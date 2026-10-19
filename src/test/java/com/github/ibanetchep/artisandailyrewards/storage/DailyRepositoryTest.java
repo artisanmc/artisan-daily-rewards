@@ -33,7 +33,7 @@ class DailyRepositoryTest {
     void setUp() throws Exception {
         dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1");
-        repository = new DailyRepository(dataSource);
+        repository = new DailyRepository(dataSource, "artisan_daily_");
         repository.migrate();
     }
 
@@ -132,8 +132,8 @@ class DailyRepositoryTest {
         repository.claim(id, DAY, SETTINGS, "lobby", 1);
         PlayerState stored = repository.load(id);
         try (Connection c = dataSource.getConnection()) {
-            assertEquals(0, DailyRepository.writeState(c, stored.withStreak(99), stored.version() - 1, 2));
-            assertEquals(1, DailyRepository.writeState(c, stored.withStreak(99), stored.version(), 2));
+            assertEquals(0, repository.writeState(c, stored.withStreak(99), stored.version() - 1, 2));
+            assertEquals(1, repository.writeState(c, stored.withStreak(99), stored.version(), 2));
         }
         assertEquals(99, repository.load(id).streak());
     }

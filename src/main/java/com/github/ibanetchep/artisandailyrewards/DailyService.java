@@ -139,7 +139,7 @@ public final class DailyService {
         claimsAllowed = false;
         logger.severe("This server runs in " + zone + " but the network's daily rewards use " + recorded
                 + ": claims are refused here so no day is paid twice. Start every server with the same "
-                + "-Duser.timezone, or delete the row 'zone' of daily_meta if the whole network moved.");
+                + "-Duser.timezone, or delete the row 'zone' of " + repository.metaTable() + " if the whole network moved.");
     }
 
     // ---- Players

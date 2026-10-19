@@ -26,11 +26,11 @@ import java.util.logging.Level;
 public final class DailyRewardsPlugin extends JavaPlugin {
 
     /**
-     * Lowest Artisan API this plugin compiles against: {@code ProjectRootRegistry.moduleFolder}
-     * (2.8.0), Config screens with a module view and {@code PlayerCommandRegistry} (2.7.0),
+     * Lowest Artisan API this plugin compiles against: {@code DatabaseApi.tablePrefix} (2.9.0),
+     * {@code ProjectRootRegistry.moduleFolder} (2.8.0), Config screens with a module view and {@code PlayerCommandRegistry} (2.7.0),
      * {@code TemplateRegistry} (2.6.0), {@code TranslationsApi} (2.5.0).
      */
-    public static final String MIN_API_VERSION = "2.8.0";
+    public static final String MIN_API_VERSION = "2.9.0";
 
     private @Nullable ArtisanAPI api;
     private @Nullable DailyService service;
@@ -45,9 +45,10 @@ public final class DailyRewardsPlugin extends JavaPlugin {
 
         DailyRepository repository;
         try {
-            repository = new DailyRepository(api.getDatabase().dataSource(this));
+            repository = new DailyRepository(api.getDatabase().dataSource(this),
+                    api.getDatabase().tablePrefix(DailyRepository.MODULE));
             repository.migrate();
-        } catch (SQLException | IllegalStateException e) {
+        } catch (SQLException | IllegalStateException | IllegalArgumentException e) {
             getLogger().log(Level.SEVERE, "The database is not available, ArtisanDailyRewards is disabled. "
                     + "Check plugins/Artisan/environment.yml.", e);
             getServer().getPluginManager().disablePlugin(this);
