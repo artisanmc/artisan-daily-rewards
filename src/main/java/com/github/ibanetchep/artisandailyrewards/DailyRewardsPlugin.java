@@ -1,10 +1,21 @@
 package com.github.ibanetchep.artisandailyrewards;
 
 import com.github.ibanetchep.artisandailyrewards.artisan.DailyRewardsModule;
+import com.github.ibanetchep.artisandailyrewards.command.DailyAdminCommand;
+import com.github.ibanetchep.artisandailyrewards.command.DailyCommand;
+import com.github.ibanetchep.artisandailyrewards.core.GameClock;
+import com.github.ibanetchep.artisandailyrewards.listener.PlayerConnectionListener;
+import com.github.ibanetchep.artisandailyrewards.storage.DailyRepository;
 import net.artisanmc.modules.api.ArtisanAPI;
+import net.artisanmc.modules.api.database.DatabaseDialect;
+import net.artisanmc.modules.api.translation.MessageBundleDeclaration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.sql.SQLException;
+import java.time.LocalTime;
+import java.util.List;
 import java.util.logging.Level;
 
 /**
@@ -22,6 +33,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
     public static final String MIN_API_VERSION = "2.8.0";
 
     private @Nullable ArtisanAPI api;
+    private @Nullable DailyService service;
 
     @Override
     public void onEnable() {
@@ -30,8 +42,44 @@ public final class DailyRewardsPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        api.getModules().register(new DailyRewardsModule(getLogger()));
-        getLogger().info("Enabled (Artisan API " + api.getApiVersion() + ").");
+
+        DailyRepository repository;
+        try {
+            repository = new DailyRepository(api.getDatabase().dataSource(this));
+            repository.migrate();
+        } catch (SQLException | IllegalStateException e) {
+            getLogger().log(Level.SEVERE, "The database is not available, ArtisanDailyRewards is disabled. "
+                    + "Check plugins/Artisan/environment.yml.", e);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        Messages messages = new Messages(api.getTranslations().register(
+                MessageBundleDeclaration.files(this, Messages.NAMESPACE, "en", "fr")));
+        // H2 is a file of this server; MySQL/MariaDB may be shared by the network.
+        boolean shared = api.getDatabase().getDialect() != DatabaseDialect.H2;
+        service = new DailyService(api.getScheduler().forPlugin(this), repository, messages, getLogger(),
+                GameClock.system(LocalTime.MIDNIGHT), serverName(), shared);
+        try {
+            service.checkZone();
+        } catch (SQLException e) {
+            getLogger().log(Level.WARNING, "Could not check the time zone recorded for the daily rewards", e);
+        }
+
+        api.getModules().register(new DailyRewardsModule(service, List.of(
+                new DailyCommand(service, messages).declaration(),
+                new DailyAdminCommand(service, messages, getLogger()).declaration()), getLogger()));
+        getServer().getPluginManager().registerEvents(new PlayerConnectionListener(service), this);
+
+        // After a reload of the plugin, players already online are loaded (and greeted) as if they joined.
+        for (Player player : getServer().getOnlinePlayers()) service.join(player);
+        getLogger().info("Enabled in " + service.clock().zone().getId() + " (Artisan API " + api.getApiVersion() + ").");
+    }
+
+    /** Written on each claim, to tell servers apart in the history: {@code host:port}. */
+    private String serverName() {
+        String ip = getServer().getIp();
+        return (ip == null || ip.isBlank() ? "*" : ip) + ":" + getServer().getPort();
     }
 
     @Override
@@ -39,6 +87,8 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         if (api != null) {
             api.getModules().unregister(DailyRewardsModule.ID);
         }
+        if (service != null) service.stop();
+        service = null;
         api = null;
     }
 
