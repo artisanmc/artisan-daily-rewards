@@ -1,0 +1,38 @@
+# Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/ArtisanDailyRewards/lang/fr.yml.
+reminder: "<gold>Ta récompense du jour t'attend !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>La réclamer'><green>[Réclamer]</green></hover></click>"
+claim:
+  success: "<green>Récompense du jour réclamée ! Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
+  success_auto: "<green>Récompense du jour réclamée automatiquement. Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
+  covered: "<aqua>Ton streak est conservé : <white><count></white> joker(s) utilisé(s) pour les jours manqués."
+  broken: "<red>Tu as manqué un jour : ton streak de <white><lost></white> est cassé. Il repart aujourd'hui."
+  freeze_earned: "<aqua>Tu as gagné un joker ! <gray>(<freezes>/<max>)"
+  already: "<gray>Tu as déjà réclamé la récompense du jour. Prochaine dans <white><time></white>."
+  playtime: "<gray>Joue encore <white><time></white> pour réclamer la récompense du jour."
+  error: "<red>Ta récompense n'a pas pu être réclamée, réessaie dans un instant."
+  conflict: "<red>Ton streak a changé au même moment ailleurs, réessaie."
+  disabled: "<red>Les récompenses quotidiennes sont suspendues sur ce serveur, préviens un administrateur."
+status:
+  loading: "<gray>Ton streak se charge, réessaie dans un instant."
+  line: "<gold>Streak : <white><streak></white> <gray>| record <white><longest></white> | jokers <white><freezes></white>"
+  claimed: "<gray>La récompense du jour est réclamée. Prochaine dans <white><time></white>."
+  waiting: "<green>La récompense du jour t'attend :</green> <click:run_command:/daily claim><green>[Réclamer]</green></click>"
+  at_risk: "<yellow>Réclame aujourd'hui ou ton streak s'arrête."
+  broken: "<red>Ton streak de <white><lost></white> repartira de zéro à ta prochaine réclamation."
+autoclaim:
+  enabled: "<green>Ta récompense du jour sera réclamée automatiquement à la connexion."
+  disabled: "<gray>Réclamation automatique désactivée : utilise <white>/daily claim</white>."
+  fixed: "<gray>La réclamation automatique est réglée par le serveur, pas par chaque joueur."
+admin:
+  info:
+    header: "<gold>Récompenses quotidiennes de <white><player></white>"
+    state: "<gray>Streak <white><streak></white> (affiché <white><shown></white>), record <white><longest></white>, <white><total></white> réclamations, <white><freezes></white> jokers, dernière <white><last></white>"
+    broken: "<gray>Streak cassé de <white><lost></white> depuis le <white><from></white>"
+    ledger: "<dark_gray><at></dark_gray> <gray><kind></gray> <white><amount></white> <dark_gray><detail>"
+  set: "<green><white><field></white> de <white><player></white> mis à <white><value></white>."
+  set_negative: "<red>La valeur ne peut pas être négative."
+  day: "<gray>Jour de jeu sur ce serveur : <white><date></white> (décalage <white><offset></white> jours)."
+  day_usage: "<red>Usage : /dailyadmin day [+n|-n|reset]"
+  day_shared: "<red>Le jour de jeu ne se décale pas sur une base partagée par le réseau : utilise un serveur de test en H2."
+command:
+  player_not_found: "<red>Aucun joueur nommé <white><player></white> n'est venu sur ce serveur."
+  error: "<red>La base de données est injoignable, voir la console."
