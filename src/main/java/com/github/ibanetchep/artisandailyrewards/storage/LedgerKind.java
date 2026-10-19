@@ -2,7 +2,7 @@ package com.github.ibanetchep.artisandailyrewards.storage;
 
 import java.util.Locale;
 
-/** What a line of {@code daily_ledger} records. */
+/** What a line of the ledger table records. */
 public enum LedgerKind {
     FREEZE_EARNED,
     FREEZE_USED,

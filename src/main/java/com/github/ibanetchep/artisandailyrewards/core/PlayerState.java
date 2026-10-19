@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * A player's stored counters, one row of {@code daily_players}. The stored {@link #streak} can be
+ * A player's stored counters, one row of the players table. The stored {@link #streak} can be
  * stale: a break is only written at the next claim, so anything shown to a player goes through
  * {@link StreakRules#display}.
  *

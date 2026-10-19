@@ -18,79 +18,98 @@ import java.util.UUID;
 
 /**
  * The streaks, in the database Artisan lends to the suite (H2, MySQL or MariaDB), in tables
- * prefixed {@code daily_}. Plain JDBC with statements every dialect runs the same: no upsert.
+ * named {@code tablePrefix("daily")} + name ({@code artisan_daily_players} by default). Plain JDBC
+ * with statements every dialect runs the same: no upsert.
  *
- * <p>The primary key {@code (uuid, game_day)} of {@code daily_claims} is what guarantees one claim per
+ * <p>The primary key {@code (uuid, game_day)} of {@code claims} is what guarantees one claim per
  * player and game day, across every server of a network; the {@code version} column of
- * {@code daily_players} keeps two servers from overwriting each other's counters.
+ * {@code players} keeps two servers from overwriting each other's counters.
  *
  * <p>Every method blocks: call them off the game threads.
  */
 public final class DailyRepository {
 
-    static final String PLAYERS = "daily_players";
-    static final String CLAIMS = "daily_claims";
-    static final String LEDGER = "daily_ledger";
-    static final String META = "daily_meta";
+    /** The namespace asked of {@code DatabaseApi.tablePrefix}. */
+    public static final String MODULE = "daily";
     static final String SCHEMA_VERSION = "schema_version";
     public static final String ZONE = "zone";
 
+    private final String players;
+    private final String claims;
+    private final String ledger;
+    private final String meta;
+
     /** Forward only: append, never edit a released step. */
-    private static final List<String> MIGRATIONS = List.of(
-            "CREATE TABLE " + PLAYERS + " ("
-                    + "uuid CHAR(36) NOT NULL PRIMARY KEY, "
-                    + "streak INT NOT NULL DEFAULT 0, "
-                    + "longest INT NOT NULL DEFAULT 0, "
-                    + "last_day INT NULL, "
-                    + "total_claims INT NOT NULL DEFAULT 0, "
-                    + "freezes INT NOT NULL DEFAULT 0, "
-                    + "milestone_mark INT NOT NULL DEFAULT 0, "
-                    + "broken_streak INT NOT NULL DEFAULT 0, "
-                    + "broken_mark INT NOT NULL DEFAULT 0, "
-                    + "broken_from_day INT NULL, "
-                    + "auto_claim BOOLEAN NULL, "
-                    + "version INT NOT NULL DEFAULT 0, "
-                    + "updated_at BIGINT NOT NULL DEFAULT 0)",
-            "CREATE TABLE " + CLAIMS + " ("
-                    + "uuid CHAR(36) NOT NULL, "
-                    + "game_day INT NOT NULL, "
-                    + "streak_after INT NOT NULL, "
-                    + "cycle_day INT NOT NULL, "
-                    + "server VARCHAR(64) NOT NULL, "
-                    + "claimed_at BIGINT NOT NULL, "
-                    + "delivered BOOLEAN NOT NULL DEFAULT FALSE, "
-                    + "PRIMARY KEY (uuid, game_day))",
-            "CREATE TABLE " + LEDGER + " ("
-                    + "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, "
-                    + "uuid CHAR(36) NOT NULL, "
-                    + "created_at BIGINT NOT NULL, "
-                    + "kind VARCHAR(32) NOT NULL, "
-                    + "amount INT NOT NULL, "
-                    + "detail VARCHAR(255) NULL)",
-            "CREATE INDEX daily_ledger_player ON " + LEDGER + " (uuid, created_at)",
-            "CREATE INDEX daily_players_streak ON " + PLAYERS + " (streak)");
+    private List<String> migrations() {
+        return List.of(
+                "CREATE TABLE " + players + " ("
+                        + "uuid CHAR(36) NOT NULL PRIMARY KEY, "
+                        + "streak INT NOT NULL DEFAULT 0, "
+                        + "longest INT NOT NULL DEFAULT 0, "
+                        + "last_day INT NULL, "
+                        + "total_claims INT NOT NULL DEFAULT 0, "
+                        + "freezes INT NOT NULL DEFAULT 0, "
+                        + "milestone_mark INT NOT NULL DEFAULT 0, "
+                        + "broken_streak INT NOT NULL DEFAULT 0, "
+                        + "broken_mark INT NOT NULL DEFAULT 0, "
+                        + "broken_from_day INT NULL, "
+                        + "auto_claim BOOLEAN NULL, "
+                        + "version INT NOT NULL DEFAULT 0, "
+                        + "updated_at BIGINT NOT NULL DEFAULT 0)",
+                "CREATE TABLE " + claims + " ("
+                        + "uuid CHAR(36) NOT NULL, "
+                        + "game_day INT NOT NULL, "
+                        + "streak_after INT NOT NULL, "
+                        + "cycle_day INT NOT NULL, "
+                        + "server VARCHAR(64) NOT NULL, "
+                        + "claimed_at BIGINT NOT NULL, "
+                        + "delivered BOOLEAN NOT NULL DEFAULT FALSE, "
+                        + "PRIMARY KEY (uuid, game_day))",
+                "CREATE TABLE " + ledger + " ("
+                        + "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+                        + "uuid CHAR(36) NOT NULL, "
+                        + "created_at BIGINT NOT NULL, "
+                        + "kind VARCHAR(32) NOT NULL, "
+                        + "amount INT NOT NULL, "
+                        + "detail VARCHAR(255) NULL)",
+                "CREATE INDEX " + prefix + "ledger_player ON " + ledger + " (uuid, created_at)",
+                "CREATE INDEX " + prefix + "players_streak ON " + players + " (streak)");
+    }
 
     private static final String STATE_COLUMNS = "streak, longest, last_day, total_claims, freezes, milestone_mark, "
             + "broken_streak, broken_mark, broken_from_day, auto_claim, version";
 
     private final DataSource dataSource;
+    private final String prefix;
 
-    public DailyRepository(DataSource dataSource) {
+    /** @param prefix {@code api.getDatabase().tablePrefix(MODULE)}, such as {@code artisan_daily_} */
+    public DailyRepository(DataSource dataSource, String prefix) {
         this.dataSource = dataSource;
+        this.prefix = prefix;
+        this.players = prefix + "players";
+        this.claims = prefix + "claims";
+        this.ledger = prefix + "ledger";
+        this.meta = prefix + "meta";
     }
 
-    /** Creates or upgrades the tables; the step reached is {@code schema_version} in {@code daily_meta}. */
+    /** The table of {@link #ZONE} and the schema step, named in messages to the admin. */
+    public String metaTable() {
+        return meta;
+    }
+
+    /** Creates or upgrades the tables; the step reached is {@code schema_version} in {@code meta}. */
     public void migrate() throws SQLException {
         try (Connection c = dataSource.getConnection()) {
             try (Statement s = c.createStatement()) {
-                s.execute("CREATE TABLE IF NOT EXISTS " + META + " ("
+                s.execute("CREATE TABLE IF NOT EXISTS " + meta + " ("
                         + "meta_key VARCHAR(64) NOT NULL PRIMARY KEY, meta_value VARCHAR(255) NOT NULL)");
             }
             String stored = meta(c, SCHEMA_VERSION);
             int current = stored != null ? Integer.parseInt(stored) : 0;
-            for (int i = current; i < MIGRATIONS.size(); i++) {
+            List<String> migrations = migrations();
+            for (int i = current; i < migrations.size(); i++) {
                 try (Statement s = c.createStatement()) {
-                    s.execute(MIGRATIONS.get(i));
+                    s.execute(migrations.get(i));
                 }
                 putMeta(c, SCHEMA_VERSION, String.valueOf(i + 1));
             }
@@ -107,7 +126,7 @@ public final class DailyRepository {
 
     /**
      * Claims for {@code uuid} on {@code today} in one transaction: the rule in memory, a row in
-     * {@code daily_claims} (a duplicate key means already claimed, on this server or another), the
+     * {@code claims} (a duplicate key means already claimed, on this server or another), the
      * counters written only if no other server wrote them since they were read, then the ledger.
      * A concurrent write is retried once.
      */
@@ -120,7 +139,7 @@ public final class DailyRepository {
             try {
                 for (int attempt = 0; attempt < 2; attempt++) {
                     PlayerState before = select(c, uuid);
-                    if (before == null) throw new SQLException("daily_players row of " + uuid + " vanished");
+                    if (before == null) throw new SQLException(players + " row of " + uuid + " vanished");
                     StreakRules.Claim claim = StreakRules.claim(before, today, settings);
                     if (!claim.claimed()) {
                         c.rollback();
@@ -164,7 +183,7 @@ public final class DailyRepository {
     public void markDelivered(UUID uuid, long day) throws SQLException {
         try (Connection c = dataSource.getConnection();
              PreparedStatement p = c.prepareStatement(
-                     "UPDATE " + CLAIMS + " SET delivered = TRUE WHERE uuid = ? AND game_day = ?")) {
+                     "UPDATE " + claims + " SET delivered = TRUE WHERE uuid = ? AND game_day = ?")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
             p.executeUpdate();
@@ -175,7 +194,7 @@ public final class DailyRepository {
     public PlayerState setAutoClaim(UUID uuid, boolean enabled, long now) throws SQLException {
         try (Connection c = dataSource.getConnection()) {
             ensureRow(c, uuid, now);
-            try (PreparedStatement p = c.prepareStatement("UPDATE " + PLAYERS
+            try (PreparedStatement p = c.prepareStatement("UPDATE " + players
                     + " SET auto_claim = ?, version = version + 1, updated_at = ? WHERE uuid = ?")) {
                 p.setBoolean(1, enabled);
                 p.setLong(2, now);
@@ -206,7 +225,7 @@ public final class DailyRepository {
                 case LONGEST -> before.longest();
                 case FREEZES -> before.freezes();
             };
-            try (PreparedStatement p = c.prepareStatement("UPDATE " + PLAYERS + " SET " + field.column
+            try (PreparedStatement p = c.prepareStatement("UPDATE " + players + " SET " + field.column
                     + " = ?, version = version + 1, updated_at = ? WHERE uuid = ?")) {
                 p.setInt(1, value);
                 p.setLong(2, now);
@@ -222,7 +241,7 @@ public final class DailyRepository {
     public List<LedgerEntry> recentLedger(UUID uuid, int limit) throws SQLException {
         List<LedgerEntry> entries = new ArrayList<>();
         try (Connection c = dataSource.getConnection();
-             PreparedStatement p = c.prepareStatement("SELECT created_at, kind, amount, detail FROM " + LEDGER
+             PreparedStatement p = c.prepareStatement("SELECT created_at, kind, amount, detail FROM " + ledger
                      + " WHERE uuid = ? ORDER BY created_at DESC, id DESC")) {
             p.setString(1, uuid.toString());
             p.setMaxRows(limit);
@@ -238,7 +257,7 @@ public final class DailyRepository {
     /** Claims recorded for a player and day; 0 or 1, the primary key sees to it. */
     public int countClaims(UUID uuid, long day) throws SQLException {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement p = c.prepareStatement("SELECT COUNT(*) FROM " + CLAIMS + " WHERE uuid = ? AND game_day = ?")) {
+             PreparedStatement p = c.prepareStatement("SELECT COUNT(*) FROM " + claims + " WHERE uuid = ? AND game_day = ?")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
             try (ResultSet r = p.executeQuery()) {
@@ -259,8 +278,8 @@ public final class DailyRepository {
         }
     }
 
-    private static @Nullable String meta(Connection c, String key) throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("SELECT meta_value FROM " + META + " WHERE meta_key = ?")) {
+    private @Nullable String meta(Connection c, String key) throws SQLException {
+        try (PreparedStatement p = c.prepareStatement("SELECT meta_value FROM " + meta + " WHERE meta_key = ?")) {
             p.setString(1, key);
             try (ResultSet r = p.executeQuery()) {
                 return r.next() ? r.getString(1) : null;
@@ -268,13 +287,13 @@ public final class DailyRepository {
         }
     }
 
-    private static void putMeta(Connection c, String key, String value) throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("UPDATE " + META + " SET meta_value = ? WHERE meta_key = ?")) {
+    private void putMeta(Connection c, String key, String value) throws SQLException {
+        try (PreparedStatement p = c.prepareStatement("UPDATE " + meta + " SET meta_value = ? WHERE meta_key = ?")) {
             p.setString(1, value);
             p.setString(2, key);
             if (p.executeUpdate() > 0) return;
         }
-        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + META + " (meta_key, meta_value) VALUES (?, ?)")) {
+        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + meta + " (meta_key, meta_value) VALUES (?, ?)")) {
             p.setString(1, key);
             p.setString(2, value);
             p.executeUpdate();
@@ -285,14 +304,14 @@ public final class DailyRepository {
     }
 
     /** Creates the player's row when missing; another server creating it first is fine. */
-    private static void ensureRow(Connection c, UUID uuid, long now) throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("SELECT 1 FROM " + PLAYERS + " WHERE uuid = ?")) {
+    private void ensureRow(Connection c, UUID uuid, long now) throws SQLException {
+        try (PreparedStatement p = c.prepareStatement("SELECT 1 FROM " + players + " WHERE uuid = ?")) {
             p.setString(1, uuid.toString());
             try (ResultSet r = p.executeQuery()) {
                 if (r.next()) return;
             }
         }
-        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + PLAYERS + " (uuid, updated_at) VALUES (?, ?)")) {
+        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + players + " (uuid, updated_at) VALUES (?, ?)")) {
             p.setString(1, uuid.toString());
             p.setLong(2, now);
             p.executeUpdate();
@@ -301,8 +320,8 @@ public final class DailyRepository {
         }
     }
 
-    private static @Nullable PlayerState select(Connection c, UUID uuid) throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("SELECT " + STATE_COLUMNS + " FROM " + PLAYERS + " WHERE uuid = ?")) {
+    private @Nullable PlayerState select(Connection c, UUID uuid) throws SQLException {
+        try (PreparedStatement p = c.prepareStatement("SELECT " + STATE_COLUMNS + " FROM " + players + " WHERE uuid = ?")) {
             p.setString(1, uuid.toString());
             try (ResultSet r = p.executeQuery()) {
                 if (!r.next()) return null;
@@ -312,9 +331,9 @@ public final class DailyRepository {
         }
     }
 
-    private static void insertClaim(Connection c, UUID uuid, long day, int streak, int cycleDay, String server, long now)
+    private void insertClaim(Connection c, UUID uuid, long day, int streak, int cycleDay, String server, long now)
             throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + CLAIMS
+        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + claims
                 + " (uuid, game_day, streak_after, cycle_day, server, claimed_at, delivered) VALUES (?, ?, ?, ?, ?, ?, FALSE)")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
@@ -327,8 +346,8 @@ public final class DailyRepository {
     }
 
     /** Writes the counters if the row still has {@code expectedVersion}; returns the rows changed. */
-    static int writeState(Connection c, PlayerState s, int expectedVersion, long now) throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("UPDATE " + PLAYERS + " SET streak = ?, longest = ?, last_day = ?, "
+    int writeState(Connection c, PlayerState s, int expectedVersion, long now) throws SQLException {
+        try (PreparedStatement p = c.prepareStatement("UPDATE " + players + " SET streak = ?, longest = ?, last_day = ?, "
                 + "total_claims = ?, freezes = ?, milestone_mark = ?, broken_streak = ?, broken_mark = ?, "
                 + "broken_from_day = ?, version = ?, updated_at = ? WHERE uuid = ? AND version = ?")) {
             p.setInt(1, s.streak());
@@ -348,10 +367,10 @@ public final class DailyRepository {
         }
     }
 
-    private static void ledger(Connection c, UUID uuid, long at, LedgerKind kind, int amount, @Nullable String detail)
+    private void ledger(Connection c, UUID uuid, long at, LedgerKind kind, int amount, @Nullable String detail)
             throws SQLException {
         try (PreparedStatement p = c.prepareStatement(
-                "INSERT INTO " + LEDGER + " (uuid, created_at, kind, amount, detail) VALUES (?, ?, ?, ?, ?)")) {
+                "INSERT INTO " + ledger + " (uuid, created_at, kind, amount, detail) VALUES (?, ?, ?, ?, ?)")) {
             p.setString(1, uuid.toString());
             p.setLong(2, at);
             p.setString(3, kind.column());
