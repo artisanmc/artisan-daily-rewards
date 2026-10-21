@@ -21,12 +21,12 @@ public final class Messages {
     }
 
     public void send(CommandSender to, String key) {
-        to.sendMessage(bundle.get(to, key));
+        bundle.send(to, key);
     }
 
     /** Placeholder values are inserted as plain text: a player name cannot inject MiniMessage tags. */
     public void send(CommandSender to, String key, Map<String, ?> placeholders) {
-        to.sendMessage(bundle.get(to, key, placeholders));
+        bundle.send(to, key, placeholders);
     }
 
     public void reload() {

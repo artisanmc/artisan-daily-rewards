@@ -175,9 +175,21 @@ public final class DailyAdminCommand {
         if (name == null) return null;
         Player online = Bukkit.getPlayerExact(name);
         if (online != null) return online.getUniqueId();
-        OfflinePlayer cached = Bukkit.getOfflinePlayerIfCached(name);
+        OfflinePlayer cached = cachedOfflinePlayer(name);
         if (cached != null) return cached.getUniqueId();
         messages.send(sender, "command.player_not_found", Map.of("player", name));
         return null;
+    }
+
+    /** Paper's cache of known players; Spigot lacks it, so there the known players are scanned. */
+    private static @Nullable OfflinePlayer cachedOfflinePlayer(String name) {
+        try {
+            return Bukkit.getOfflinePlayerIfCached(name);
+        } catch (NoSuchMethodError spigot) {
+            for (OfflinePlayer known : Bukkit.getOfflinePlayers()) {
+                if (name.equalsIgnoreCase(known.getName())) return known;
+            }
+            return null;
+        }
     }
 }
