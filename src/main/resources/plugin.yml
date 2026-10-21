@@ -7,12 +7,9 @@ description: Daily rewards with streaks, a looping cycle, jokers and paid streak
 authors:
   - ibanetchep
 
-dependencies:
-  server:
-    Artisan:
-      load: BEFORE
-      required: true
-      join-classpath: true
+# A Bukkit plugin, not a Paper plugin (paper-plugin.yml): plugin reloaders such as PlugManX
+# cannot reload Paper plugins.
+depend: [Artisan]
 
 permissions:
   daily.use:
