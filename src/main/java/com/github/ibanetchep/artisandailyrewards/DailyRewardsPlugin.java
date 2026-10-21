@@ -26,11 +26,12 @@ import java.util.logging.Level;
 public final class DailyRewardsPlugin extends JavaPlugin {
 
     /**
-     * Lowest Artisan API this plugin compiles against: {@code DatabaseApi.tablePrefix} (2.9.0),
+     * Lowest Artisan API this plugin compiles against: {@code MessageBundle.send} (2.10.0),
+     * {@code DatabaseApi.tablePrefix} (2.9.0),
      * {@code ProjectRootRegistry.moduleFolder} (2.8.0), Config screens with a module view and {@code PlayerCommandRegistry} (2.7.0),
      * {@code TemplateRegistry} (2.6.0), {@code TranslationsApi} (2.5.0).
      */
-    public static final String MIN_API_VERSION = "2.9.0";
+    public static final String MIN_API_VERSION = "2.10.0";
 
     private @Nullable ArtisanAPI api;
     private @Nullable DailyService service;
