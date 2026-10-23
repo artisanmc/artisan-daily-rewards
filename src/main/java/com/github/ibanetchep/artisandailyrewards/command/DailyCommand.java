@@ -16,12 +16,13 @@ import java.util.Map;
 /**
  * {@code /daily}, declared to Artisan ({@code api.getPlayerCommands()}): the player's streak, and
  * {@code claim} and {@code autoclaim [on|off]}. Artisan checks the permission, parses and
- * completes the arguments; the admin renames the command, sets its aliases or a cooldown with a
- * {@code command_override/v1} targeting {@link #ID}.
+ * completes the arguments. Artisan writes it as {@code commands/daily.yaml} of the module's folder,
+ * whose actions call {@link #ID} ({@code module_command}): the admin renames the command, sets its
+ * aliases or a cooldown by editing that file.
  */
 public final class DailyCommand {
 
-    /** What an override targets; never changes. */
+    /** What the command file's {@code module_command} calls; never changes. */
     public static final String ID = "daily:daily";
     public static final String NAME = "daily";
     public static final String PERMISSION = "daily.use";
