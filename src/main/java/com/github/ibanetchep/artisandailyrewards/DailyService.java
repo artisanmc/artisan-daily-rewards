@@ -91,12 +91,13 @@ public final class DailyService {
     // ---- Calendar
 
     /**
-     * Reads {@code data/calendar.yaml} of the module's folder. Missing: the defaults. Unreadable or
-     * wrong: the previous settings stay and the error is logged. Reschedules the reset.
+     * Reads {@code data/calendar.yml} of the module's folder, else {@code data/calendar.yaml} (what
+     * Artisan wrote before it moved to {@code .yml}). Missing: the defaults. Unreadable or wrong: the
+     * previous settings stay and the error is logged. Reschedules the reset.
      */
     public void loadCalendar(@Nullable File moduleFolder) {
-        File file = moduleFolder != null ? new File(moduleFolder, CALENDAR_PATH) : null;
-        if (file == null || !file.isFile()) {
+        File file = moduleFolder != null ? calendarFile(moduleFolder) : null;
+        if (file == null) {
             apply(CalendarSettings.DEFAULTS);
             logger.info("No " + CALENDAR_PATH + " in the module folder yet: default settings.");
             return;
@@ -109,6 +110,14 @@ public final class DailyService {
         } catch (CalendarException e) {
             logger.severe(file.getPath() + " cannot be used, the previous settings stay: " + e.getMessage());
         }
+    }
+
+    /** {@code data/calendar.yml}, else {@code data/calendar.yaml}, else {@code null}. */
+    static @Nullable File calendarFile(File moduleFolder) {
+        File yml = new File(moduleFolder, CALENDAR_PATH.replace(".yaml", ".yml"));
+        if (yml.isFile()) return yml;
+        File yaml = new File(moduleFolder, CALENDAR_PATH);
+        return yaml.isFile() ? yaml : null;
     }
 
     private void apply(CalendarSettings next) {
