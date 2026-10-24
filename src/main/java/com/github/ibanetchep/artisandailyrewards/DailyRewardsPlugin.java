@@ -26,12 +26,13 @@ import java.util.logging.Level;
 public final class DailyRewardsPlugin extends JavaPlugin {
 
     /**
-     * Lowest Artisan API this plugin compiles against: {@code MessageBundle.send} (2.10.0),
+     * Lowest Artisan API this plugin compiles against: messages in the module's folder (2.17.0),
+     * {@code MessageBundle.send} (2.10.0),
      * {@code DatabaseApi.tablePrefix} (2.9.0),
      * {@code ProjectRootRegistry.moduleFolder} (2.8.0), Config screens with a module view and {@code PlayerCommandRegistry} (2.7.0),
      * {@code TemplateRegistry} (2.6.0), {@code TranslationsApi} (2.5.0).
      */
-    public static final String MIN_API_VERSION = "2.10.0";
+    public static final String MIN_API_VERSION = "2.17.0";
 
     private @Nullable ArtisanAPI api;
     private @Nullable DailyService service;
@@ -57,7 +58,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         }
 
         Messages messages = new Messages(api.getTranslations().register(
-                MessageBundleDeclaration.files(this, Messages.NAMESPACE, "en", "fr")));
+                messageFiles(api)));
         // H2 is a file of this server; MySQL/MariaDB may be shared by the network.
         boolean shared = api.getDatabase().getDialect() != DatabaseDialect.H2;
         service = new DailyService(api.getScheduler().forPlugin(this), repository, messages, getLogger(),
@@ -82,6 +83,22 @@ public final class DailyRewardsPlugin extends JavaPlugin {
     private String serverName() {
         String ip = getServer().getIp();
         return (ip == null || ip.isBlank() ? "*" : ip) + ":" + getServer().getPort();
+    }
+
+    /**
+     * The messages, read from {@code plugins/Artisan/modules/daily/lang/} beside the module's
+     * other files: Artisan moves {@code plugins/ArtisanDailyRewards/lang/*.yml} there once. Without that
+     * folder they stay in this plugin's.
+     */
+    private MessageBundleDeclaration messageFiles(ArtisanAPI api) {
+        MessageBundleDeclaration files = MessageBundleDeclaration.files(this, Messages.NAMESPACE, "en", "fr");
+        try {
+            return files.inFolder(api.getProjectRoots().moduleFolder(DailyRewardsModule.FOLDER, DailyRewardsModule.ID, null));
+        } catch (RuntimeException e) {
+            getLogger().log(Level.WARNING, "No folder plugins/Artisan/modules/" + DailyRewardsModule.FOLDER
+                    + ": the messages stay in plugins/" + getName() + "/lang/", e);
+            return files;
+        }
     }
 
     @Override

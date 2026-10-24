@@ -1,5 +1,5 @@
-# ArtisanDailyRewards messages (MiniMessage). Override any key in plugins/ArtisanDailyRewards/lang/en.yml;
-# add a language with plugins/ArtisanDailyRewards/lang/<code>.yml.
+# ArtisanDailyRewards messages (MiniMessage). Override any key in plugins/Artisan/modules/daily/lang/en.yml;
+# add a language with plugins/Artisan/modules/daily/lang/<code>.yml.
 reminder: "<gold>Your daily reward is waiting!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim it'><green>[Claim]</green></hover></click>"
 claim:
   success: "<green>Daily reward claimed! Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"

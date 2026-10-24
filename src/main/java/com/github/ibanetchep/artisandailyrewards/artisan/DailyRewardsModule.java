@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 public final class DailyRewardsModule implements ArtisanModule {
 
     public static final String ID = "daily";
-    static final String FOLDER = "daily";
+    public static final String FOLDER = "daily";
 
     private final DailyService service;
     private final List<PlayerCommandDeclaration> commands;
