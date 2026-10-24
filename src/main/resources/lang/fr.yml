@@ -1,4 +1,4 @@
-# Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/ArtisanDailyRewards/lang/fr.yml.
+# Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/Artisan/modules/daily/lang/fr.yml.
 reminder: "<gold>Ta récompense du jour t'attend !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>La réclamer'><green>[Réclamer]</green></hover></click>"
 claim:
   success: "<green>Récompense du jour réclamée ! Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"

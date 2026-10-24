@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * The plugin's system messages, served by Artisan's translations (namespace {@code daily}):
  * {@code lang/<code>.yml} in the jar, overridden key by key by
- * {@code plugins/ArtisanDailyRewards/lang/<code>.yml}.
+ * {@code plugins/Artisan/modules/daily/lang/<code>.yml} (the module's folder).
  */
 public final class Messages {
 
