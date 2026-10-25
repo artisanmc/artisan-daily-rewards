@@ -1,7 +1,10 @@
 package com.github.ibanetchep.artisandailyrewards;
 
+import com.github.ibanetchep.artisandailyrewards.artisan.DailyRewardsModule;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarException;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarSettings;
+import com.github.ibanetchep.artisandailyrewards.core.CalendarView;
+import com.github.ibanetchep.artisandailyrewards.core.ClaimHistory;
 import com.github.ibanetchep.artisandailyrewards.core.Durations;
 import com.github.ibanetchep.artisandailyrewards.core.GameClock;
 import com.github.ibanetchep.artisandailyrewards.core.PlayerState;
@@ -9,6 +12,9 @@ import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
 import com.github.ibanetchep.artisandailyrewards.storage.ClaimResult;
 import com.github.ibanetchep.artisandailyrewards.storage.DailyRepository;
 import com.github.ibanetchep.artisandailyrewards.storage.LedgerEntry;
+import net.artisanmc.modules.api.action.ModuleActionsApi;
+import net.artisanmc.modules.api.menu.MenuApi;
+import net.artisanmc.modules.api.menu.MenuRef;
 import net.artisanmc.modules.api.scheduler.TaskScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -36,8 +42,8 @@ import java.util.logging.Logger;
 
 /**
  * The claim flow around the pure rule: the calendar settings, the cache of online players, the
- * claim itself (off the game threads, then back on the player's thread), auto-claim and the
- * reminder at join and at each reset.
+ * claim itself (off the game threads, then back on the player's thread), the day's reward,
+ * auto-claim, the reminder at join and at each reset, and the calendar menu.
  *
  * <p>The database is only touched from {@link TaskScheduler#runAsync}; the cache is read from
  * any thread and answers placeholders without I/O.
@@ -46,6 +52,10 @@ public final class DailyService {
 
     /** Where the calendar lives in the module's folder. */
     public static final String CALENDAR_PATH = "data/calendar.yaml";
+    /** How far back the calendar menu can show: the claims read at join. */
+    public static final int HISTORY_DAYS = 35;
+    /** How far ahead the calendar menu can show. */
+    public static final int MAX_FUTURE_DAYS = 366;
 
     private final TaskScheduler scheduler;
     private final DailyRepository repository;
@@ -54,19 +64,23 @@ public final class DailyService {
     private final GameClock clock;
     private final String server;
     private final boolean sharedDatabase;
+    private final ModuleActionsApi actions;
+    private final MenuApi menus;
 
     private volatile CalendarSettings settings = CalendarSettings.DEFAULTS;
     /** False when this server's time zone differs from the network's: claiming would pay a day twice. */
     private volatile boolean claimsAllowed = true;
 
     private final Map<UUID, PlayerState> cache = new ConcurrentHashMap<>();
+    private final Map<UUID, ClaimHistory> history = new ConcurrentHashMap<>();
     private final Map<UUID, Long> sessionStart = new ConcurrentHashMap<>();
     private final Set<UUID> claiming = ConcurrentHashMap.newKeySet();
     /** Raised on every reschedule: a reset task from an older schedule does nothing. */
     private final AtomicInteger resetGeneration = new AtomicInteger();
 
     public DailyService(TaskScheduler scheduler, DailyRepository repository, Messages messages, Logger logger,
-                        GameClock clock, String server, boolean sharedDatabase) {
+                        GameClock clock, String server, boolean sharedDatabase, ModuleActionsApi actions,
+                        MenuApi menus) {
         this.scheduler = scheduler;
         this.repository = repository;
         this.messages = messages;
@@ -74,6 +88,8 @@ public final class DailyService {
         this.clock = clock;
         this.server = server;
         this.sharedDatabase = sharedDatabase;
+        this.actions = actions;
+        this.menus = menus;
     }
 
     public CalendarSettings settings() {
@@ -165,11 +181,19 @@ public final class DailyService {
         UUID uuid = player.getUniqueId();
         sessionStart.put(uuid, System.currentTimeMillis());
         scheduler.runAsync(() -> {
+            List<DailyRepository.Undelivered> pending;
             try {
                 cache.put(uuid, repository.load(uuid));
+                history.put(uuid, repository.history(uuid, clock.today() - HISTORY_DAYS));
+                pending = repository.undelivered(uuid);
             } catch (SQLException e) {
                 logger.log(Level.SEVERE, "Could not load the streak of " + player.getName(), e);
                 return;
+            }
+            // Claims whose rewards were not handed out: the player left first, or a server stopped.
+            CalendarSettings current = settings;
+            for (DailyRepository.Undelivered claim : pending) {
+                deliver(player, claim.day(), claim.streak(), claim.cycleDay(), current);
             }
             scheduler.runFor(player, () -> greet(player));
         });
@@ -177,6 +201,7 @@ public final class DailyService {
 
     public void quit(Player player) {
         cache.remove(player.getUniqueId());
+        history.remove(player.getUniqueId());
         sessionStart.remove(player.getUniqueId());
         claiming.remove(player.getUniqueId());
     }
@@ -248,11 +273,15 @@ public final class DailyService {
                 return;
             }
             if (result.status() != ClaimResult.Status.CONFLICT) cache.put(uuid, result.state());
+            if (result.claimed()) {
+                history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay()));
+                deliver(player, today, result.state().streak(), result.cycleDay(), current);
+            }
             scheduler.runFor(player, () -> {
                 claiming.remove(uuid);
                 answer(player, result, current, automatic);
+                if (result.status() != ClaimResult.Status.CONFLICT) refreshMenu(player);
             });
-            if (result.claimed()) deliver(player, result, today);
         });
     }
 
@@ -281,16 +310,27 @@ public final class DailyService {
     }
 
     /**
-     * Hands out the rewards of a claim, then records them as delivered. The rewards themselves
-     * (cycle day, base, tier) come with the Artisan integration; a claim not marked delivered is
-     * replayed at the player's next join.
+     * Hands out the reward of the claim of {@code day}: the actions of its day of the cycle
+     * ({@code days}, else {@code default_day}), run by Artisan with {@code {streak}},
+     * {@code {cycle_day}} and {@code {cycle_length}}. Off the game threads. The delivery is taken
+     * in the database first, so two servers never pay one claim twice; a player who left keeps it
+     * for their next join.
      */
-    private void deliver(Player player, ClaimResult result, long day) {
+    private void deliver(Player player, long day, int streak, int cycleDay, CalendarSettings current) {
+        if (!player.isOnline()) return;
         try {
-            repository.markDelivered(player.getUniqueId(), day);
+            if (!repository.takeDelivery(player.getUniqueId(), day)) return;
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "Could not mark the claim of " + player.getName() + " delivered", e);
+            logger.log(Level.WARNING, "Could not deliver the daily reward of " + player.getName()
+                    + "; it is tried again at their next join", e);
+            return;
         }
+        CalendarSettings.DayReward reward = current.reward(cycleDay);
+        if (reward == null || reward.actions() == null) return;
+        actions.run(player, reward.actions(), Map.of(
+                "streak", streak,
+                "cycle_day", cycleDay,
+                "cycle_length", current.cycleLength()), DailyRewardsModule.FOLDER);
     }
 
     // ---- Auto-claim choice
@@ -317,6 +357,27 @@ public final class DailyService {
                 if (next) greet(player);
             });
         });
+    }
+
+    // ---- Calendar menu
+
+    /**
+     * {@code past} days, today and {@code future} days for the calendar menu, from the cache:
+     * null until the player's streak is loaded. Capped to {@link #HISTORY_DAYS} and
+     * {@link #MAX_FUTURE_DAYS}.
+     */
+    public @Nullable List<CalendarView.Day> calendar(UUID uuid, int past, int future) {
+        PlayerState state = cache.get(uuid);
+        if (state == null) return null;
+        ClaimHistory claims = history.getOrDefault(uuid, ClaimHistory.EMPTY);
+        return CalendarView.around(state, claims, clock.today(), settings.cycleLength(),
+                Math.clamp(past, 0, HISTORY_DAYS), Math.clamp(future, 0, MAX_FUTURE_DAYS));
+    }
+
+    /** Opens again a menu of the module's folder the player has open: what it shows changed. */
+    private void refreshMenu(Player player) {
+        MenuRef open = menus.openMenu(player);
+        if (open != null && DailyRewardsModule.FOLDER.equals(open.getProjectId())) menus.open(player, open, Map.of());
     }
 
     // ---- Reset

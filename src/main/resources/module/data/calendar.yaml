@@ -1,0 +1,47 @@
+# The daily rewards: edited in the Artisan editor (the daily folder, Calendar).
+reset_time: "00:00"
+cycle_length: 28
+auto_claim: "off"
+min_playtime_minutes: 0
+join_reminder: true
+freeze:
+  earn_every: 7
+  max_stock: 2
+# The reward of a day of the cycle not listed under days.
+default_day:
+  icon:
+    material: BREAD
+    count: 8
+    title: { en: "<white>8 bread", fr: "<white>8 pains" }
+  actions:
+    - give_item: { material: BREAD, count: 8 }
+# Keyed by the day of the cycle, 1 to cycle_length.
+days:
+  7:
+    icon:
+      material: IRON_INGOT
+      count: 8
+      title: { en: "<white>8 iron ingots", fr: "<white>8 lingots de fer" }
+    actions:
+      - give_item: { material: IRON_INGOT, count: 8 }
+  14:
+    icon:
+      material: GOLD_INGOT
+      count: 8
+      title: { en: "<gold>8 gold ingots", fr: "<gold>8 lingots d'or" }
+    actions:
+      - give_item: { material: GOLD_INGOT, count: 8 }
+  21:
+    icon:
+      material: EMERALD
+      count: 6
+      title: { en: "<green>6 emeralds", fr: "<green>6 émeraudes" }
+    actions:
+      - give_item: { material: EMERALD, count: 6 }
+  28:
+    icon:
+      material: DIAMOND
+      count: 3
+      title: { en: "<aqua>3 diamonds", fr: "<aqua>3 diamants" }
+    actions:
+      - give_item: { material: DIAMOND, count: 3 }

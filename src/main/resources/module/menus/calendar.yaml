@@ -1,0 +1,106 @@
+schema: menu/v1
+# /daily: the last 7 days as they went, today (first slot of the second row), then the 20 days
+# to come with the reward each one pays if the player claims every day. The rewards are those of
+# data/calendar (days, else default_day): edit them in the Calendar screen.
+title:
+  - kind: plain
+    value: { en: "<dark_gray>Daily rewards", fr: "<dark_gray>Récompenses quotidiennes" }
+size: 54
+inputs:
+  - name: status
+    type: list
+    source: { ref: "daily:status" }
+  - name: days
+    type: list
+    source:
+      ref: "daily:calendar"
+      params: { past: "7", future: "20" }
+elements:
+  - id: border
+    positions: "0-3,5-8,9,17,18,26,27,35,36,44,46-48,50-52"
+    material: GRAY_STAINED_GLASS_PANE
+    title: " "
+  - id: streak
+    positions: 4
+    material: NETHER_STAR
+    title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
+    lore:
+      - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
+      - { en: "<gray>Claims: <white>{status[0].total}", fr: "<gray>Réclamations : <white>{status[0].total}" }
+      - { en: "<gray>Day <white>{status[0].cycle_day}</white> of <white>{status[0].cycle_length}</white>", fr: "<gray>Jour <white>{status[0].cycle_day}</white> sur <white>{status[0].cycle_length}</white>" }
+      - ""
+      - { en: "{status[0].at_risk ? \"<yellow>Claim today or your streak ends\" : \"\"}{status[0].broken ? \"<red>Your streak starts again at your next claim\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Réclame aujourd'hui ou ton streak s'arrête\" : \"\"}{status[0].broken ? \"<red>Ton streak repart de zéro à ta prochaine réclamation\" : \"\"}" }
+  - id: days
+    positions: "10-16,19-25,28-34,37-43"
+    iterates: { source: days, alias: d }
+    states:
+      # Today, waiting: the reward glows, a click claims it.
+      - if:
+          - expression: d.is_available
+        item: "{d.icon}"
+        enchanted: true
+        lore:
+          - ""
+          - { en: "<yellow>Today <gray>· day {d.cycle_day}", fr: "<yellow>Aujourd'hui <gray>· jour {d.cycle_day}" }
+          - { en: "<green>Click to claim", fr: "<green>Cliquer pour réclamer" }
+        click:
+          left:
+            - module_command: { command: "daily:claim" }
+      - if:
+          - expression: d.is_today
+        item: "{d.icon}"
+        lore:
+          - ""
+          - { en: "<yellow>Today <gray>· day {d.cycle_day}", fr: "<yellow>Aujourd'hui <gray>· jour {d.cycle_day}" }
+          - { en: "<green>✔ Claimed <gray>· next in {status[0].until_reset}", fr: "<green>✔ Réclamée <gray>· prochaine dans {status[0].until_reset}" }
+      - if:
+          - expression: d.is_claimed
+        item: "{d.icon}"
+        lore:
+          - ""
+          - { en: "<green>✔ Claimed on {d.date} <gray>· day {d.cycle_day}", fr: "<green>✔ Réclamée le {d.date} <gray>· jour {d.cycle_day}" }
+      - if:
+          - expression: d.is_missed
+        material: RED_STAINED_GLASS_PANE
+        title: { en: "<red>✘ Missed", fr: "<red>✘ Manquée" }
+        lore:
+          - { en: "<gray>{d.date}: not claimed", fr: "<gray>{d.date} : pas réclamée" }
+      - if:
+          - expression: d.is_before
+        material: LIGHT_GRAY_STAINED_GLASS_PANE
+        title: { en: "<gray>{d.date}", fr: "<gray>{d.date}" }
+    # A day to come.
+    item: "{d.icon}"
+    lore:
+      - ""
+      - { en: "<gray>On {d.date} <dark_gray>· day {d.cycle_day}", fr: "<gray>Le {d.date} <dark_gray>· jour {d.cycle_day}" }
+      - { en: "<dark_gray>If you claim every day until then", fr: "<dark_gray>Si tu réclames chaque jour d'ici là" }
+  - id: jokers
+    positions: 45
+    material: TOTEM_OF_UNDYING
+    title: { en: "<aqua>Jokers: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Jokers : <white>{status[0].freezes}/{status[0].freeze_max}" }
+    lore:
+      - { en: "<gray>A joker covers a missed day:", fr: "<gray>Un joker couvre un jour manqué :" }
+      - { en: "<gray>your streak goes on, the day's reward is lost.", fr: "<gray>ton streak continue, la récompense du jour est perdue." }
+  - id: claim
+    positions: 49
+    states:
+      - if:
+          - placeholder_equals: { placeholder: "{status[0].can_claim}", value: "true" }
+        material: SUNFLOWER
+        enchanted: true
+        title: { en: "<green>Claim today's reward", fr: "<green>Réclamer la récompense du jour" }
+        click:
+          left:
+            - module_command: { command: "daily:claim" }
+      - if:
+          - placeholder_equals: { placeholder: "{status[0].claimed_today}", value: "true" }
+        material: CLOCK
+        title: { en: "<gray>Next reward in <white>{status[0].until_reset}", fr: "<gray>Prochaine récompense dans <white>{status[0].until_reset}" }
+    material: CLOCK
+    title: { en: "<gray>Loading…", fr: "<gray>Chargement…" }
+  - id: close
+    positions: 53
+    material: BARRIER
+    title: { en: "<red>Close", fr: "<red>Fermer" }
+    click: { left: [ close_menu ] }

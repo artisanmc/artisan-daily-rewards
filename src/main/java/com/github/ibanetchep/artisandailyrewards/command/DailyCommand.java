@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * {@code /daily}, declared to Artisan ({@code api.getPlayerCommands()}): the player's streak, and
- * {@code claim} and {@code autoclaim [on|off]}. Artisan checks the permission, parses and
+ * {@code /daily}, declared to Artisan ({@code api.getPlayerCommands()}): opens the calendar menu
+ * {@link #MENU}; {@code claim}, {@code autoclaim [on|off]}, and {@code status}, the streak in chat. Artisan checks the permission, parses and
  * completes the arguments. Artisan writes it as {@code commands/daily.yaml} of the module's folder,
  * whose actions call {@link #ID} ({@code module_command}): the admin renames the command, sets its
  * aliases or a cooldown by editing that file.
@@ -26,6 +26,8 @@ public final class DailyCommand {
     public static final String ID = "daily:daily";
     public static final String NAME = "daily";
     public static final String PERMISSION = "daily.use";
+    /** The system menu of the module's folder {@code /daily} opens. */
+    public static final String MENU = "daily:calendar";
 
     private final DailyService service;
     private final Messages messages;
@@ -42,7 +44,13 @@ public final class DailyCommand {
                 .description(Map.of(
                         "en", "Your daily reward and streak",
                         "fr", "Ta récompense quotidienne et ton streak"))
-                .executor(this::status)
+                .opensMenu(MENU)
+                .child(PlayerCommandDeclaration.builder("daily:status")
+                        .name("status")
+                        .permission(PERMISSION)
+                        .description(Map.of("en", "Your streak, in chat", "fr", "Ton streak, dans le chat"))
+                        .executor(this::status)
+                        .build())
                 .child(PlayerCommandDeclaration.builder("daily:claim")
                         .name("claim")
                         .permission(PERMISSION)
@@ -64,7 +72,7 @@ public final class DailyCommand {
                 .build();
     }
 
-    /** The menu comes with the Artisan integration; until then, the streak in chat. */
+    /** {@code /daily status}: the streak in chat, what the menu's top item shows. */
     private void status(PlayerCommandContext ctx) {
         withPlayer(ctx, player -> {
             PlayerState state = service.state(player.getUniqueId());

@@ -1,6 +1,7 @@
 package com.github.ibanetchep.artisandailyrewards.storage;
 
 import com.github.ibanetchep.artisandailyrewards.core.CalendarSettings;
+import com.github.ibanetchep.artisandailyrewards.core.ClaimHistory;
 import com.github.ibanetchep.artisandailyrewards.core.PlayerState;
 import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
 import org.h2.jdbcx.JdbcDataSource;
@@ -70,6 +71,32 @@ class DailyRepositoryTest {
         assertTrue(next.claimed());
         assertEquals(2, next.state().streak());
         assertEquals(next.state(), repository.load(id));
+    }
+
+    @Test
+    void aDeliveryIsTakenOnceAndTheOthersWaitForTheNextJoin() throws Exception {
+        UUID id = UUID.randomUUID();
+        repository.claim(id, DAY, SETTINGS, "lobby", 1);
+        repository.claim(id, DAY + 1, SETTINGS, "lobby", 2);
+        assertEquals(List.of(new DailyRepository.Undelivered(DAY, 1, 1), new DailyRepository.Undelivered(DAY + 1, 2, 2)),
+                repository.undelivered(id));
+
+        assertTrue(repository.takeDelivery(id, DAY));
+        assertFalse(repository.takeDelivery(id, DAY), "another server took it");
+        assertFalse(repository.takeDelivery(id, DAY + 5), "no such claim");
+        assertEquals(List.of(new DailyRepository.Undelivered(DAY + 1, 2, 2)), repository.undelivered(id));
+    }
+
+    @Test
+    void theHistoryHoldsTheRecentClaimsAndTheFirstOne() throws Exception {
+        UUID id = UUID.randomUUID();
+        assertEquals(ClaimHistory.EMPTY, repository.history(id, DAY));
+        for (long day = DAY; day < DAY + 3; day++) repository.claim(id, day, SETTINGS, "lobby", day);
+        repository.claim(UUID.randomUUID(), DAY + 2, SETTINGS, "lobby", 9);
+
+        ClaimHistory history = repository.history(id, DAY + 1);
+        assertEquals(DAY, history.firstDay());
+        assertEquals(java.util.Map.of(DAY + 1, 2, DAY + 2, 3), history.days());
     }
 
     @Test

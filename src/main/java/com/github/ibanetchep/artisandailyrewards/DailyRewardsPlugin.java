@@ -27,6 +27,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
 
     /**
      * Lowest Artisan API this plugin compiles against: messages in the module's folder (2.17.0),
+     * system templates (2.12.0),
      * {@code MessageBundle.send} (2.10.0),
      * {@code DatabaseApi.tablePrefix} (2.9.0),
      * {@code ProjectRootRegistry.moduleFolder} (2.8.0), Config screens with a module view and {@code PlayerCommandRegistry} (2.7.0),
@@ -62,7 +63,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         // H2 is a file of this server; MySQL/MariaDB may be shared by the network.
         boolean shared = api.getDatabase().getDialect() != DatabaseDialect.H2;
         service = new DailyService(api.getScheduler().forPlugin(this), repository, messages, getLogger(),
-                GameClock.system(LocalTime.MIDNIGHT), serverName(), shared);
+                GameClock.system(LocalTime.MIDNIGHT), serverName(), shared, api.getActions(), api.getMenus());
         try {
             service.checkZone();
         } catch (SQLException e) {
