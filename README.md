@@ -23,3 +23,14 @@ released there, publish it from Artisan's `v2` branch:
 ```bash
 cd <artisan>/plugin && ./gradlew :artisan-api:publishToMavenLocal -PapiVersion=2.10.0
 ```
+
+## Release
+
+Push a tag `v<version>` (`git tag v1.0.3 && git push origin v1.0.3`). `.github/workflows/release.yml`
+builds `ArtisanDailyRewards-<version>.jar`, waits for the `release` environment to be approved, signs
+the jar with `scripts/sign-release.sh` and publishes it with `release.json` (`{plugin, version, sha256,
+signature}`) on the tag's GitHub Release. Artisan checks that signature against the public key it pins
+before it stages an update in `plugins/update/`.
+
+One-time setup: a `release` environment (Settings → Environments) with a required reviewer and the
+secret `ARTISAN_SIGNING_KEY`, the Ed25519 private key in PEM (`openssl genpkey -algorithm ed25519`).

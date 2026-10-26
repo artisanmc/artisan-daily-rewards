@@ -1,0 +1,60 @@
+name: Release
+
+# A tag v<version> builds the jar, then, once the `release` environment is approved,
+# signs it (scripts/sign-release.sh) and publishes both on this repository's Release.
+# Artisan's updater downloads release.json and the jar, and checks the signature
+# against the public key it pins. The private key never leaves the `release`
+# environment: set ARTISAN_SIGNING_KEY there, with a required reviewer.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      # Artisan's add-on API is not on repo.artisanmc.net yet past 1.7: built from Artisan's
+      # sources at the version gradle.properties names, into mavenLocal.
+      - name: Artisan API
+        run: |
+          api=$(sed -n 's/^artisanApiVersion=//p' gradle.properties)
+          git clone --depth 1 --branch v2 https://github.com/artisanmc/artisan.git "$RUNNER_TEMP/artisan"
+          (cd "$RUNNER_TEMP/artisan/plugin" && ./gradlew :artisan-api:publishCoreApiPublicationToMavenLocal -PapiVersion="$api" --no-daemon)
+      - run: ./gradlew test jar -PreleaseVersion="${GITHUB_REF_NAME#v}" --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: jar
+          path: dist
+      - name: Sign
+        env:
+          ARTISAN_SIGNING_KEY: ${{ secrets.ARTISAN_SIGNING_KEY }}
+        run: scripts/sign-release.sh dist/*.jar "${GITHUB_REF_NAME#v}"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.jar dist/release.json --title "$GITHUB_REF_NAME" --generate-notes
