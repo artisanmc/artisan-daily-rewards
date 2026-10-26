@@ -6,6 +6,8 @@ folia-supported: true
 description: Daily rewards with streaks, a looping cycle, jokers and paid streak restores.
 authors:
   - ibanetchep
+# Where /artisan update finds this plugin's signed releases (.github/workflows/release.yml).
+artisan-releases: artisanmc/artisan-daily-rewards
 
 # A Bukkit plugin, not a Paper plugin (paper-plugin.yml): plugin reloaders such as PlugManX
 # cannot reload Paper plugins.
