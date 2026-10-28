@@ -277,8 +277,12 @@ public final class DailyService {
             }
             scheduler.runFor(player, () -> {
                 announce(player, result, current);
-                if (result.status() != CheckInResult.Status.CONFLICT) {
-                    refreshMenu(player);
+                if (result.status() == CheckInResult.Status.CONFLICT) return;
+                refreshMenu(player);
+                PlayerState state = cache.get(uuid);
+                if (result.counted() && state != null && !autoClaims(state) && current.joinReminder()) {
+                    unlocked(player, result, current);
+                } else {
                     offer(player, remind || result.counted());
                 }
             });
@@ -293,6 +297,19 @@ public final class DailyService {
             history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay()));
         }
         return result;
+    }
+
+    /**
+     * The first time the player is counted on a game day: today's reward is unlocked, a click on
+     * the message opens {@code /daily}; with the rewards of the days before when some still wait.
+     */
+    private void unlocked(Player player, CheckInResult result, CalendarSettings current) {
+        int waiting = unclaimed(player.getUniqueId());
+        messages.send(player, waiting > 1 ? "unlocked_many" : "unlocked", Map.of(
+                "streak", result.state().streak(),
+                "cycle_day", result.cycleDay(),
+                "cycle_length", current.cycleLength(),
+                "count", waiting));
     }
 
     /** What counting the day did to the streak: jokers used, a break, a joker earned. */

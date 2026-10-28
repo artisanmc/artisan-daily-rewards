@@ -37,7 +37,7 @@ public final class CalendarModel {
                         "Minutes of the current session before the day counts for the streak and its reward can be claimed.",
                         d.minPlaytimeMinutes(), 0),
                 new ModelField("join_reminder", ModelFieldType.bool()).withLabel("Remind at join")
-                        .withHelp("Tell a player whose rewards wait, at join and at the reset.").withDefault(d.joinReminder()),
+                        .withHelp("Tell a player their reward is unlocked when the day counts, and remind of the rewards that wait.").withDefault(d.joinReminder()),
                 new ModelField("freeze", ModelFieldType.object(List.of(
                         integer("earn_every", "Earned every", "Days of streak per joker; 0: never.", d.freezeEarnEvery(), 0),
                         integer("max_stock", "Held at most", null, d.freezeMaxStock(), 0))))

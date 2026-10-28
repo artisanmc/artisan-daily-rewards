@@ -2,6 +2,9 @@
 # add a language with plugins/Artisan/modules/daily/lang/<code>.yml.
 reminder: "<gold>Your daily reward is waiting!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim it'><green>[Claim]</green></hover></click>"
 reminder_many: "<gold><count> daily rewards are waiting for you!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim them'><green>[Claim]</green></hover></click>"
+# Sent the first time the player counts in the game day (join or reset), unless auto-claim is on.
+unlocked: "<gold>Streak <white><streak></white>! You just unlocked the day <white><cycle_day></white> reward.</gold> <click:run_command:/daily><hover:show_text:'<gray>Open /daily'><green>[Collect it]</green></hover></click>"
+unlocked_many: "<gold>Streak <white><streak></white>! You just unlocked the day <white><cycle_day></white> reward, <white><count></white> rewards are waiting.</gold> <click:run_command:/daily><hover:show_text:'<gray>Open /daily'><green>[Collect them]</green></hover></click>"
 claim:
   success: "<green>Daily reward claimed! Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"
   success_auto: "<green>Daily reward claimed automatically. Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"

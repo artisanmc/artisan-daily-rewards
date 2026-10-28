@@ -43,6 +43,10 @@ the day of the cycle and the streak of that day, until the player claims: `/dail
 menu, or auto-claim) pays every reward that waits, however old. A day the player was not there is
 missed: the jokers may keep the streak, its reward is lost.
 
+The first time a player counts in a game day, the `unlocked` message (in `lang/`, a click opens
+`/daily`) tells them the reward is unlocked; `join_reminder: false` turns it off, auto-claim
+claims instead.
+
 A claim takes its delivery in the database before the actions run, so two servers never pay one
 reward twice. A player who leaves before the reward is handed out gets it at their next join.
 
