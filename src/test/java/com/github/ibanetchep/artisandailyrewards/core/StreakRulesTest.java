@@ -2,6 +2,7 @@ package com.github.ibanetchep.artisandailyrewards.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -112,7 +113,7 @@ class StreakRulesTest {
     @Test
     void theDisplayedStreakFollowsTheDocumentedWeek() {
         // Cycle of 7 days, 1 joker: the example of the design document.
-        CalendarSettings weekly = new CalendarSettings(SETTINGS.resetTime(), 7, SETTINGS.autoClaim(), 0, true, "daily", 7, 2);
+        CalendarSettings weekly = new CalendarSettings(SETTINGS.resetTime(), 7, SETTINGS.autoClaim(), 0, true, 7, 2, Map.of(), null);
         PlayerState state = new PlayerState(fresh.uuid(), 5, 5, MONDAY - 1, 5, 1, 0, 0, 0, null, null, 0);
 
         state = StreakRules.claim(state, MONDAY, weekly).state();                 // Monday

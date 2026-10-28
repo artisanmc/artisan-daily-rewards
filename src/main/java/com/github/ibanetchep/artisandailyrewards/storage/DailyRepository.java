@@ -1,6 +1,7 @@
 package com.github.ibanetchep.artisandailyrewards.storage;
 
 import com.github.ibanetchep.artisandailyrewards.core.CalendarSettings;
+import com.github.ibanetchep.artisandailyrewards.core.ClaimHistory;
 import com.github.ibanetchep.artisandailyrewards.core.PlayerState;
 import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -179,14 +182,62 @@ public final class DailyRepository {
         }
     }
 
-    /** The rewards of that claim were handed out. */
-    public void markDelivered(UUID uuid, long day) throws SQLException {
+    /**
+     * Takes the delivery of that claim's rewards: true for the one caller that marks it delivered,
+     * false when it already was (by this server or another) or there is no such claim. Taken
+     * before the rewards are handed out: a reward is lost rather than paid twice.
+     */
+    public boolean takeDelivery(UUID uuid, long day) throws SQLException {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement p = c.prepareStatement(
-                     "UPDATE " + claims + " SET delivered = TRUE WHERE uuid = ? AND game_day = ?")) {
+             PreparedStatement p = c.prepareStatement("UPDATE " + claims
+                     + " SET delivered = TRUE WHERE uuid = ? AND game_day = ? AND delivered = FALSE")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
-            p.executeUpdate();
+            return p.executeUpdate() == 1;
+        }
+    }
+
+    /** A claim whose rewards were not handed out yet: the player left before, or a server stopped. */
+    public record Undelivered(long day, int streak, int cycleDay) {
+    }
+
+    /** The player's claims not delivered yet, oldest first. */
+    public List<Undelivered> undelivered(UUID uuid) throws SQLException {
+        List<Undelivered> found = new ArrayList<>();
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement p = c.prepareStatement("SELECT game_day, streak_after, cycle_day FROM " + claims
+                     + " WHERE uuid = ? AND delivered = FALSE ORDER BY game_day")) {
+            p.setString(1, uuid.toString());
+            try (ResultSet r = p.executeQuery()) {
+                while (r.next()) found.add(new Undelivered(r.getLong(1), r.getInt(2), r.getInt(3)));
+            }
+        }
+        return found;
+    }
+
+    /**
+     * The player's claims from {@code fromDay} on, and the day of their first claim ever: what the
+     * calendar menu shows of the past.
+     */
+    public ClaimHistory history(UUID uuid, long fromDay) throws SQLException {
+        try (Connection c = dataSource.getConnection()) {
+            Long first = null;
+            try (PreparedStatement p = c.prepareStatement("SELECT MIN(game_day) FROM " + claims + " WHERE uuid = ?")) {
+                p.setString(1, uuid.toString());
+                try (ResultSet r = p.executeQuery()) {
+                    if (r.next()) first = nullableLong(r, 1);
+                }
+            }
+            Map<Long, Integer> days = new HashMap<>();
+            try (PreparedStatement p = c.prepareStatement("SELECT game_day, cycle_day FROM " + claims
+                    + " WHERE uuid = ? AND game_day >= ?")) {
+                p.setString(1, uuid.toString());
+                p.setLong(2, fromDay);
+                try (ResultSet r = p.executeQuery()) {
+                    while (r.next()) days.put(r.getLong(1), r.getInt(2));
+                }
+            }
+            return ClaimHistory.of(first, days);
         }
     }
 
