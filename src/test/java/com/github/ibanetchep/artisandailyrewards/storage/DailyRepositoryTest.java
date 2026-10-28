@@ -41,10 +41,10 @@ class DailyRepositoryTest {
     @Test
     void migratingTwiceChangesNothing() throws Exception {
         UUID id = UUID.randomUUID();
-        repository.claim(id, DAY, SETTINGS, "lobby", 1);
+        repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
         repository.migrate();
         assertEquals(1, repository.load(id).streak());
-        assertEquals("5", repository.meta(DailyRepository.SCHEMA_VERSION));
+        assertEquals("6", repository.meta(DailyRepository.SCHEMA_VERSION));
     }
 
     @Test
@@ -58,65 +58,97 @@ class DailyRepositoryTest {
     @Test
     void claimsOncePerDayAndContinuesTheNextDay() throws Exception {
         UUID id = UUID.randomUUID();
-        ClaimResult first = repository.claim(id, DAY, SETTINGS, "lobby", 1);
-        assertTrue(first.claimed());
+        CheckInResult first = repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
+        assertTrue(first.counted());
         assertEquals(StreakRules.Outcome.FIRST, first.outcome());
         assertEquals(1, first.cycleDay());
 
-        ClaimResult again = repository.claim(id, DAY, SETTINGS, "survival", 2);
-        assertEquals(ClaimResult.Status.ALREADY_CLAIMED, again.status());
+        CheckInResult again = repository.checkIn(id, DAY, SETTINGS, "survival", 2);
+        assertEquals(CheckInResult.Status.ALREADY_COUNTED, again.status());
         assertEquals(1, repository.countClaims(id, DAY));
 
-        ClaimResult next = repository.claim(id, DAY + 1, SETTINGS, "lobby", 3);
-        assertTrue(next.claimed());
+        CheckInResult next = repository.checkIn(id, DAY + 1, SETTINGS, "lobby", 3);
+        assertTrue(next.counted());
         assertEquals(2, next.state().streak());
         assertEquals(next.state(), repository.load(id));
     }
 
     @Test
-    void aDeliveryIsTakenOnceAndTheOthersWaitForTheNextJoin() throws Exception {
+    void aCountedDayWaitsUntilItIsClaimedThenIsDeliveredOnce() throws Exception {
         UUID id = UUID.randomUUID();
-        repository.claim(id, DAY, SETTINGS, "lobby", 1);
-        repository.claim(id, DAY + 1, SETTINGS, "lobby", 2);
-        assertEquals(List.of(new DailyRepository.Undelivered(DAY, 1, 1), new DailyRepository.Undelivered(DAY + 1, 2, 2)),
-                repository.undelivered(id));
+        repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
+        repository.checkIn(id, DAY + 1, SETTINGS, "lobby", 2);
+        assertEquals(2, repository.load(id).streak(), "there both days: the streak counts them unclaimed");
+        assertEquals(List.of(new DailyRepository.Reward(DAY, 1, 1), new DailyRepository.Reward(DAY + 1, 2, 2)),
+                repository.unclaimed(id));
+        assertEquals(List.of(), repository.undelivered(id), "nothing claimed, nothing to deliver at join");
+        assertFalse(repository.takeDelivery(id, DAY), "not claimed yet");
+
+        assertEquals(List.of(new DailyRepository.Reward(DAY, 1, 1), new DailyRepository.Reward(DAY + 1, 2, 2)),
+                repository.claimAll(id, 3));
+        assertEquals(List.of(), repository.claimAll(id, 4), "another server claimed them");
+        assertEquals(List.of(), repository.unclaimed(id));
 
         assertTrue(repository.takeDelivery(id, DAY));
         assertFalse(repository.takeDelivery(id, DAY), "another server took it");
-        assertFalse(repository.takeDelivery(id, DAY + 5), "no such claim");
-        assertEquals(List.of(new DailyRepository.Undelivered(DAY + 1, 2, 2)), repository.undelivered(id));
+        assertFalse(repository.takeDelivery(id, DAY + 5), "no such day");
+        assertEquals(List.of(new DailyRepository.Reward(DAY + 1, 2, 2)), repository.undelivered(id));
+    }
+
+    @Test
+    void rewardsClaimedBeforeTheMigrationStayClaimed() throws Exception {
+        UUID id = UUID.randomUUID();
+        try (Connection c = dataSource.getConnection(); java.sql.Statement st = c.createStatement()) {
+            st.execute("INSERT INTO artisan_daily_claims (uuid, game_day, streak_after, cycle_day, server, claimed_at, delivered) "
+                    + "VALUES ('" + id + "', " + DAY + ", 1, 1, 'lobby', 1, TRUE)");
+        }
+        assertEquals(List.of(), repository.unclaimed(id));
+        assertEquals(List.of(), repository.undelivered(id));
     }
 
     @Test
     void theHistoryHoldsTheRecentClaimsAndTheFirstOne() throws Exception {
         UUID id = UUID.randomUUID();
         assertEquals(ClaimHistory.EMPTY, repository.history(id, DAY));
-        for (long day = DAY; day < DAY + 3; day++) repository.claim(id, day, SETTINGS, "lobby", day);
-        repository.claim(UUID.randomUUID(), DAY + 2, SETTINGS, "lobby", 9);
+        for (long day = DAY; day < DAY + 3; day++) repository.checkIn(id, day, SETTINGS, "lobby", day);
+        repository.checkIn(UUID.randomUUID(), DAY + 2, SETTINGS, "lobby", 9);
+
+        repository.claimAll(id, 5);
+        repository.checkIn(id, DAY + 3, SETTINGS, "lobby", 6);
 
         ClaimHistory history = repository.history(id, DAY + 1);
         assertEquals(DAY, history.firstDay());
-        assertEquals(java.util.Map.of(DAY + 1, 2, DAY + 2, 3), history.days());
+        assertEquals(java.util.Map.of(DAY + 1, 2, DAY + 2, 3, DAY + 3, 4), history.days());
+        assertEquals(java.util.Set.of(DAY + 3), history.unclaimed());
+    }
+
+    @Test
+    void theHistoryKeepsEveryRewardThatWaitsHoweverOld() throws Exception {
+        UUID id = UUID.randomUUID();
+        repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
+        ClaimHistory history = repository.history(id, DAY + 30);
+        assertEquals(java.util.Set.of(DAY), history.unclaimed());
+        assertEquals(1, history.cycleDayOn(DAY));
     }
 
     @Test
     void theStateReturnedMatchesTheRowWritten() throws Exception {
         UUID id = UUID.randomUUID();
-        ClaimResult result = repository.claim(id, DAY, SETTINGS, "lobby", 1);
+        CheckInResult result = repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
         assertEquals(repository.load(id), result.state());
     }
 
     @Test
     void aBreakAndTheJokersAreWrittenToTheLedger() throws Exception {
         UUID id = UUID.randomUUID();
-        for (long day = DAY; day < DAY + 7; day++) repository.claim(id, day, SETTINGS, "lobby", day);
+        for (long day = DAY; day < DAY + 7; day++) repository.checkIn(id, day, SETTINGS, "lobby", day);
         assertEquals(1, repository.load(id).freezes(), "earned at 7");
 
-        ClaimResult covered = repository.claim(id, DAY + 8, SETTINGS, "lobby", DAY + 8);
+        CheckInResult covered = repository.checkIn(id, DAY + 8, SETTINGS, "lobby", DAY + 8);
         assertEquals(StreakRules.Outcome.COVERED, covered.outcome());
         assertEquals(1, covered.freezesUsed());
 
-        ClaimResult broken = repository.claim(id, DAY + 11, SETTINGS, "lobby", DAY + 11);
+        CheckInResult broken = repository.checkIn(id, DAY + 11, SETTINGS, "lobby", DAY + 11);
         assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
         assertEquals(8, broken.state().brokenStreak());
 
@@ -132,31 +164,31 @@ class DailyRepositoryTest {
         int servers = 8;
         ExecutorService pool = Executors.newFixedThreadPool(servers);
         CountDownLatch start = new CountDownLatch(1);
-        List<Future<ClaimResult>> results = new ArrayList<>();
+        List<Future<CheckInResult>> results = new ArrayList<>();
         for (int i = 0; i < servers; i++) {
             String server = "server-" + i;
             results.add(pool.submit(() -> {
                 start.await();
-                return repository.claim(id, DAY, SETTINGS, server, 1);
+                return repository.checkIn(id, DAY, SETTINGS, server, 1);
             }));
         }
         start.countDown();
         int claimed = 0;
-        for (Future<ClaimResult> result : results) {
-            if (result.get().claimed()) claimed++;
+        for (Future<CheckInResult> result : results) {
+            if (result.get().counted()) claimed++;
         }
         pool.shutdown();
         assertEquals(1, claimed);
         assertEquals(1, repository.countClaims(id, DAY));
         PlayerState state = repository.load(id);
         assertEquals(1, state.streak());
-        assertEquals(1, state.totalClaims());
+        assertEquals(1, state.totalDays());
     }
 
     @Test
     void aStaleVersionWritesNothing() throws Exception {
         UUID id = UUID.randomUUID();
-        repository.claim(id, DAY, SETTINGS, "lobby", 1);
+        repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
         PlayerState stored = repository.load(id);
         try (Connection c = dataSource.getConnection()) {
             assertEquals(0, repository.writeState(c, stored.withStreak(99), stored.version() - 1, 2));
@@ -179,7 +211,7 @@ class DailyRepositoryTest {
         assertEquals("streak 0 -> 42 by Iban", line.detail());
 
         // A claim after a correction reads the corrected row.
-        ClaimResult next = repository.claim(id, DAY, SETTINGS, "lobby", 4);
+        CheckInResult next = repository.checkIn(id, DAY, SETTINGS, "lobby", 4);
         assertEquals(StreakRules.Outcome.FIRST, next.outcome());
     }
 

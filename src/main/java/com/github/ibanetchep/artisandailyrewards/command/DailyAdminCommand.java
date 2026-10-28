@@ -102,7 +102,7 @@ public final class DailyAdminCommand {
                     "streak", s.streak(),
                     "shown", shown.streak(),
                     "longest", s.longest(),
-                    "total", s.totalClaims(),
+                    "total", s.totalDays(),
                     "freezes", s.freezes(),
                     "last", s.lastDay() != null ? LocalDate.ofEpochDay(s.lastDay()).toString() : "-"));
             if (s.brokenStreak() > 0 && s.brokenFromDay() != null) {

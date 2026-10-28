@@ -6,10 +6,12 @@ import java.util.UUID;
 
 /**
  * A player's stored counters, one row of the players table. The stored {@link #streak} can be
- * stale: a break is only written at the next claim, so anything shown to a player goes through
+ * stale: a break is only written when the player is next there, so anything shown to a player goes through
  * {@link StreakRules#display}.
  *
- * @param lastDay        game day of the last claim, null before the first one
+ * @param lastDay        last game day counted for the streak (the player was there), null before
+ *                       the first one
+ * @param totalDays      game days counted, ever
  * @param milestoneMark  highest milestone paid in the current streak
  * @param brokenStreak   streak lost at the last break, 0 once restored or expired
  * @param brokenMark     milestone mark lost at the last break
@@ -23,7 +25,7 @@ public record PlayerState(
         int streak,
         int longest,
         @Nullable Long lastDay,
-        int totalClaims,
+        int totalDays,
         int freezes,
         int milestoneMark,
         int brokenStreak,
@@ -33,37 +35,37 @@ public record PlayerState(
         int version
 ) {
 
-    /** A player who never claimed and has no row yet. */
+    /** A player never counted, with no row yet. */
     public static PlayerState fresh(UUID uuid) {
         return new PlayerState(uuid, 0, 0, null, 0, 0, 0, 0, 0, null, null, 0);
     }
 
-    public boolean claimedOn(long day) {
+    public boolean countedOn(long day) {
         return lastDay != null && lastDay >= day;
     }
 
     public PlayerState withStreak(int value) {
-        return new PlayerState(uuid, value, longest, lastDay, totalClaims, freezes, milestoneMark,
+        return new PlayerState(uuid, value, longest, lastDay, totalDays, freezes, milestoneMark,
                 brokenStreak, brokenMark, brokenFromDay, autoClaim, version);
     }
 
     public PlayerState withLongest(int value) {
-        return new PlayerState(uuid, streak, value, lastDay, totalClaims, freezes, milestoneMark,
+        return new PlayerState(uuid, streak, value, lastDay, totalDays, freezes, milestoneMark,
                 brokenStreak, brokenMark, brokenFromDay, autoClaim, version);
     }
 
     public PlayerState withFreezes(int value) {
-        return new PlayerState(uuid, streak, longest, lastDay, totalClaims, value, milestoneMark,
+        return new PlayerState(uuid, streak, longest, lastDay, totalDays, value, milestoneMark,
                 brokenStreak, brokenMark, brokenFromDay, autoClaim, version);
     }
 
     public PlayerState withAutoClaim(@Nullable Boolean value) {
-        return new PlayerState(uuid, streak, longest, lastDay, totalClaims, freezes, milestoneMark,
+        return new PlayerState(uuid, streak, longest, lastDay, totalDays, freezes, milestoneMark,
                 brokenStreak, brokenMark, brokenFromDay, value, version);
     }
 
     public PlayerState withVersion(int value) {
-        return new PlayerState(uuid, streak, longest, lastDay, totalClaims, freezes, milestoneMark,
+        return new PlayerState(uuid, streak, longest, lastDay, totalDays, freezes, milestoneMark,
                 brokenStreak, brokenMark, brokenFromDay, autoClaim, value);
     }
 }
