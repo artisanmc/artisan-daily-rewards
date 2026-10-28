@@ -24,9 +24,11 @@ import java.util.UUID;
  * named {@code tablePrefix("daily")} + name ({@code artisan_daily_players} by default). Plain JDBC
  * with statements every dialect runs the same: no upsert.
  *
- * <p>The primary key {@code (uuid, game_day)} of {@code claims} is what guarantees one claim per
- * player and game day, across every server of a network; the {@code version} column of
- * {@code players} keeps two servers from overwriting each other's counters.
+ * <p>A row of {@code claims} is a game day counted for the streak (the player was there). Its
+ * reward is then claimed ({@code claimed}), maybe days later, and handed out ({@code delivered}).
+ * The primary key {@code (uuid, game_day)} is what guarantees one counted day per player and game
+ * day, across every server of a network; the {@code version} column of {@code players} keeps two
+ * servers from overwriting each other's counters.
  *
  * <p>Every method blocks: call them off the game threads.
  */
@@ -76,7 +78,9 @@ public final class DailyRepository {
                         + "amount INT NOT NULL, "
                         + "detail VARCHAR(255) NULL)",
                 "CREATE INDEX " + prefix + "ledger_player ON " + ledger + " (uuid, created_at)",
-                "CREATE INDEX " + prefix + "players_streak ON " + players + " (streak)");
+                "CREATE INDEX " + prefix + "players_streak ON " + players + " (streak)",
+                // A counted day's reward waits until it is claimed; the rows before were claimed at once.
+                "ALTER TABLE " + claims + " ADD COLUMN claimed BOOLEAN NOT NULL DEFAULT TRUE");
     }
 
     private static final String STATE_COLUMNS = "streak, longest, last_day, total_claims, freezes, milestone_mark, "
@@ -128,12 +132,12 @@ public final class DailyRepository {
     }
 
     /**
-     * Claims for {@code uuid} on {@code today} in one transaction: the rule in memory, a row in
-     * {@code claims} (a duplicate key means already claimed, on this server or another), the
-     * counters written only if no other server wrote them since they were read, then the ledger.
-     * A concurrent write is retried once.
+     * Counts {@code today} for {@code uuid}, who is there, in one transaction: the rule in memory,
+     * a row in {@code claims} with its reward waiting (a duplicate key means already counted, on
+     * this server or another), the counters written only if no other server wrote them since they
+     * were read, then the ledger. A concurrent write is retried once.
      */
-    public ClaimResult claim(UUID uuid, long today, CalendarSettings settings, String server, long now)
+    public CheckInResult checkIn(UUID uuid, long today, CalendarSettings settings, String server, long now)
             throws SQLException {
         try (Connection c = dataSource.getConnection()) {
             ensureRow(c, uuid, now);
@@ -143,20 +147,20 @@ public final class DailyRepository {
                 for (int attempt = 0; attempt < 2; attempt++) {
                     PlayerState before = select(c, uuid);
                     if (before == null) throw new SQLException(players + " row of " + uuid + " vanished");
-                    StreakRules.Claim claim = StreakRules.claim(before, today, settings);
-                    if (!claim.claimed()) {
+                    StreakRules.CheckIn claim = StreakRules.checkIn(before, today, settings);
+                    if (!claim.counted()) {
                         c.rollback();
-                        return ClaimResult.alreadyClaimed(before);
+                        return CheckInResult.alreadyCounted(before);
                     }
                     PlayerState after = claim.state();
                     int cycleDay = StreakRules.cycleDay(after.streak(), settings.cycleLength());
                     try {
-                        insertClaim(c, uuid, today, after.streak(), cycleDay, server, now);
+                        insertDay(c, uuid, today, after.streak(), cycleDay, server, now);
                     } catch (SQLException e) {
                         c.rollback();
                         if (!isDuplicateKey(e)) throw e;
                         PlayerState current = select(c, uuid);
-                        return ClaimResult.alreadyClaimed(current != null ? current : before);
+                        return CheckInResult.alreadyCounted(current != null ? current : before);
                     }
                     if (writeState(c, after, before.version(), now) == 0) {
                         c.rollback(); // another server wrote this player since the read
@@ -169,10 +173,10 @@ public final class DailyRepository {
                     }
                     if (claim.freezeEarned()) ledger(c, uuid, now, LedgerKind.FREEZE_EARNED, 1, "streak " + after.streak());
                     c.commit();
-                    return ClaimResult.claimed(before, after.withVersion(before.version() + 1), claim.outcome(),
+                    return CheckInResult.counted(before, after.withVersion(before.version() + 1), claim.outcome(),
                             freezesUsed, claim.freezeEarned(), cycleDay);
                 }
-                return ClaimResult.conflict(PlayerState.fresh(uuid));
+                return CheckInResult.conflict(PlayerState.fresh(uuid));
             } catch (SQLException | RuntimeException e) {
                 c.rollback();
                 throw e;
@@ -182,42 +186,77 @@ public final class DailyRepository {
         }
     }
 
+    /** A counted day's reward: the day, the streak it reached, the day of the cycle it pays. */
+    public record Reward(long day, int streak, int cycleDay) {
+    }
+
+    /** The counted days whose reward waits to be claimed, oldest first. */
+    public List<Reward> unclaimed(UUID uuid) throws SQLException {
+        try (Connection c = dataSource.getConnection()) {
+            return rewards(c, uuid, "claimed = FALSE");
+        }
+    }
+
     /**
-     * Takes the delivery of that claim's rewards: true for the one caller that marks it delivered,
-     * false when it already was (by this server or another) or there is no such claim. Taken
-     * before the rewards are handed out: a reward is lost rather than paid twice.
+     * Claims every reward that waits, oldest first: each one only once, across every server. The
+     * rewards returned are the caller's to hand out ({@link #takeDelivery}).
+     */
+    public List<Reward> claimAll(UUID uuid, long now) throws SQLException {
+        List<Reward> claimedNow = new ArrayList<>();
+        try (Connection c = dataSource.getConnection()) {
+            for (Reward reward : rewards(c, uuid, "claimed = FALSE")) {
+                try (PreparedStatement p = c.prepareStatement("UPDATE " + claims
+                        + " SET claimed = TRUE, claimed_at = ? WHERE uuid = ? AND game_day = ? AND claimed = FALSE")) {
+                    p.setLong(1, now);
+                    p.setString(2, uuid.toString());
+                    p.setLong(3, reward.day());
+                    if (p.executeUpdate() == 1) claimedNow.add(reward);
+                }
+            }
+        }
+        return claimedNow;
+    }
+
+    /**
+     * Takes the delivery of a claimed reward: true for the one caller that marks it delivered,
+     * false when it already was (by this server or another), is not claimed, or there is no such
+     * day. Taken before the reward is handed out: a reward is lost rather than paid twice.
      */
     public boolean takeDelivery(UUID uuid, long day) throws SQLException {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement p = c.prepareStatement("UPDATE " + claims
-                     + " SET delivered = TRUE WHERE uuid = ? AND game_day = ? AND delivered = FALSE")) {
+             PreparedStatement p = c.prepareStatement("UPDATE " + claims + " SET delivered = TRUE"
+                     + " WHERE uuid = ? AND game_day = ? AND claimed = TRUE AND delivered = FALSE")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
             return p.executeUpdate() == 1;
         }
     }
 
-    /** A claim whose rewards were not handed out yet: the player left before, or a server stopped. */
-    public record Undelivered(long day, int streak, int cycleDay) {
+    /**
+     * The rewards claimed and not handed out yet, oldest first: the player left before, or a
+     * server stopped.
+     */
+    public List<Reward> undelivered(UUID uuid) throws SQLException {
+        try (Connection c = dataSource.getConnection()) {
+            return rewards(c, uuid, "claimed = TRUE AND delivered = FALSE");
+        }
     }
 
-    /** The player's claims not delivered yet, oldest first. */
-    public List<Undelivered> undelivered(UUID uuid) throws SQLException {
-        List<Undelivered> found = new ArrayList<>();
-        try (Connection c = dataSource.getConnection();
-             PreparedStatement p = c.prepareStatement("SELECT game_day, streak_after, cycle_day FROM " + claims
-                     + " WHERE uuid = ? AND delivered = FALSE ORDER BY game_day")) {
+    private List<Reward> rewards(Connection c, UUID uuid, String condition) throws SQLException {
+        List<Reward> found = new ArrayList<>();
+        try (PreparedStatement p = c.prepareStatement("SELECT game_day, streak_after, cycle_day FROM " + claims
+                + " WHERE uuid = ? AND " + condition + " ORDER BY game_day")) {
             p.setString(1, uuid.toString());
             try (ResultSet r = p.executeQuery()) {
-                while (r.next()) found.add(new Undelivered(r.getLong(1), r.getInt(2), r.getInt(3)));
+                while (r.next()) found.add(new Reward(r.getLong(1), r.getInt(2), r.getInt(3)));
             }
         }
         return found;
     }
 
     /**
-     * The player's claims from {@code fromDay} on, and the day of their first claim ever: what the
-     * calendar menu shows of the past.
+     * The player's counted days from {@code fromDay} on, the first day they were counted, and every
+     * day whose reward waits however old: what the calendar menu shows of the past.
      */
     public ClaimHistory history(UUID uuid, long fromDay) throws SQLException {
         try (Connection c = dataSource.getConnection()) {
@@ -237,7 +276,12 @@ public final class DailyRepository {
                     while (r.next()) days.put(r.getLong(1), r.getInt(2));
                 }
             }
-            return ClaimHistory.of(first, days);
+            List<Long> waiting = new ArrayList<>();
+            for (Reward reward : rewards(c, uuid, "claimed = FALSE")) {
+                waiting.add(reward.day());
+                days.putIfAbsent(reward.day(), reward.cycleDay());
+            }
+            return ClaimHistory.of(first, days, waiting);
         }
     }
 
@@ -305,7 +349,7 @@ public final class DailyRepository {
         return entries;
     }
 
-    /** Claims recorded for a player and day; 0 or 1, the primary key sees to it. */
+    /** Rows recorded for a player and day; 0 or 1, the primary key sees to it. */
     public int countClaims(UUID uuid, long day) throws SQLException {
         try (Connection c = dataSource.getConnection();
              PreparedStatement p = c.prepareStatement("SELECT COUNT(*) FROM " + claims + " WHERE uuid = ? AND game_day = ?")) {
@@ -382,10 +426,11 @@ public final class DailyRepository {
         }
     }
 
-    private void insertClaim(Connection c, UUID uuid, long day, int streak, int cycleDay, String server, long now)
+    /** A counted day, its reward waiting: {@code claimed_at} holds when it was counted until it is claimed. */
+    private void insertDay(Connection c, UUID uuid, long day, int streak, int cycleDay, String server, long now)
             throws SQLException {
-        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + claims
-                + " (uuid, game_day, streak_after, cycle_day, server, claimed_at, delivered) VALUES (?, ?, ?, ?, ?, ?, FALSE)")) {
+        try (PreparedStatement p = c.prepareStatement("INSERT INTO " + claims + " (uuid, game_day, streak_after, "
+                + "cycle_day, server, claimed_at, claimed, delivered) VALUES (?, ?, ?, ?, ?, ?, FALSE, FALSE)")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
             p.setInt(3, streak);
@@ -404,7 +449,7 @@ public final class DailyRepository {
             p.setInt(1, s.streak());
             p.setInt(2, s.longest());
             setNullableLong(p, 3, s.lastDay());
-            p.setInt(4, s.totalClaims());
+            p.setInt(4, s.totalDays());
             p.setInt(5, s.freezes());
             p.setInt(6, s.milestoneMark());
             p.setInt(7, s.brokenStreak());

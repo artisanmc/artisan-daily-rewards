@@ -1,9 +1,12 @@
 # ArtisanDailyRewards messages (MiniMessage). Override any key in plugins/Artisan/modules/daily/lang/en.yml;
 # add a language with plugins/Artisan/modules/daily/lang/<code>.yml.
 reminder: "<gold>Your daily reward is waiting!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim it'><green>[Claim]</green></hover></click>"
+reminder_many: "<gold><count> daily rewards are waiting for you!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim them'><green>[Claim]</green></hover></click>"
 claim:
   success: "<green>Daily reward claimed! Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"
   success_auto: "<green>Daily reward claimed automatically. Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"
+  success_many: "<green><white><count></white> daily rewards claimed! Streak: <white><streak></white>"
+  success_many_auto: "<green><white><count></white> daily rewards claimed automatically. Streak: <white><streak></white>"
   covered: "<aqua>Your streak was kept: <white><count></white> freeze(s) used for the missed days."
   broken: "<red>You missed a day: your streak of <white><lost></white> is broken. It starts again today."
   freeze_earned: "<aqua>You earned a freeze! <gray>(<freezes>/<max>)"
@@ -16,9 +19,10 @@ status:
   loading: "<gray>Your streak is loading, try again in a moment."
   line: "<gold>Streak: <white><streak></white> <gray>| best <white><longest></white> | freezes <white><freezes></white>"
   claimed: "<gray>Today's reward is claimed. Next one in <white><time></white>."
-  waiting: "<green>Today's reward is waiting:</green> <click:run_command:/daily claim><green>[Claim]</green></click>"
-  at_risk: "<yellow>Claim today or your streak ends."
-  broken: "<red>Your streak of <white><lost></white> will restart at your next claim."
+  waiting: "<green>Your daily reward is waiting:</green> <click:run_command:/daily claim><green>[Claim]</green></click>"
+  waiting_many: "<green><white><count></white> daily rewards are waiting:</green> <click:run_command:/daily claim><green>[Claim]</green></click>"
+  at_risk: "<yellow>Play today or your streak ends."
+  broken: "<red>Your streak of <white><lost></white> starts again today."
 autoclaim:
   enabled: "<green>Your daily reward will be claimed automatically when you join."
   disabled: "<gray>Automatic claim turned off: use <white>/daily claim</white>."
@@ -26,7 +30,7 @@ autoclaim:
 admin:
   info:
     header: "<gold>Daily rewards of <white><player></white>"
-    state: "<gray>Streak <white><streak></white> (shown <white><shown></white>), best <white><longest></white>, <white><total></white> claims, <white><freezes></white> freezes, last claim <white><last></white>"
+    state: "<gray>Streak <white><streak></white> (shown <white><shown></white>), best <white><longest></white>, <white><total></white> days, <white><freezes></white> freezes, last day <white><last></white>"
     broken: "<gray>Broken streak of <white><lost></white> since <white><from></white>"
     ledger: "<dark_gray><at></dark_gray> <gray><kind></gray> <white><amount></white> <dark_gray><detail>"
   set: "<green><white><field></white> of <white><player></white> set to <white><value></white>."

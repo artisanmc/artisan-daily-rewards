@@ -15,8 +15,9 @@ import java.util.Map;
  * else {@code default_day}); the base reward, the tiers, the milestones and the restore settings
  * come with the next steps, and this reader ignores them.
  *
- * @param minPlaytimeMinutes playtime of the current session before a claim is accepted
- * @param joinReminder       remind a player who has not claimed, on join and at the reset
+ * @param minPlaytimeMinutes playtime of the current session before the day counts for the streak
+ *                           and its reward can be claimed
+ * @param joinReminder       remind a player whose rewards wait, on join and at the reset
  * @param days               the reward of each listed day of the cycle, 1 to {@code cycleLength}
  * @param defaultDay         the reward of a day {@code days} does not list, null for none
  */

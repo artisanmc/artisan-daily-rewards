@@ -22,7 +22,8 @@ import java.util.Map;
 /**
  * What the calendar menu shows, from the service's cache (no I/O, any thread):
  * <ul>
- *   <li>{@code daily:calendar}, one row per game day: the recent ones as they went, today, and
+ *   <li>{@code daily:calendar}, one row per game day: the recent ones as they went (claimed,
+ *       waiting to be claimed, missed), today, and
  *       the days to come with the reward each one will pay. Params {@code past} (7 by default, at
  *       most {@link DailyService#HISTORY_DAYS}) and {@code future} (20);</li>
  *   <li>{@code daily:status}, one row: the viewer's streak, jokers and today's claim.</li>
@@ -51,15 +52,15 @@ public final class CalendarData {
                 new DataSourceField("date", ModelFieldType.string(), "dd/MM"),
                 new DataSourceField("offset", ModelFieldType.integer(), "Days from today: -1 yesterday, 0 today, 1 tomorrow"),
                 new DataSourceField("status", ModelFieldType.enumOf(List.of("before", "claimed", "missed", "available", "upcoming")),
-                        "before: earlier than the first claim. available: today, not claimed yet"),
+                        "before: earlier than the first day counted. available: a reward to claim, today or a day the viewer was there"),
                 new DataSourceField("is_today", ModelFieldType.bool(), null),
-                new DataSourceField("is_claimed", ModelFieldType.bool(), "Claimed, today or before"),
-                new DataSourceField("is_missed", ModelFieldType.bool(), "Over and not claimed (a joker may have kept the streak)"),
-                new DataSourceField("is_before", ModelFieldType.bool(), "Before the viewer's first claim"),
-                new DataSourceField("is_available", ModelFieldType.bool(), "Today, waiting to be claimed"),
+                new DataSourceField("is_claimed", ModelFieldType.bool(), "Its reward claimed, today or before"),
+                new DataSourceField("is_missed", ModelFieldType.bool(), "Over and the viewer was not there (a joker may have kept the streak)"),
+                new DataSourceField("is_before", ModelFieldType.bool(), "Before the viewer's first day counted"),
+                new DataSourceField("is_available", ModelFieldType.bool(), "Its reward waits: today, or a day the viewer was there without claiming"),
                 new DataSourceField("is_upcoming", ModelFieldType.bool(), "A day to come"),
                 new DataSourceField("cycle_day", ModelFieldType.integer(),
-                        "The day of the cycle paid or to be paid if the viewer claims every day; 0 when missed or before"),
+                        "The day of the cycle paid or to be paid if the viewer comes every day; 0 when missed or before"),
                 new DataSourceField("has_reward", ModelFieldType.bool(), "That day of the cycle has a reward"),
                 new DataSourceField("icon", ModelFieldType.item(),
                         "The reward's icon (days, else default_day of the calendar), for item: \"{d.icon}\"")));
@@ -71,15 +72,16 @@ public final class CalendarData {
                 new DataSourceField("loaded", ModelFieldType.bool(), "The viewer's streak is loaded (false for a moment after a join)"),
                 new DataSourceField("streak", ModelFieldType.integer(), "As shown: 0 once broken"),
                 new DataSourceField("longest", ModelFieldType.integer(), null),
-                new DataSourceField("total", ModelFieldType.integer(), "Claims ever"),
+                new DataSourceField("total", ModelFieldType.integer(), "Days counted ever"),
                 new DataSourceField("freezes", ModelFieldType.integer(), "Jokers held"),
                 new DataSourceField("freeze_max", ModelFieldType.integer(), "Jokers held at most"),
-                new DataSourceField("claimed_today", ModelFieldType.bool(), null),
-                new DataSourceField("can_claim", ModelFieldType.bool(), "Loaded and not claimed today"),
-                new DataSourceField("at_risk", ModelFieldType.bool(), "Days missed that the jokers will cover at the next claim"),
-                new DataSourceField("broken", ModelFieldType.bool(), "The streak starts again at the next claim"),
+                new DataSourceField("claimed_today", ModelFieldType.bool(), "Today counted and its reward claimed"),
+                new DataSourceField("unclaimed", ModelFieldType.integer(), "Rewards of days counted that wait to be claimed"),
+                new DataSourceField("can_claim", ModelFieldType.bool(), "Loaded, and a reward waits or today is not claimed yet"),
+                new DataSourceField("at_risk", ModelFieldType.bool(), "Days missed that the jokers will cover when the viewer is next there"),
+                new DataSourceField("broken", ModelFieldType.bool(), "The streak starts again when the viewer is next there"),
                 new DataSourceField("lost", ModelFieldType.integer(), "The streak a break loses, 0 when not broken"),
-                new DataSourceField("cycle_day", ModelFieldType.integer(), "Today's day of the cycle, claimed or to claim"),
+                new DataSourceField("cycle_day", ModelFieldType.integer(), "Today's day of the cycle, counted or to count"),
                 new DataSourceField("cycle_length", ModelFieldType.integer(), null),
                 new DataSourceField("until_reset", ModelFieldType.string(), "Time left in the game day: 3h 12m")));
     }
@@ -125,17 +127,20 @@ public final class CalendarData {
         row.put("until_reset", Durations.format(service.clock().untilReset()));
         if (state == null) {
             row.putAll(Map.of("streak", 0, "longest", 0, "total", 0, "freezes", 0, "claimed_today", false,
-                    "can_claim", false, "at_risk", false, "broken", false, "lost", 0, "cycle_day", 1));
+                    "unclaimed", 0, "can_claim", false, "at_risk", false, "broken", false, "lost", 0));
+            row.put("cycle_day", 1);
             return List.of(row);
         }
         StreakRules.Displayed shown = service.displayed(state);
-        int todayStreak = shown.claimedToday() ? shown.streak() : shown.streak() + 1;
+        int todayStreak = shown.countedToday() ? shown.streak() : shown.streak() + 1;
         row.put("streak", shown.streak());
         row.put("longest", state.longest());
-        row.put("total", state.totalClaims());
+        row.put("total", state.totalDays());
         row.put("freezes", state.freezes());
-        row.put("claimed_today", shown.claimedToday());
-        row.put("can_claim", !shown.claimedToday());
+        int unclaimed = service.unclaimed(player.getUniqueId());
+        row.put("claimed_today", shown.countedToday() && !service.unclaimedOn(player.getUniqueId(), service.clock().today()));
+        row.put("unclaimed", unclaimed);
+        row.put("can_claim", unclaimed > 0 || !shown.countedToday());
         row.put("at_risk", shown.atRisk());
         row.put("broken", shown.broken());
         row.put("lost", shown.broken() ? state.streak() : 0);

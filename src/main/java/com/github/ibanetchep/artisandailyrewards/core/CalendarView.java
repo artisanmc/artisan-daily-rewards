@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The calendar a player sees, pure: the recent game days as they went (claimed, missed), today,
- * and the days to come with the day of the cycle each one will pay if the player claims every
- * day from now on.
+ * The calendar a player sees, pure: the recent game days as they went (claimed, waiting to be
+ * claimed, missed), today, and the days to come with the day of the cycle each one will pay if the
+ * player comes every day from now on.
  */
 public final class CalendarView {
 
@@ -14,13 +14,16 @@ public final class CalendarView {
     }
 
     public enum Status {
-        /** Before the player's first claim: not missed, they were not there yet. */
+        /** Before the player was first counted: not missed, they were not there yet. */
         BEFORE,
-        /** Claimed, today or before. */
+        /** Counted and its reward claimed, today or before. */
         CLAIMED,
-        /** Not claimed, and over. A joker may have saved the streak; the reward is lost either way. */
+        /** Over, and the player was not there. A joker may have saved the streak; the reward is lost either way. */
         MISSED,
-        /** Today, not claimed yet. */
+        /**
+         * Its reward waits to be claimed: today, or a day before when the player was there without
+         * claiming. A claim pays every such day.
+         */
         AVAILABLE,
         /** A day to come. */
         UPCOMING
@@ -29,14 +32,14 @@ public final class CalendarView {
     /**
      * @param offset   days from today: negative in the past, 0 today
      * @param cycleDay the day of the cycle paid (claimed) or to be paid (available, upcoming); 0
-     *                 for a day missed or before the first claim
+     *                 for a day missed or before the first one
      */
     public record Day(long day, int offset, Status status, int cycleDay) {
     }
 
     /**
      * {@code past} days before today, today, then {@code future} days after it. The past comes
-     * from {@code history}: a day it does not hold is missed, unless it is before the first claim.
+     * from {@code history}: a day it does not hold is missed, unless it is before the first one.
      * Today and the future follow the streak as {@link StreakRules#display} shows it: a broken
      * streak starts again at day 1, one the jokers still cover goes on.
      */
@@ -45,22 +48,23 @@ public final class CalendarView {
         List<Day> days = new ArrayList<>(past + 1 + future);
         for (int offset = -past; offset < 0; offset++) {
             long day = today + offset;
-            Integer claimed = history.cycleDayOn(day);
+            Integer counted = history.cycleDayOn(day);
             Status status;
-            if (claimed != null) status = Status.CLAIMED;
+            if (counted != null) status = history.unclaimedOn(day) ? Status.AVAILABLE : Status.CLAIMED;
             else if (history.firstDay() == null || day < history.firstDay()) status = Status.BEFORE;
             else status = Status.MISSED;
-            days.add(new Day(day, offset, status, claimed != null ? claimed : 0));
+            days.add(new Day(day, offset, status, counted != null ? counted : 0));
         }
 
         StreakRules.Displayed shown = StreakRules.display(state, today);
-        // The streak today's claim reaches, made or to make.
-        int todayStreak = shown.claimedToday() ? shown.streak() : shown.streak() + 1;
-        Integer claimedToday = history.cycleDayOn(today);
-        int todayCycleDay = shown.claimedToday() && claimedToday != null
-                ? claimedToday
+        // The streak today reaches, counted or to count.
+        int todayStreak = shown.countedToday() ? shown.streak() : shown.streak() + 1;
+        Integer countedToday = history.cycleDayOn(today);
+        int todayCycleDay = shown.countedToday() && countedToday != null
+                ? countedToday
                 : StreakRules.cycleDay(todayStreak, cycleLength);
-        days.add(new Day(today, 0, shown.claimedToday() ? Status.CLAIMED : Status.AVAILABLE, todayCycleDay));
+        boolean claimedToday = shown.countedToday() && !history.unclaimedOn(today);
+        days.add(new Day(today, 0, claimedToday ? Status.CLAIMED : Status.AVAILABLE, todayCycleDay));
 
         for (int offset = 1; offset <= future; offset++) {
             days.add(new Day(today + offset, offset, Status.UPCOMING,

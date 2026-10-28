@@ -9,7 +9,7 @@ import com.github.ibanetchep.artisandailyrewards.core.Durations;
 import com.github.ibanetchep.artisandailyrewards.core.GameClock;
 import com.github.ibanetchep.artisandailyrewards.core.PlayerState;
 import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
-import com.github.ibanetchep.artisandailyrewards.storage.ClaimResult;
+import com.github.ibanetchep.artisandailyrewards.storage.CheckInResult;
 import com.github.ibanetchep.artisandailyrewards.storage.DailyRepository;
 import com.github.ibanetchep.artisandailyrewards.storage.LedgerEntry;
 import net.artisanmc.modules.api.action.ModuleActionsApi;
@@ -42,8 +42,9 @@ import java.util.logging.Logger;
 
 /**
  * The claim flow around the pure rule: the calendar settings, the cache of online players, the
- * claim itself (off the game threads, then back on the player's thread), the day's reward,
- * auto-claim, the reminder at join and at each reset, and the calendar menu.
+ * day counted for the streak once the player is there (at join, after the minimum playtime, and at
+ * each reset), the claim of every reward that waits (off the game threads, then back on the
+ * player's thread), auto-claim, the reminder, and the calendar menu.
  *
  * <p>The database is only touched from {@link TaskScheduler#runAsync}; the cache is read from
  * any thread and answers placeholders without I/O.
@@ -75,6 +76,7 @@ public final class DailyService {
     private final Map<UUID, ClaimHistory> history = new ConcurrentHashMap<>();
     private final Map<UUID, Long> sessionStart = new ConcurrentHashMap<>();
     private final Set<UUID> claiming = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> checkingIn = ConcurrentHashMap.newKeySet();
     /** Raised on every reschedule: a reset task from an older schedule does nothing. */
     private final AtomicInteger resetGeneration = new AtomicInteger();
 
@@ -181,7 +183,7 @@ public final class DailyService {
         UUID uuid = player.getUniqueId();
         sessionStart.put(uuid, System.currentTimeMillis());
         scheduler.runAsync(() -> {
-            List<DailyRepository.Undelivered> pending;
+            List<DailyRepository.Reward> pending;
             try {
                 cache.put(uuid, repository.load(uuid));
                 history.put(uuid, repository.history(uuid, clock.today() - HISTORY_DAYS));
@@ -190,12 +192,10 @@ public final class DailyService {
                 logger.log(Level.SEVERE, "Could not load the streak of " + player.getName(), e);
                 return;
             }
-            // Claims whose rewards were not handed out: the player left first, or a server stopped.
+            // Rewards claimed but not handed out: the player left first, or a server stopped.
             CalendarSettings current = settings;
-            for (DailyRepository.Undelivered claim : pending) {
-                deliver(player, claim.day(), claim.streak(), claim.cycleDay(), current);
-            }
-            scheduler.runFor(player, () -> greet(player));
+            for (DailyRepository.Reward reward : pending) deliver(player, reward, current);
+            scheduler.runFor(player, () -> greet(player, true));
         });
     }
 
@@ -204,19 +204,108 @@ public final class DailyService {
         history.remove(player.getUniqueId());
         sessionStart.remove(player.getUniqueId());
         claiming.remove(player.getUniqueId());
+        checkingIn.remove(player.getUniqueId());
     }
 
-    /** At join and at the reset: claims for an auto-claim player, else reminds the one who has not claimed. */
-    private void greet(Player player) {
+    /**
+     * At join and at the reset: counts the day once the player has played long enough, then
+     * claims for an auto-claim player, else reminds of the rewards that wait ({@code remind}).
+     */
+    private void greet(Player player, boolean remind) {
         if (!player.isOnline()) return;
+        UUID uuid = player.getUniqueId();
+        PlayerState state = cache.get(uuid);
+        if (state == null) return;
+        if (claimsAllowed && !state.countedOn(clock.today())) {
+            Duration wait = playtimeLeft(uuid);
+            if (wait.isZero()) {
+                checkIn(player, remind);
+                return;
+            }
+            scheduler.runForLater(player, ticks(wait), () -> greet(player, false));
+            if (remind && !autoClaims(state) && settings.joinReminder()) remind(player, unclaimed(uuid) + 1);
+            return;
+        }
+        offer(player, remind);
+    }
+
+    /** Claims what waits for an auto-claim player, else reminds of it. */
+    private void offer(Player player, boolean remind) {
         PlayerState state = cache.get(player.getUniqueId());
-        if (state == null || state.claimedOn(clock.today())) return;
-        if (autoClaims(state)) {
-            Duration wait = playtimeLeft(player.getUniqueId());
-            if (wait.isZero()) claim(player, true);
-            else scheduler.runForLater(player, ticks(wait), () -> greet(player));
-        } else if (settings.joinReminder()) {
-            messages.send(player, "reminder");
+        int waiting = unclaimed(player.getUniqueId());
+        if (state == null || waiting == 0) return;
+        if (autoClaims(state)) claim(player, true);
+        else if (remind && settings.joinReminder()) remind(player, waiting);
+    }
+
+    private void remind(Player player, int waiting) {
+        if (waiting > 1) messages.send(player, "reminder_many", Map.of("count", waiting));
+        else messages.send(player, "reminder");
+    }
+
+    /** {@code day} counted and its reward not claimed yet, from the cache. */
+    public boolean unclaimedOn(UUID uuid, long day) {
+        ClaimHistory claims = history.get(uuid);
+        return claims != null && claims.unclaimedOn(day);
+    }
+
+    /** The rewards of counted days that wait to be claimed, from the cache. */
+    public int unclaimed(UUID uuid) {
+        ClaimHistory claims = history.get(uuid);
+        return claims != null ? claims.unclaimed().size() : 0;
+    }
+
+    /**
+     * Counts today for the player, who is there and played long enough: off the game threads, then
+     * tells them what it did to the streak and offers what waits. On a failure the day is tried
+     * again at the next join or reset.
+     */
+    private void checkIn(Player player, boolean remind) {
+        UUID uuid = player.getUniqueId();
+        if (!checkingIn.add(uuid)) return;
+        long today = clock.today();
+        CalendarSettings current = settings;
+        scheduler.runAsync(() -> {
+            CheckInResult result;
+            try {
+                result = countDay(uuid, today, current);
+            } catch (SQLException | RuntimeException e) {
+                logger.log(Level.SEVERE, "Could not count the day of " + player.getName(), e);
+                return;
+            } finally {
+                checkingIn.remove(uuid);
+            }
+            scheduler.runFor(player, () -> {
+                announce(player, result, current);
+                if (result.status() != CheckInResult.Status.CONFLICT) {
+                    refreshMenu(player);
+                    offer(player, remind || result.counted());
+                }
+            });
+        });
+    }
+
+    /** Counts {@code today} in the database and the cache. Off the game threads. */
+    private CheckInResult countDay(UUID uuid, long today, CalendarSettings current) throws SQLException {
+        CheckInResult result = repository.checkIn(uuid, today, current, server, System.currentTimeMillis());
+        if (result.status() != CheckInResult.Status.CONFLICT) cache.put(uuid, result.state());
+        if (result.counted()) {
+            history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay()));
+        }
+        return result;
+    }
+
+    /** What counting the day did to the streak: jokers used, a break, a joker earned. */
+    private void announce(Player player, CheckInResult result, CalendarSettings current) {
+        if (!result.counted()) return;
+        PlayerState state = result.state();
+        if (result.outcome() == StreakRules.Outcome.COVERED) {
+            messages.send(player, "claim.covered", Map.of("count", result.freezesUsed()));
+        } else if (result.outcome() == StreakRules.Outcome.BROKEN) {
+            messages.send(player, "claim.broken", Map.of("lost", result.before().streak()));
+        }
+        if (result.freezeEarned()) {
+            messages.send(player, "claim.freeze_earned", Map.of("freezes", state.freezes(), "max", current.freezeMaxStock()));
         }
     }
 
@@ -240,8 +329,10 @@ public final class DailyService {
     // ---- Claim
 
     /**
-     * Claims today's reward for {@code player}, from {@code /daily claim}, the action or
-     * auto-claim. Call on the player's thread; answers there.
+     * Claims every reward that waits for {@code player}: today's, counted first when the player
+     * has played long enough, and those of the days before when they were there without claiming.
+     * From {@code /daily claim}, the menu, the action or auto-claim. Call on the player's thread;
+     * answers there.
      */
     public void claim(Player player, boolean automatic) {
         UUID uuid = player.getUniqueId();
@@ -251,75 +342,79 @@ public final class DailyService {
         }
         long today = clock.today();
         PlayerState cached = cache.get(uuid);
-        if (cached != null && cached.claimedOn(today)) {
-            if (!automatic) messages.send(player, "claim.already", Map.of("time", Durations.format(clock.untilReset())));
-            return;
-        }
         Duration wait = playtimeLeft(uuid);
-        if (!wait.isZero()) {
-            if (!automatic) messages.send(player, "claim.playtime", Map.of("time", Durations.format(wait)));
-            return;
-        }
+        boolean countToday = (cached == null || !cached.countedOn(today)) && wait.isZero();
         if (!claiming.add(uuid)) return; // a click while the previous claim is on its way
         CalendarSettings current = settings;
         scheduler.runAsync(() -> {
-            ClaimResult result;
+            CheckInResult counted = null;
+            List<DailyRepository.Reward> rewards;
             try {
-                result = repository.claim(uuid, today, current, server, System.currentTimeMillis());
+                if (countToday) counted = countDay(uuid, today, current);
+                rewards = repository.claimAll(uuid, System.currentTimeMillis());
             } catch (SQLException | RuntimeException e) {
                 claiming.remove(uuid);
                 logger.log(Level.SEVERE, "Could not claim the daily reward of " + player.getName(), e);
                 scheduler.runFor(player, () -> messages.send(player, "claim.error"));
                 return;
             }
-            if (result.status() != ClaimResult.Status.CONFLICT) cache.put(uuid, result.state());
-            if (result.claimed()) {
-                history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay()));
-                deliver(player, today, result.state().streak(), result.cycleDay(), current);
-            }
+            List<Long> days = rewards.stream().map(DailyRepository.Reward::day).toList();
+            history.computeIfPresent(uuid, (id, old) -> old.claimed(days));
+            for (DailyRepository.Reward reward : rewards) deliver(player, reward, current);
+            CheckInResult count = counted;
             scheduler.runFor(player, () -> {
                 claiming.remove(uuid);
-                answer(player, result, current, automatic);
-                if (result.status() != ClaimResult.Status.CONFLICT) refreshMenu(player);
+                if (count != null) {
+                    if (count.status() == CheckInResult.Status.CONFLICT) messages.send(player, "claim.conflict");
+                    announce(player, count, current);
+                }
+                answer(player, rewards, current, automatic);
+                refreshMenu(player);
             });
         });
     }
 
-    private void answer(Player player, ClaimResult result, CalendarSettings current, boolean automatic) {
-        switch (result.status()) {
-            case ALREADY_CLAIMED -> {
-                if (!automatic) messages.send(player, "claim.already", Map.of("time", Durations.format(clock.untilReset())));
-            }
-            case CONFLICT -> messages.send(player, "claim.conflict");
-            case CLAIMED -> {
-                PlayerState state = result.state();
-                if (result.outcome() == StreakRules.Outcome.COVERED) {
-                    messages.send(player, "claim.covered", Map.of("count", result.freezesUsed()));
-                } else if (result.outcome() == StreakRules.Outcome.BROKEN) {
-                    messages.send(player, "claim.broken", Map.of("lost", result.before().streak()));
-                }
-                messages.send(player, automatic ? "claim.success_auto" : "claim.success", Map.of(
-                        "streak", state.streak(),
-                        "cycle_day", result.cycleDay(),
-                        "cycle_length", current.cycleLength()));
-                if (result.freezeEarned()) {
-                    messages.send(player, "claim.freeze_earned", Map.of("freezes", state.freezes(), "max", current.freezeMaxStock()));
-                }
-            }
+    private void answer(Player player, List<DailyRepository.Reward> rewards, CalendarSettings current, boolean automatic) {
+        UUID uuid = player.getUniqueId();
+        PlayerState state = cache.get(uuid);
+        boolean countedToday = state != null && state.countedOn(clock.today());
+        if (rewards.isEmpty()) {
+            if (automatic) return;
+            Duration wait = playtimeLeft(uuid);
+            if (!countedToday && !wait.isZero()) messages.send(player, "claim.playtime", Map.of("time", Durations.format(wait)));
+            else if (countedToday) messages.send(player, "claim.already", Map.of("time", Durations.format(clock.untilReset())));
+            return;
+        }
+        DailyRepository.Reward last = rewards.get(rewards.size() - 1);
+        if (rewards.size() == 1) {
+            messages.send(player, automatic ? "claim.success_auto" : "claim.success", Map.of(
+                    "streak", last.streak(),
+                    "cycle_day", last.cycleDay(),
+                    "cycle_length", current.cycleLength()));
+        } else {
+            messages.send(player, automatic ? "claim.success_many_auto" : "claim.success_many", Map.of(
+                    "count", rewards.size(),
+                    "streak", state != null ? state.streak() : last.streak()));
+        }
+        // Today could not be counted yet: its reward comes once the player has played long enough.
+        Duration wait = playtimeLeft(uuid);
+        if (!countedToday && !automatic && !wait.isZero()) {
+            messages.send(player, "claim.playtime", Map.of("time", Durations.format(wait)));
         }
     }
 
     /**
-     * Hands out the reward of the claim of {@code day}: the actions of its day of the cycle
-     * ({@code days}, else {@code default_day}), run by Artisan with {@code {streak}},
-     * {@code {cycle_day}} and {@code {cycle_length}}. Off the game threads. The delivery is taken
-     * in the database first, so two servers never pay one claim twice; a player who left keeps it
+     * Hands out a claimed reward: the actions of its day of the cycle ({@code days}, else
+     * {@code default_day}), run by Artisan with {@code {streak}}, {@code {cycle_day}} and
+     * {@code {cycle_length}} of the day it was counted. Off the game threads. The delivery is taken
+     * in the database first, so two servers never pay one reward twice; a player who left keeps it
      * for their next join.
      */
-    private void deliver(Player player, long day, int streak, int cycleDay, CalendarSettings current) {
+    private void deliver(Player player, DailyRepository.Reward claimed, CalendarSettings current) {
         if (!player.isOnline()) return;
+        int cycleDay = claimed.cycleDay();
         try {
-            if (!repository.takeDelivery(player.getUniqueId(), day)) return;
+            if (!repository.takeDelivery(player.getUniqueId(), claimed.day())) return;
         } catch (SQLException e) {
             logger.log(Level.WARNING, "Could not deliver the daily reward of " + player.getName()
                     + "; it is tried again at their next join", e);
@@ -328,7 +423,7 @@ public final class DailyService {
         CalendarSettings.DayReward reward = current.reward(cycleDay);
         if (reward == null || reward.actions() == null) return;
         actions.run(player, reward.actions(), Map.of(
-                "streak", streak,
+                "streak", claimed.streak(),
                 "cycle_day", cycleDay,
                 "cycle_length", current.cycleLength()), DailyRewardsModule.FOLDER);
     }
@@ -354,7 +449,7 @@ public final class DailyService {
             }
             scheduler.runFor(player, () -> {
                 messages.send(player, next ? "autoclaim.enabled" : "autoclaim.disabled");
-                if (next) greet(player);
+                if (next) greet(player, true);
             });
         });
     }
@@ -395,7 +490,7 @@ public final class DailyService {
 
     private void onReset() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            scheduler.runFor(player, () -> greet(player));
+            scheduler.runFor(player, () -> greet(player, true));
         }
     }
 

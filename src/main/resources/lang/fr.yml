@@ -1,8 +1,11 @@
 # Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/Artisan/modules/daily/lang/fr.yml.
 reminder: "<gold>Ta récompense du jour t'attend !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>La réclamer'><green>[Réclamer]</green></hover></click>"
+reminder_many: "<gold><count> récompenses quotidiennes t'attendent !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Les réclamer'><green>[Réclamer]</green></hover></click>"
 claim:
   success: "<green>Récompense du jour réclamée ! Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
   success_auto: "<green>Récompense du jour réclamée automatiquement. Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
+  success_many: "<green><white><count></white> récompenses quotidiennes réclamées ! Streak : <white><streak></white>"
+  success_many_auto: "<green><white><count></white> récompenses quotidiennes réclamées automatiquement. Streak : <white><streak></white>"
   covered: "<aqua>Ton streak est conservé : <white><count></white> joker(s) utilisé(s) pour les jours manqués."
   broken: "<red>Tu as manqué un jour : ton streak de <white><lost></white> est cassé. Il repart aujourd'hui."
   freeze_earned: "<aqua>Tu as gagné un joker ! <gray>(<freezes>/<max>)"
@@ -15,9 +18,10 @@ status:
   loading: "<gray>Ton streak se charge, réessaie dans un instant."
   line: "<gold>Streak : <white><streak></white> <gray>| record <white><longest></white> | jokers <white><freezes></white>"
   claimed: "<gray>La récompense du jour est réclamée. Prochaine dans <white><time></white>."
-  waiting: "<green>La récompense du jour t'attend :</green> <click:run_command:/daily claim><green>[Réclamer]</green></click>"
-  at_risk: "<yellow>Réclame aujourd'hui ou ton streak s'arrête."
-  broken: "<red>Ton streak de <white><lost></white> repartira de zéro à ta prochaine réclamation."
+  waiting: "<green>Ta récompense quotidienne t'attend :</green> <click:run_command:/daily claim><green>[Réclamer]</green></click>"
+  waiting_many: "<green><white><count></white> récompenses quotidiennes t'attendent :</green> <click:run_command:/daily claim><green>[Réclamer]</green></click>"
+  at_risk: "<yellow>Joue aujourd'hui ou ton streak s'arrête."
+  broken: "<red>Ton streak de <white><lost></white> repart de zéro aujourd'hui."
 autoclaim:
   enabled: "<green>Ta récompense du jour sera réclamée automatiquement à la connexion."
   disabled: "<gray>Réclamation automatique désactivée : utilise <white>/daily claim</white>."
@@ -25,7 +29,7 @@ autoclaim:
 admin:
   info:
     header: "<gold>Récompenses quotidiennes de <white><player></white>"
-    state: "<gray>Streak <white><streak></white> (affiché <white><shown></white>), record <white><longest></white>, <white><total></white> réclamations, <white><freezes></white> jokers, dernière <white><last></white>"
+    state: "<gray>Streak <white><streak></white> (affiché <white><shown></white>), record <white><longest></white>, <white><total></white> jours, <white><freezes></white> jokers, dernier jour <white><last></white>"
     broken: "<gray>Streak cassé de <white><lost></white> depuis le <white><from></white>"
     ledger: "<dark_gray><at></dark_gray> <gray><kind></gray> <white><amount></white> <dark_gray><detail>"
   set: "<green><white><field></white> de <white><player></white> mis à <white><value></white>."

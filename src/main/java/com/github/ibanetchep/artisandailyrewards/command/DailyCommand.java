@@ -85,10 +85,13 @@ public final class DailyCommand {
                     "streak", shown.streak(),
                     "longest", state.longest(),
                     "freezes", state.freezes()));
-            if (shown.claimedToday()) {
-                messages.send(player, "status.claimed", Map.of("time", Durations.format(service.clock().untilReset())));
-            } else {
+            int waiting = service.unclaimed(player.getUniqueId());
+            if (waiting > 1) {
+                messages.send(player, "status.waiting_many", Map.of("count", waiting));
+            } else if (waiting == 1 || !shown.countedToday()) {
                 messages.send(player, "status.waiting");
+            } else {
+                messages.send(player, "status.claimed", Map.of("time", Durations.format(service.clock().untilReset())));
             }
             if (shown.atRisk()) messages.send(player, "status.at_risk");
             if (shown.broken()) messages.send(player, "status.broken", Map.of("lost", state.streak()));

@@ -2,7 +2,11 @@ package com.github.ibanetchep.artisandailyrewards.core;
 
 /**
  * The streak rule, pure: no I/O, no clock. The caller passes the game day ({@link GameClock}) and
- * stores what comes back; the database guarantees the rest (one claim per player and day).
+ * stores what comes back; the database guarantees the rest (one counted day per player and day).
+ *
+ * <p>A day counts for the streak when the player is there (joined and played
+ * {@code min_playtime_minutes}), whether they claim its reward or not: the reward of a counted day
+ * waits until it is claimed, the day is never missed.
  */
 public final class StreakRules {
 
@@ -10,45 +14,45 @@ public final class StreakRules {
     }
 
     /**
-     * The outcome of one claim on {@code today}, and the state to store when it is
-     * {@link Claim#claimed()}.
+     * The outcome of counting {@code today}, and the state to store when it is
+     * {@link CheckIn#counted()}.
      *
      * @param freezesUsed  jokers spent on the missed days
-     * @param freezeEarned whether this claim earned a joker
+     * @param freezeEarned whether this day earned a joker
      */
-    public record Claim(PlayerState state, Outcome outcome, int freezesUsed, boolean freezeEarned) {
-        public boolean claimed() {
-            return outcome != Outcome.ALREADY_CLAIMED;
+    public record CheckIn(PlayerState state, Outcome outcome, int freezesUsed, boolean freezeEarned) {
+        public boolean counted() {
+            return outcome != Outcome.ALREADY_COUNTED;
         }
     }
 
     public enum Outcome {
-        /** First claim ever. */
+        /** First day ever. */
         FIRST,
-        /** The day after the previous claim. */
+        /** The day after the previous counted day. */
         CONTINUED,
         /** Days were missed, and jokers covered all of them. */
         COVERED,
         /** Days were missed and the jokers did not cover them: the streak starts again at 1. */
         BROKEN,
-        /** Already claimed on this game day. */
-        ALREADY_CLAIMED
+        /** This game day already counts. */
+        ALREADY_COUNTED
     }
 
     /**
-     * Claims on {@code today}.
+     * Counts {@code today}: the player is there.
      * <ul>
-     *   <li>the day after the last claim: streak + 1;</li>
+     *   <li>the day after the last counted day: streak + 1;</li>
      *   <li>days missed, all covered by jokers: those jokers are used, streak + 1 (the covered days
      *       do not count);</li>
      *   <li>otherwise the streak breaks: it is kept aside for a restore, from the first missed
      *       day, and starts again at 1. No joker is used.</li>
      * </ul>
-     * Then the longest streak, the total, and one joker every {@code freeze_earn_every} days of
+     * Then the longest streak, the days counted, and one joker every {@code freeze_earn_every} days of
      * streak, up to {@code freeze_max_stock}.
      */
-    public static Claim claim(PlayerState state, long today, CalendarSettings settings) {
-        if (state.claimedOn(today)) return new Claim(state, Outcome.ALREADY_CLAIMED, 0, false);
+    public static CheckIn checkIn(PlayerState state, long today, CalendarSettings settings) {
+        if (state.countedOn(today)) return new CheckIn(state, Outcome.ALREADY_COUNTED, 0, false);
 
         int streak;
         int freezes = state.freezes();
@@ -88,19 +92,19 @@ public final class StreakRules {
         if (earned) freezes++;
 
         PlayerState next = new PlayerState(state.uuid(), streak, Math.max(state.longest(), streak), today,
-                state.totalClaims() + 1, freezes, milestoneMark, brokenStreak, brokenMark, brokenFromDay,
+                state.totalDays() + 1, freezes, milestoneMark, brokenStreak, brokenMark, brokenFromDay,
                 state.autoClaim(), state.version());
-        return new Claim(next, outcome, freezesUsed, earned);
+        return new CheckIn(next, outcome, freezesUsed, earned);
     }
 
     /** What a player sees on {@code today}: the stored streak, unless it is already lost. */
-    public record Displayed(int streak, boolean claimedToday, boolean atRisk, boolean broken) {
+    public record Displayed(int streak, boolean countedToday, boolean atRisk, boolean broken) {
     }
 
     /**
-     * The streak to show: the stored one while the last claim was today or yesterday; still the
-     * stored one, {@code atRisk}, while the jokers cover the days missed (they are used at the next
-     * claim); 0 and {@code broken} once they cannot.
+     * The streak to show: the stored one while the last counted day was today or yesterday; still
+     * the stored one, {@code atRisk}, while the jokers cover the days missed (they are used when the
+     * player is next there); 0 and {@code broken} once they cannot.
      */
     public static Displayed display(PlayerState state, long today) {
         Long last = state.lastDay();

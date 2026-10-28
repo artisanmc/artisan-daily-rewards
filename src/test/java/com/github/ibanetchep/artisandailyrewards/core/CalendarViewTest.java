@@ -75,6 +75,27 @@ class CalendarViewTest {
     }
 
     @Test
+    void aDayThePlayerWasThereWithoutClaimingWaitsInsteadOfMissed() {
+        // There yesterday (day 5) and today (day 6), claimed neither.
+        ClaimHistory history = ClaimHistory.of(TODAY - 10, Map.of(TODAY - 2, 4, TODAY - 1, 5, TODAY, 6),
+                List.of(TODAY - 1, TODAY));
+        List<CalendarView.Day> days = CalendarView.around(state(6, TODAY, 0), history, TODAY, 7, 2, 1);
+        assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.AVAILABLE, CalendarView.Status.AVAILABLE,
+                CalendarView.Status.UPCOMING), statuses(days));
+        assertEquals(List.of(4, 5, 6, 7), cycleDays(days));
+    }
+
+    @Test
+    void claimingClearsEveryDayThatWaits() {
+        ClaimHistory history = ClaimHistory.EMPTY.with(TODAY - 1, 1).with(TODAY, 2);
+        assertEquals(java.util.Set.of(TODAY - 1, TODAY), history.unclaimed());
+        ClaimHistory claimed = history.claimed(List.of(TODAY - 1, TODAY));
+        assertEquals(java.util.Set.of(), claimed.unclaimed());
+        List<CalendarView.Day> days = CalendarView.around(state(2, TODAY, 0), claimed, TODAY, 7, 1, 0);
+        assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.CLAIMED), statuses(days));
+    }
+
+    @Test
     void aClaimIsAddedToTheHistory() {
         ClaimHistory history = ClaimHistory.EMPTY.with(TODAY, 1);
         assertEquals(TODAY, history.firstDay());
