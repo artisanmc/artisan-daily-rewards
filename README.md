@@ -4,7 +4,7 @@ Daily rewards for Paper servers, built on Artisan: each day a player comes count
 streak and earns a reward they claim, then or later; they keep a streak, earn bigger rewards as the streak grows, loop through a reward cycle, and can save a
 broken streak with jokers or a paid restore.
 
-Requires Paper 1.21+ (Folia supported) and **Artisan with API 2.17.0 or later**. Artisan provides
+Requires Paper 1.21+ (Folia supported) and **Artisan with API 1.0.0 or later**. Artisan provides
 the database (H2, MySQL or MariaDB, set in `plugins/Artisan/environment.yml`), the action engine
 that pays the rewards, the menus and the editor.
 
@@ -59,8 +59,8 @@ reward twice. A player who leaves before the reward is handed out gets it at the
 ```
 
 `artisan-core-api` comes from `repo.artisanmc.net`. Until the version in `gradle.properties` is
-released there, publish it from Artisan's `v2` branch:
+released there, publish it locally from Artisan's `main` branch:
 
 ```bash
-cd <artisan>/plugin && ./gradlew :artisan-api:publishToMavenLocal -PapiVersion=2.17.0
+cd <artisan>/plugin && ./gradlew :artisan-api:publishToMavenLocal -PapiVersion=<artisanApiVersion>
 ```
