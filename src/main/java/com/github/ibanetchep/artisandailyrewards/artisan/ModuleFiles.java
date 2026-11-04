@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * The files the plugin ships for its folder {@code plugins/Artisan/modules/daily/}: the calendar
- * menu, the calendar and its model, a system template Artisan keeps there
+ * menu, the settings, the rewards and their models, a system template Artisan keeps there
  * ({@code TemplateDeclaration.system()}). A missing file is written again, an untouched one
  * follows each new version, an edited one stays the admin's until Reset in the editor, and a
  * file already on disk before counts as edited. Artisan writes them under {@code .yml}, whatever
@@ -22,12 +22,15 @@ public final class ModuleFiles {
     static final String ROOT = "module";
     static final String TEMPLATE = "daily_files";
     /** Raise it whenever a file of {@link #PATHS} changes: untouched copies follow, edited ones merge. */
-    static final int VERSION = 1;
+    static final int VERSION = 2;
 
+    /** Version 2 split {@code data/calendar} into these two files ({@link CalendarFiles#migrate}). */
     static final List<String> PATHS = List.of(
-            "data/calendar.yaml",
+            CalendarFiles.REWARDS + ".yaml",
+            CalendarFiles.SETTINGS + ".yaml",
             "menus/calendar.yaml",
-            "models/calendar.yaml");
+            "models/rewards.yaml",
+            "models/settings.yaml");
 
     private ModuleFiles() {
     }

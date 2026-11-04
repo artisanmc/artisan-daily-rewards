@@ -1,0 +1,63 @@
+import { createModuleI18n } from "@artisan/editor-sdk";
+
+const en = {
+  cycleLength: "Cycle length",
+  cycleHint: "Days before the rewards start again at day 1. The streak goes on.",
+  days: "{{count}} days",
+  legendOwn: "Its own reward",
+  legendDefault: "Reward of the other days",
+  defaultTitle: "The other days",
+  defaultHint: "What a day without its own reward pays.",
+  defaultNone: "None: no reward on those days.",
+  defaultAdd: "Add a reward for the other days",
+  defaultRemove: "No reward on the other days",
+  day: "Day {{day}}",
+  ownHint: "Its own reward, in place of the other days' one.",
+  inheritHint: "This day pays the reward of the other days.",
+  customize: "Give this day its own reward",
+  editDefault: "Edit the reward of the other days",
+  reset: "Back to the reward of the other days",
+  icon: "Icon",
+  iconHint: "Shown in the /daily menu: name it after the reward.",
+  actions: "Actions",
+  actionsHint: "Run when the day is claimed: give_item, give_money, a command… ({streak}, {cycle_day}, {cycle_length}).",
+  steps: "{{count}} step(s)",
+  noActions: "no action",
+  outsideTitle: "Days past the cycle",
+  outsideHint: "The plugin refuses the file while these days are listed: lengthen the cycle or remove them.",
+  remove: "Remove day {{day}}",
+  pick: "Click a day to edit its reward.",
+} as const;
+
+type Key = keyof typeof en;
+
+const fr: Record<Key, string> = {
+  cycleLength: "Longueur du cycle",
+  cycleHint: "Jours avant que les récompenses reprennent au jour 1. Le streak continue.",
+  days: "{{count}} jours",
+  legendOwn: "Récompense propre",
+  legendDefault: "Récompense des autres jours",
+  defaultTitle: "Les autres jours",
+  defaultHint: "Ce que rapporte un jour sans récompense propre.",
+  defaultNone: "Aucune : pas de récompense ces jours-là.",
+  defaultAdd: "Ajouter une récompense pour les autres jours",
+  defaultRemove: "Pas de récompense les autres jours",
+  day: "Jour {{day}}",
+  ownHint: "Sa propre récompense, à la place de celle des autres jours.",
+  inheritHint: "Ce jour rapporte la récompense des autres jours.",
+  customize: "Donner à ce jour sa propre récompense",
+  editDefault: "Modifier la récompense des autres jours",
+  reset: "Revenir à la récompense des autres jours",
+  icon: "Icône",
+  iconHint: "Affichée dans le menu /daily : nomme-la d'après la récompense.",
+  actions: "Actions",
+  actionsHint: "Exécutées quand le jour est réclamé : give_item, give_money, une commande… ({streak}, {cycle_day}, {cycle_length}).",
+  steps: "{{count}} étape(s)",
+  noActions: "aucune action",
+  outsideTitle: "Jours hors du cycle",
+  outsideHint: "Le plugin refuse le fichier tant que ces jours y sont : allonge le cycle ou retire-les.",
+  remove: "Retirer le jour {{day}}",
+  pick: "Clique sur un jour pour modifier sa récompense.",
+};
+
+export const useT = createModuleI18n<Key>({ en, fr });

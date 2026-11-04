@@ -8,18 +8,19 @@ import net.artisanmc.modules.api.model.ModelFieldType;
 import java.util.List;
 
 /**
- * {@code daily:calendar} (model/v1): the shape of {@code data/calendar.yaml}, declared to the
- * editor so the Calendar screen of the daily folder renders a form. The field names are the
- * keys {@link CalendarSettings#read} reads; CalendarModelTest keeps both in step.
+ * {@code daily:settings} (model/v1): the shape of {@code data/settings.yml}, declared to the
+ * editor so the Settings screen of the daily folder renders a form. The field names are keys
+ * {@link CalendarSettings#read} reads; ModuleFilesTest keeps both in step. The rewards and the
+ * cycle are in {@link RewardsModel}.
  */
-public final class CalendarModel {
+public final class SettingsModel {
 
-    public static final String ID = "daily:calendar";
-    public static final String SCREEN = "daily:calendar";
-    /** The table the screen edits: the calendar without its extension. */
-    public static final String TABLE = "data/calendar";
+    public static final String ID = "daily:settings";
+    public static final String SCREEN = "daily:settings";
+    /** The table the screen edits: the settings without their extension. */
+    public static final String TABLE = CalendarFiles.SETTINGS;
 
-    private CalendarModel() {
+    private SettingsModel() {
     }
 
     public static ModelDeclaration declaration() {
@@ -28,7 +29,6 @@ public final class CalendarModel {
                 new ModelField("reset_time", ModelFieldType.string()).withLabel("Reset time")
                         .withHelp("When the game day ends, server time: \"00:00\", \"06:00\".")
                         .withPattern("^([01]\\d|2[0-3]):[0-5]\\d$").withDefault("00:00"),
-                integer("cycle_length", "Cycle length", "Days before the rewards start again at day 1.", d.cycleLength(), 1),
                 new ModelField("auto_claim", ModelFieldType.enumOf(List.of("off", "on", "player"))).withLabel("Auto-claim")
                         .withHelp("off: the player claims. on: claimed at join and at the reset. player: each player "
                                 + "chooses with /daily autoclaim.")
@@ -42,25 +42,11 @@ public final class CalendarModel {
                         integer("earn_every", "Earned every", "Days of streak per joker; 0: never.", d.freezeEarnEvery(), 0),
                         integer("max_stock", "Held at most", null, d.freezeMaxStock(), 0))))
                         .withLabel("Jokers")
-                        .withHelp("A joker covers a missed day: the streak goes on."),
-                new ModelField("days", ModelFieldType.map(reward())).withLabel("Rewards by day")
-                        .withHelp("Keyed by the day of the cycle, 1 to the cycle length. The icon is what the "
-                                + "calendar menu shows, the actions what a claim of that day runs ({streak}, "
-                                + "{cycle_day}, {cycle_length})."),
-                new ModelField("default_day", reward()).withLabel("Reward of the other days")
-                        .withHelp("For a day the list above does not hold. Empty: no reward that day.")))
-                .withName("Daily rewards calendar");
+                        .withHelp("A joker covers a missed day: the streak goes on.")))
+                .withName("Daily rewards settings");
     }
 
-    private static ModelFieldType reward() {
-        return ModelFieldType.object(List.of(
-                new ModelField("icon", ModelFieldType.item()).withLabel("Icon")
-                        .withHelp("Shown in the calendar menu: name it after the reward."),
-                new ModelField("actions", ModelFieldType.actions()).withLabel("Actions")
-                        .withHelp("Run when the day is claimed: give_item, give_money, a command…")));
-    }
-
-    private static ModelField integer(String name, String label, String help, int defaultValue, int min) {
+    static ModelField integer(String name, String label, String help, int defaultValue, int min) {
         return new ModelField(name, ModelFieldType.integer()).withLabel(label).withHelp(help)
                 .withDefault(defaultValue).withRange((double) min, null);
     }
