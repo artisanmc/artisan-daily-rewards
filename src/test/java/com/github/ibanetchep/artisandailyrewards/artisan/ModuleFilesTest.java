@@ -57,7 +57,9 @@ class ModuleFilesTest {
 
     @Test
     void theShippedCalendarReadsAsTheDefaultsWithRewards() throws Exception {
-        CalendarSettings shipped = CalendarSettings.read((Map<?, ?>) yaml("data/calendar.yaml"));
+        Map<Object, Object> calendar = new java.util.LinkedHashMap<>((Map<?, ?>) yaml("data/settings.yaml"));
+        calendar.putAll((Map<?, ?>) yaml("data/rewards.yaml"));
+        CalendarSettings shipped = CalendarSettings.read(calendar);
         CalendarSettings d = CalendarSettings.DEFAULTS;
         assertEquals(new CalendarSettings(d.resetTime(), d.cycleLength(), d.autoClaim(), d.minPlaytimeMinutes(),
                 d.joinReminder(), d.freezeEarnEvery(), d.freezeMaxStock(), shipped.days(), shipped.defaultDay()), shipped);
@@ -69,11 +71,35 @@ class ModuleFilesTest {
     }
 
     @Test
-    void theModelNamesTheKeysTheReaderReads() throws IOException {
-        Set<String> declared = new TreeSet<>(CalendarModel.declaration().getFields().stream().map(ModelField::getName).toList());
-        Set<String> shipped = new TreeSet<>(((Map<?, ?>) yaml("data/calendar.yaml")).keySet().stream().map(String::valueOf).toList());
-        assertEquals(declared, shipped);
-        assertEquals(Map.of("model", CalendarModel.ID), yaml("models/calendar.yaml"));
+    void eachModelNamesTheKeysOfItsFile() throws IOException {
+        assertEquals(keys(SettingsModel.declaration().getFields()), keys("data/settings.yaml"));
+        assertEquals(keys(RewardsModel.declaration().getFields()), keys("data/rewards.yaml"));
+        assertEquals(CalendarFiles.REWARD_KEYS, keys("data/rewards.yaml"));
+        assertEquals(Map.of("model", SettingsModel.ID), yaml("models/settings.yaml"));
+        assertEquals(Map.of("model", RewardsModel.ID), yaml("models/rewards.yaml"));
+        assertEquals(CalendarFiles.SETTINGS, SettingsModel.TABLE);
+        assertEquals(CalendarFiles.REWARDS, RewardsModel.TABLE);
+    }
+
+    private static Set<String> keys(List<ModelField> fields) {
+        return new TreeSet<>(fields.stream().map(ModelField::getName).toList());
+    }
+
+    private static Set<String> keys(String path) throws IOException {
+        return new TreeSet<>(((Map<?, ?>) yaml(path)).keySet().stream().map(String::valueOf).toList());
+    }
+
+    @Test
+    void theEditorBundleIsInTheJarBuiltAgainstTheDeclaredSdk() throws IOException {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(DailyRewardsModule.EDITOR_BUNDLE)) {
+            assertNotNull(in, DailyRewardsModule.EDITOR_BUNDLE + ": run npm run build in editor/");
+            String script = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(script.contains(RewardsModel.COMPONENT), "the bundle names its view " + RewardsModel.COMPONENT);
+        }
+        String pkg = Files.readString(Path.of("editor/package.json"));
+        Matcher sdk = Pattern.compile("artisan-editor-sdk-(\\d+\\.\\d+)\\.\\d+\\.tgz").matcher(pkg);
+        assertTrue(sdk.find(), "editor/package.json takes the SDK from its archive");
+        assertEquals(DailyRewardsModule.EDITOR_SDK, sdk.group(1));
     }
 
     @Test

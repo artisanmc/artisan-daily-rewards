@@ -1,12 +1,6 @@
-# The daily rewards: edited in the Artisan editor (the daily folder, Calendar).
-reset_time: "00:00"
+# The reward cycle: edited in the Artisan editor (the daily folder, Rewards).
+# Days before the rewards start again at day 1.
 cycle_length: 28
-auto_claim: "off"
-min_playtime_minutes: 0
-join_reminder: true
-freeze:
-  earn_every: 7
-  max_stock: 2
 # The reward of a day of the cycle not listed under days.
 default_day:
   icon:

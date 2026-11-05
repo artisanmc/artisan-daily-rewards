@@ -2,7 +2,7 @@ schema: menu/v1
 # /daily: the last 7 days as they went (claimed, waiting to be claimed, missed), today (first slot
 # of the second row), then the 20 days to come with the reward each one pays if the player comes
 # every day. A day the player was there counts for the streak, claimed or not: its reward waits. The rewards are those of
-# data/calendar (days, else default_day): edit them in the Calendar screen.
+# data/rewards (days, else default_day): edit them in the Rewards screen.
 title:
   - kind: plain
     value: { en: "<dark_gray>Daily rewards", fr: "<dark_gray>Récompenses quotidiennes" }

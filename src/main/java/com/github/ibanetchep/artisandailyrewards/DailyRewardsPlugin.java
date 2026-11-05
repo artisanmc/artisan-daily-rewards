@@ -70,7 +70,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
 
         api.getModules().register(new DailyRewardsModule(service, List.of(
                 new DailyCommand(service, messages).declaration(),
-                new DailyAdminCommand(service, messages, getLogger()).declaration()), getLogger()));
+                new DailyAdminCommand(service, messages, getLogger()).declaration()), getLogger(), getDataFolder()));
         getServer().getPluginManager().registerEvents(new PlayerConnectionListener(service), this);
 
         // After a reload of the plugin, players already online are loaded (and greeted) as if they joined.

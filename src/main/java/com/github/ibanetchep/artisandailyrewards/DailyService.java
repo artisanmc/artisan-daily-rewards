@@ -1,5 +1,6 @@
 package com.github.ibanetchep.artisandailyrewards;
 
+import com.github.ibanetchep.artisandailyrewards.artisan.CalendarFiles;
 import com.github.ibanetchep.artisandailyrewards.artisan.DailyRewardsModule;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarException;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarSettings;
@@ -19,15 +20,9 @@ import net.artisanmc.modules.api.scheduler.TaskScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.List;
@@ -51,8 +46,6 @@ import java.util.logging.Logger;
  */
 public final class DailyService {
 
-    /** Where the calendar lives in the module's folder. */
-    public static final String CALENDAR_PATH = "data/calendar.yaml";
     /** How far back the calendar menu can show: the claims read at join. */
     public static final int HISTORY_DAYS = 35;
     /** How far ahead the calendar menu can show. */
@@ -109,33 +102,24 @@ public final class DailyService {
     // ---- Calendar
 
     /**
-     * Reads {@code data/calendar.yml} of the module's folder, else {@code data/calendar.yaml} (what
-     * Artisan wrote before it moved to {@code .yml}). Missing: the defaults. Unreadable or wrong: the
-     * previous settings stay and the error is logged. Reschedules the reset.
+     * Reads {@code data/settings.yml} and {@code data/rewards.yml} of the module's folder, the
+     * owner's copies else the shipped ones ({@link CalendarFiles}). Neither yet: the defaults.
+     * Unreadable or wrong: the previous settings stay and the error is logged. Reschedules the reset.
      */
     public void loadCalendar(@Nullable File moduleFolder) {
-        File file = moduleFolder != null ? calendarFile(moduleFolder) : null;
-        if (file == null) {
+        if (moduleFolder == null || CalendarFiles.noneYet(moduleFolder)) {
             apply(CalendarSettings.DEFAULTS);
-            logger.info("No " + CALENDAR_PATH + " in the module folder yet: default settings.");
+            logger.info("No " + CalendarFiles.SETTINGS + ".yml nor " + CalendarFiles.REWARDS
+                    + ".yml in the module folder yet: default settings.");
             return;
         }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            Object root = new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
-            apply(CalendarSettings.read(root instanceof Map<?, ?> map ? map : Map.of()));
+        try {
+            apply(CalendarSettings.read(CalendarFiles.read(moduleFolder)));
         } catch (IOException | RuntimeException e) {
-            logger.log(Level.SEVERE, "Cannot read " + file.getPath() + ", the previous settings stay", e);
+            logger.log(Level.SEVERE, "Cannot read the calendar of " + moduleFolder.getPath() + ", the previous settings stay", e);
         } catch (CalendarException e) {
-            logger.severe(file.getPath() + " cannot be used, the previous settings stay: " + e.getMessage());
+            logger.severe("The calendar of " + moduleFolder.getPath() + " cannot be used, the previous settings stay: " + e.getMessage());
         }
-    }
-
-    /** {@code data/calendar.yml}, else {@code data/calendar.yaml}, else {@code null}. */
-    static @Nullable File calendarFile(File moduleFolder) {
-        File yml = new File(moduleFolder, CALENDAR_PATH.replace(".yaml", ".yml"));
-        if (yml.isFile()) return yml;
-        File yaml = new File(moduleFolder, CALENDAR_PATH);
-        return yaml.isFile() ? yaml : null;
     }
 
     private void apply(CalendarSettings next) {

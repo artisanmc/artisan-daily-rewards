@@ -17,13 +17,22 @@ actions and the placeholders come next.
 Artisan keeps these files in `plugins/Artisan/modules/daily/` (a system template: a missing file
 is written again, an edited one stays yours until Reset in the editor):
 
-- `data/calendar.yml`: reset time, cycle length, auto-claim, jokers, and the rewards. `days` is
-  keyed by the day of the cycle (1 to `cycle_length`), `default_day` covers the others. Each
-  reward has an `icon` (the item the menu shows) and `actions` (run at the claim, with
-  `{streak}`, `{cycle_day}` and `{cycle_length}`). Edited in the editor's **Calendar** screen.
+- `data/settings.yml`: reset time, auto-claim, playtime before the day counts, join reminder,
+  jokers. Edited in the editor's **Settings** screen.
+- `data/rewards.yml`: `cycle_length` and the rewards. `days` is keyed by the day of the cycle
+  (1 to `cycle_length`), `default_day` covers the others. Each reward has an `icon` (the item the
+  menu shows) and `actions` (run at the claim, with `{streak}`, `{cycle_day}` and
+  `{cycle_length}`). Edited in the editor's **Rewards** screen: a grid of the cycle, the days with
+  their own reward highlighted, the others showing `default_day` faded; a click on a day edits it,
+  gives it its own reward or sends it back to `default_day`.
 - `menus/calendar.yml`: what `/daily` opens. The last 7 days as they went (claimed, waiting to be
   claimed, missed), today (a click claims everything that waits), and the next 20 days with the
   reward each one pays if the player comes every day.
+
+Before version 2 of these files, everything was in `data/calendar.yml`. At startup an edited
+`data/calendar.yml` is split into the two files (the old one is copied to
+`plugins/ArtisanDailyRewards/calendar-<date>.yml`, then removed); when both new files already
+exist it is left as is and no longer read.
 
 The menu reads two data sources:
 
@@ -57,6 +66,18 @@ reward twice. A player who leaves before the reward is handed out gets it at the
 ```bash
 ./gradlew build   # → build/libs/ArtisanDailyRewards-<version>.jar
 ```
+
+The Rewards grid is the module's view in the Artisan editor, built from `editor/` (React, against
+`@artisan/editor-sdk`) into `src/main/resources/artisan-editor/ui.js`, which is committed and
+served by the jar. After a change under `editor/`:
+
+```bash
+cd editor && npm install && npm test && npm run build
+```
+
+The SDK comes from its archive in `editor/vendor/` (`npm pack` of Artisan's
+`editor/packages/editor-sdk`) as long as it is not on npm. Its `MAJOR.MINOR` is
+`DailyRewardsModule.EDITOR_SDK`; an Artisan editor older than that shows the generated form instead.
 
 `artisan-core-api` comes from `repo.artisanmc.net`. Until the version in `gradle.properties` is
 released there, publish it locally from Artisan's `main` branch:

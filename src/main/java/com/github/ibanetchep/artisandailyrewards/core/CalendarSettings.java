@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The settings of {@code data/calendar.yaml} the streak rule, the claim flow and the calendar
+ * The settings of {@code data/settings.yml} and {@code data/rewards.yml} ({@code CalendarFiles}) the streak rule, the claim flow and the calendar
  * menu read. The rewards are one per day of the cycle ({@code days}, keyed by the day's number,
  * else {@code default_day}); the base reward, the tiers, the milestones and the restore settings
  * come with the next steps, and this reader ignores them.
