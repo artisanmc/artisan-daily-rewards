@@ -12,6 +12,19 @@ that pays the rewards, the menus and the editor.
 calendar menu work. The base reward, the tiers, the milestones, the paid restore, the `daily:*`
 actions and the placeholders come next.
 
+User docs: [`docs/site/`](docs/site/), published on
+[artisanmc.net/docs/daily-rewards](https://artisanmc.net/docs/daily-rewards/) at each release.
+
+## Commands
+
+| Command | Permission | Does |
+|---|---|---|
+| `/daily` | `daily.use` (everyone) | Opens the calendar |
+| `/daily claim`, `/daily status`, `/daily autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
+| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct, shift this server's game day to test |
+
+`daily.restore` and `daily.restore.free` are declared for the paid restore, not implemented yet.
+
 ## Calendar
 
 Artisan keeps these files in `plugins/Artisan/modules/daily/` (a system template: a missing file
