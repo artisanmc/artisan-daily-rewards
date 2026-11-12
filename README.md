@@ -85,17 +85,3 @@ released there, publish it locally from Artisan's `main` branch:
 ```bash
 cd <artisan>/plugin && ./gradlew :artisan-api:publishToMavenLocal -PapiVersion=<artisanApiVersion>
 ```
-
-## Variants
-
-The calendar menu also ship in two variants, chosen for each player when a menu opens (`variants.yml` of
-the module's folder, editable under **View as → Display rules…** in the editor):
-
-- `textured`, for a Java player who loaded the server's resource pack: a drawn window (slots only
-  where the menu puts something) and image buttons, in place of the glass-pane filling.
-- `bedrock`, for a Bedrock player (Geyser): the same window with item buttons, and every action on
-  a tap, the only click Bedrock sends.
-
-Everyone else gets the menus as before, which need no pack. The images are in `assets/` of the
-module's folder; restyle a variant's menu in the editor like any menu, or show nobody a variant
-by ending the display rules on **Show Default**.

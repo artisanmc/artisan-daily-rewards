@@ -22,26 +22,15 @@ public final class ModuleFiles {
     static final String ROOT = "module";
     static final String TEMPLATE = "daily_files";
     /** Raise it whenever a file of {@link #PATHS} changes: untouched copies follow, edited ones merge. */
-    static final int VERSION = 3;
+    static final int VERSION = 2;
 
-    /**
-     * Version 2 split {@code data/calendar} into these two files ({@link CalendarFiles#migrate}).
-     * Version 3 adds the menu's variants ({@code variants.yaml}: {@code textured} for a Java player
-     * who loaded the resource pack, {@code bedrock} for a Bedrock player) and their images.
-     */
+    /** Version 2 split {@code data/calendar} into these two files ({@link CalendarFiles#migrate}). */
     static final List<String> PATHS = List.of(
             CalendarFiles.REWARDS + ".yaml",
             CalendarFiles.SETTINGS + ".yaml",
             "menus/calendar.yaml",
             "models/rewards.yaml",
-            "models/settings.yaml",
-            "assets/glyphs/bg_calendar.png",
-            "assets/glyphs/bg_calendar.yaml",
-            "assets/textures/close.png",
-            "assets/textures/close.yaml",
-            "variants.yaml",
-            "variants/bedrock/menus/calendar.yaml",
-            "variants/textured/menus/calendar.yaml");
+            "models/settings.yaml");
 
     private ModuleFiles() {
     }
