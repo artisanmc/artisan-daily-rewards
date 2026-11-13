@@ -1,10 +1,10 @@
 # ArtisanDailyRewards messages (MiniMessage). Override any key in plugins/ArtisanDailyRewards/artisan_module/lang/en.yml;
 # add a language with plugins/ArtisanDailyRewards/artisan_module/lang/<code>.yml.
-reminder: "<gold>Your daily reward is waiting!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim it'><green>[Claim]</green></hover></click>"
-reminder_many: "<gold><count> daily rewards are waiting for you!</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Claim them'><green>[Claim]</green></hover></click>"
+reminder: "<gold>Your daily reward is waiting!</gold> <click:run_command:/<command> claim><hover:show_text:'<gray>Claim it'><green>[Claim]</green></hover></click>"
+reminder_many: "<gold><count> daily rewards are waiting for you!</gold> <click:run_command:/<command> claim><hover:show_text:'<gray>Claim them'><green>[Claim]</green></hover></click>"
 # Sent the first time the player counts in the game day (join or reset), unless auto-claim is on.
-unlocked: "<gold>Streak <white><streak></white>! You just unlocked the day <white><cycle_day></white> reward.</gold> <click:run_command:/daily><hover:show_text:'<gray>Open /daily'><green>[Collect it]</green></hover></click>"
-unlocked_many: "<gold>Streak <white><streak></white>! You just unlocked the day <white><cycle_day></white> reward, <white><count></white> rewards are waiting.</gold> <click:run_command:/daily><hover:show_text:'<gray>Open /daily'><green>[Collect them]</green></hover></click>"
+unlocked: "<gold>Streak <white><streak></white>! You just unlocked the day <white><cycle_day></white> reward.</gold> <click:run_command:/<command>><hover:show_text:'<gray>Open /<command>'><green>[Collect it]</green></hover></click>"
+unlocked_many: "<gold>Streak <white><streak></white>! You just unlocked the day <white><cycle_day></white> reward, <white><count></white> rewards are waiting.</gold> <click:run_command:/<command>><hover:show_text:'<gray>Open /<command>'><green>[Collect them]</green></hover></click>"
 claim:
   success: "<green>Daily reward claimed! Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"
   success_auto: "<green>Daily reward claimed automatically. Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"
@@ -22,13 +22,13 @@ status:
   loading: "<gray>Your streak is loading, try again in a moment."
   line: "<gold>Streak: <white><streak></white> <gray>| best <white><longest></white> | freezes <white><freezes></white>"
   claimed: "<gray>Today's reward is claimed. Next one in <white><time></white>."
-  waiting: "<green>Your daily reward is waiting:</green> <click:run_command:/daily claim><green>[Claim]</green></click>"
-  waiting_many: "<green><white><count></white> daily rewards are waiting:</green> <click:run_command:/daily claim><green>[Claim]</green></click>"
+  waiting: "<green>Your daily reward is waiting:</green> <click:run_command:/<command> claim><green>[Claim]</green></click>"
+  waiting_many: "<green><white><count></white> daily rewards are waiting:</green> <click:run_command:/<command> claim><green>[Claim]</green></click>"
   at_risk: "<yellow>Play today or your streak ends."
   broken: "<red>Your streak of <white><lost></white> starts again today."
 autoclaim:
   enabled: "<green>Your daily reward will be claimed automatically when you join."
-  disabled: "<gray>Automatic claim turned off: use <white>/daily claim</white>."
+  disabled: "<gray>Automatic claim turned off: use <white>/<command> claim</white>."
   fixed: "<gray>Automatic claim is set by the server, not by each player."
 admin:
   info:

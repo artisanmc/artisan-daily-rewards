@@ -1,9 +1,9 @@
 # Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/ArtisanDailyRewards/artisan_module/lang/fr.yml.
-reminder: "<gold>Ta récompense du jour t'attend !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>La réclamer'><green>[Réclamer]</green></hover></click>"
-reminder_many: "<gold><count> récompenses quotidiennes t'attendent !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Les réclamer'><green>[Réclamer]</green></hover></click>"
+reminder: "<gold>Ta récompense du jour t'attend !</gold> <click:run_command:/<command> claim><hover:show_text:'<gray>La réclamer'><green>[Réclamer]</green></hover></click>"
+reminder_many: "<gold><count> récompenses quotidiennes t'attendent !</gold> <click:run_command:/<command> claim><hover:show_text:'<gray>Les réclamer'><green>[Réclamer]</green></hover></click>"
 # Envoyé la première fois que le joueur compte dans la journée (connexion ou reset), sauf en auto-claim.
-unlocked: "<gold>Streak <white><streak></white> ! Tu viens de débloquer la récompense du jour <white><cycle_day></white>.</gold> <click:run_command:/daily><hover:show_text:'<gray>Ouvrir /daily'><green>[La récupérer]</green></hover></click>"
-unlocked_many: "<gold>Streak <white><streak></white> ! Tu viens de débloquer la récompense du jour <white><cycle_day></white>, <white><count></white> récompenses t'attendent.</gold> <click:run_command:/daily><hover:show_text:'<gray>Ouvrir /daily'><green>[Les récupérer]</green></hover></click>"
+unlocked: "<gold>Streak <white><streak></white> ! Tu viens de débloquer la récompense du jour <white><cycle_day></white>.</gold> <click:run_command:/<command>><hover:show_text:'<gray>Ouvrir /<command>'><green>[La récupérer]</green></hover></click>"
+unlocked_many: "<gold>Streak <white><streak></white> ! Tu viens de débloquer la récompense du jour <white><cycle_day></white>, <white><count></white> récompenses t'attendent.</gold> <click:run_command:/<command>><hover:show_text:'<gray>Ouvrir /<command>'><green>[Les récupérer]</green></hover></click>"
 claim:
   success: "<green>Récompense du jour réclamée ! Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
   success_auto: "<green>Récompense du jour réclamée automatiquement. Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
@@ -21,13 +21,13 @@ status:
   loading: "<gray>Ton streak se charge, réessaie dans un instant."
   line: "<gold>Streak : <white><streak></white> <gray>| record <white><longest></white> | jokers <white><freezes></white>"
   claimed: "<gray>La récompense du jour est réclamée. Prochaine dans <white><time></white>."
-  waiting: "<green>Ta récompense quotidienne t'attend :</green> <click:run_command:/daily claim><green>[Réclamer]</green></click>"
-  waiting_many: "<green><white><count></white> récompenses quotidiennes t'attendent :</green> <click:run_command:/daily claim><green>[Réclamer]</green></click>"
+  waiting: "<green>Ta récompense quotidienne t'attend :</green> <click:run_command:/<command> claim><green>[Réclamer]</green></click>"
+  waiting_many: "<green><white><count></white> récompenses quotidiennes t'attendent :</green> <click:run_command:/<command> claim><green>[Réclamer]</green></click>"
   at_risk: "<yellow>Joue aujourd'hui ou ton streak s'arrête."
   broken: "<red>Ton streak de <white><lost></white> repart de zéro aujourd'hui."
 autoclaim:
   enabled: "<green>Ta récompense du jour sera réclamée automatiquement à la connexion."
-  disabled: "<gray>Réclamation automatique désactivée : utilise <white>/daily claim</white>."
+  disabled: "<gray>Réclamation automatique désactivée : utilise <white>/<command> claim</white>."
   fixed: "<gray>La réclamation automatique est réglée par le serveur, pas par chaque joueur."
 admin:
   info:

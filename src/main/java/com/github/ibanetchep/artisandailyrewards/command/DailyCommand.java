@@ -8,13 +8,16 @@ import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
 import net.artisanmc.modules.api.playercommand.CommandArgument;
 import net.artisanmc.modules.api.playercommand.PlayerCommandContext;
 import net.artisanmc.modules.api.playercommand.PlayerCommandDeclaration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+
+import java.io.File;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * {@code /daily}, declared to Artisan ({@code api.getPlayerCommands()}): opens the calendar menu
+ * {@code /dailyrewards}, declared to Artisan ({@code api.getPlayerCommands()}): opens the calendar menu
  * {@link #MENU}; {@code claim}, {@code autoclaim [on|off]}, and {@code status}, the streak in chat. Artisan checks the permission, parses and
  * completes the arguments. Artisan writes it as {@code commands/daily.yaml} of the module's folder,
  * whose actions call {@link #ID} ({@code module_command}): the admin renames the command, sets its
@@ -24,10 +27,18 @@ public final class DailyCommand {
 
     /** What the command file's {@code module_command} calls; never changes. */
     public static final String ID = "daily:daily";
-    public static final String NAME = "daily";
+    public static final String NAME = "dailyrewards";
     public static final String PERMISSION = "daily.use";
-    /** The system menu of the module's folder {@code /daily} opens. */
+    /** The system menu of the module's folder {@code /dailyrewards} opens. */
     public static final String MENU = "daily:calendar";
+
+    /** The name players type: the admin's rename in {@code commands/daily.yml} of the module's folder, else {@link #NAME}. */
+    public static String nameIn(File moduleDir) {
+        File file = new File(moduleDir, "commands/daily.yml");
+        if (!file.isFile()) return NAME;
+        String name = YamlConfiguration.loadConfiguration(file).getString("name");
+        return name == null || name.isBlank() ? NAME : name;
+    }
 
     private final DailyService service;
     private final Messages messages;

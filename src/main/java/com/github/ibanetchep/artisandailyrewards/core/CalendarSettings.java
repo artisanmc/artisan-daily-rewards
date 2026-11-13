@@ -56,11 +56,11 @@ public record CalendarSettings(
     }
 
     public enum AutoClaim {
-        /** The player claims: {@code /daily claim} or the menu. */
+        /** The player claims: {@code /dailyrewards claim} or the menu. */
         OFF,
         /** The claim goes on its own on join and at the reset. */
         ON,
-        /** Each player chooses with {@code /daily autoclaim}. */
+        /** Each player chooses with {@code /dailyrewards autoclaim}. */
         PLAYER
     }
 
