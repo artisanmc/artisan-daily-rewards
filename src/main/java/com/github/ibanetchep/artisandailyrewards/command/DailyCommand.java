@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * {@code /dailyrewards}, declared to Artisan ({@code api.getPlayerCommands()}): opens the calendar menu
  * {@link #MENU}; {@code claim}, {@code autoclaim [on|off]}, and {@code status}, the streak in chat. Artisan checks the permission, parses and
- * completes the arguments. Artisan writes it as {@code commands/daily.yaml} of the module's folder,
+ * completes the arguments. Artisan writes it as {@code commands/dailyrewards.yml} of the module's folder,
  * whose actions call {@link #ID} ({@code module_command}): the admin renames the command, sets its
  * aliases or a cooldown by editing that file.
  */
@@ -32,9 +32,9 @@ public final class DailyCommand {
     /** The system menu of the module's folder {@code /dailyrewards} opens. */
     public static final String MENU = "daily:calendar";
 
-    /** The name players type: the admin's rename in {@code commands/daily.yml} of the module's folder, else {@link #NAME}. */
+    /** The name players type: the admin's rename in {@code commands/dailyrewards.yml} of the module's folder (Artisan names the file after {@link #NAME}), else {@link #NAME}. */
     public static String nameIn(File moduleDir) {
-        File file = new File(moduleDir, "commands/daily.yml");
+        File file = new File(moduleDir, "commands/" + NAME + ".yml");
         if (!file.isFile()) return NAME;
         String name = YamlConfiguration.loadConfiguration(file).getString("name");
         return name == null || name.isBlank() ? NAME : name;

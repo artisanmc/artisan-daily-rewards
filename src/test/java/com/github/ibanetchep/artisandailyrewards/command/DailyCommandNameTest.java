@@ -22,14 +22,14 @@ class DailyCommandNameTest {
     @Test
     void followsTheAdminsRename() throws Exception {
         Files.createDirectories(moduleDir.resolve("commands"));
-        Files.writeString(moduleDir.resolve("commands/daily.yml"), "schema: command/v1\nname: calendrier\n");
+        Files.writeString(moduleDir.resolve("commands/dailyrewards.yml"), "schema: command/v1\nname: calendrier\n");
         assertEquals("calendrier", DailyCommand.nameIn(moduleDir.toFile()));
     }
 
     @Test
     void ignoresAFileWithoutName() throws Exception {
         Files.createDirectories(moduleDir.resolve("commands"));
-        Files.writeString(moduleDir.resolve("commands/daily.yml"), "schema: command/v1\npermission: daily.use\n");
+        Files.writeString(moduleDir.resolve("commands/dailyrewards.yml"), "schema: command/v1\npermission: daily.use\n");
         assertEquals("dailyrewards", DailyCommand.nameIn(new File(moduleDir.toString())));
     }
 }
