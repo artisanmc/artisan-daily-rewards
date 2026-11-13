@@ -4,7 +4,7 @@ Daily rewards for Paper servers, built on Artisan: each day a player comes count
 streak and earns a reward they claim, then or later; they keep a streak, earn bigger rewards as the streak grows, loop through a reward cycle, and can save a
 broken streak with jokers or a paid restore.
 
-Requires Paper 1.21+ (Folia supported) and **Artisan with API 1.0.0 or later**. Artisan provides
+Requires Paper 1.21+ (Folia supported) and **Artisan with API 1.1.0 or later**. Artisan provides
 the database (H2, MySQL or MariaDB, set in `plugins/Artisan/environment.yml`), the action engine
 that pays the rewards, the menus and the editor.
 
@@ -14,7 +14,7 @@ actions and the placeholders come next.
 
 ## Calendar
 
-Artisan keeps these files in `plugins/Artisan/modules/daily/` (a system template: a missing file
+Artisan keeps these files in `plugins/ArtisanDailyRewards/artisan_module/` (a system template: a missing file
 is written again, an edited one stays yours until Reset in the editor):
 
 - `data/settings.yml`: reset time, auto-claim, playtime before the day counts, join reminder,

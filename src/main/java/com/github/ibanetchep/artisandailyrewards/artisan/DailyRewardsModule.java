@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 /**
  * ArtisanDailyRewards inside Artisan:
  * <ul>
- *   <li>the module's folder {@code plugins/Artisan/modules/daily/}, whose {@code data/settings.yml}
+ *   <li>the module's folder {@code plugins/ArtisanDailyRewards/artisan_module/}, whose {@code data/settings.yml}
  *       and {@code data/rewards.yml} ({@link CalendarFiles}) are edited in the editor's Settings
  *       screen ({@link SettingsModel}, a generated form) and Rewards screen ({@link RewardsModel},
  *       a grid of the cycle from the module's editor bundle, {@link #EDITOR_BUNDLE});</li>
@@ -33,6 +33,8 @@ public final class DailyRewardsModule implements ArtisanModule {
 
     public static final String ID = "daily";
     public static final String FOLDER = "daily";
+    /** The folder of the module's files inside the plugin's data folder. */
+    public static final String MODULE_DIR = "artisan_module";
     /** The editor view of the module (the Rewards grid), built from {@code editor/} into the jar. */
     static final String EDITOR_BUNDLE = "artisan-editor/ui.js";
     /** The {@code @artisan/editor-sdk} version the bundle is built against: keep it with editor/package.json. */
@@ -43,9 +45,11 @@ public final class DailyRewardsModule implements ArtisanModule {
     private final Logger logger;
     /** Where the old {@code data/calendar.yml} is copied when it is split: the plugin's own folder. */
     private final File backupDir;
+    private final File moduleDir;
     private @Nullable File folder;
 
-    public DailyRewardsModule(DailyService service, List<PlayerCommandDeclaration> commands, Logger logger, File backupDir) {
+    public DailyRewardsModule(DailyService service, List<PlayerCommandDeclaration> commands, Logger logger, File backupDir, File moduleDir) {
+        this.moduleDir = moduleDir;
         this.service = service;
         this.commands = commands;
         this.logger = logger;
@@ -154,13 +158,13 @@ public final class DailyRewardsModule implements ArtisanModule {
         }
     }
 
-    /** {@code modules/daily/}, before any template: Artisan seeds the shipped files there. */
+    /** {@code plugins/ArtisanDailyRewards/artisan_module/}, before any template: Artisan seeds the shipped files there. */
     private void claimFolder(ArtisanAPI api) {
         try {
-            folder = api.getProjectRoots().moduleFolder(FOLDER, ID, null);
+            folder = api.getProjectRoots().pluginFolder(FOLDER, ID, moduleDir);
             logger.fine("Module folder: " + folder.getPath());
         } catch (IllegalArgumentException | IllegalStateException | UnsupportedOperationException e) {
-            logger.log(Level.WARNING, "The folder plugins/Artisan/modules/" + FOLDER + " is not available", e);
+            logger.log(Level.WARNING, "The folder " + moduleDir.getPath() + " is not available", e);
         }
     }
 }

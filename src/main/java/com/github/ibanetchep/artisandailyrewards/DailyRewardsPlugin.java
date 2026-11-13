@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.time.LocalTime;
+import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -28,10 +29,11 @@ public final class DailyRewardsPlugin extends JavaPlugin {
     /**
      * Lowest Artisan API this plugin compiles against: messages in the module's folder, system
      * templates, {@code MessageBundle.send}, {@code DatabaseApi.tablePrefix},
-     * {@code ProjectRootRegistry.moduleFolder}, Config screens with a module view,
+     * {@code ProjectRootRegistry.pluginFolder} (1.1.0: the module's files in this plugin's own folder,
+     * {@code plugins/ArtisanDailyRewards/artisan_module/}), Config screens with a module view,
      * {@code PlayerCommandRegistry}, {@code TemplateRegistry}, {@code TranslationsApi}.
      */
-    public static final String MIN_API_VERSION = "1.0.0";
+    public static final String MIN_API_VERSION = "1.1.0";
 
     private @Nullable ArtisanAPI api;
     private @Nullable DailyService service;
@@ -70,7 +72,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
 
         api.getModules().register(new DailyRewardsModule(service, List.of(
                 new DailyCommand(service, messages).declaration(),
-                new DailyAdminCommand(service, messages, getLogger()).declaration()), getLogger(), getDataFolder()));
+                new DailyAdminCommand(service, messages, getLogger()).declaration()), getLogger(), getDataFolder(), moduleDir()));
         getServer().getPluginManager().registerEvents(new PlayerConnectionListener(service), this);
 
         // After a reload of the plugin, players already online are loaded (and greeted) as if they joined.
@@ -85,16 +87,16 @@ public final class DailyRewardsPlugin extends JavaPlugin {
     }
 
     /**
-     * The messages, read from {@code plugins/Artisan/modules/daily/lang/} beside the module's
+     * The messages, read from {@code plugins/ArtisanDailyRewards/artisan_module/lang/} beside the module's
      * other files: Artisan moves {@code plugins/ArtisanDailyRewards/lang/*.yml} there once. Without that
      * folder they stay in this plugin's.
      */
     private MessageBundleDeclaration messageFiles(ArtisanAPI api) {
         MessageBundleDeclaration files = MessageBundleDeclaration.files(this, Messages.NAMESPACE, "en", "fr");
         try {
-            return files.inFolder(api.getProjectRoots().moduleFolder(DailyRewardsModule.FOLDER, DailyRewardsModule.ID, null));
+            return files.inFolder(api.getProjectRoots().pluginFolder(DailyRewardsModule.FOLDER, DailyRewardsModule.ID, moduleDir()));
         } catch (RuntimeException e) {
-            getLogger().log(Level.WARNING, "No folder plugins/Artisan/modules/" + DailyRewardsModule.FOLDER
+            getLogger().log(Level.WARNING, "No folder " + moduleDir().getPath()
                     + ": the messages stay in plugins/" + getName() + "/lang/", e);
             return files;
         }
@@ -129,5 +131,10 @@ public final class DailyRewardsPlugin extends JavaPlugin {
                     + MIN_API_VERSION + "+.", e);
             return null;
         }
+    }
+
+    /** The module's files, in this plugin's own folder: Artisan moves a former {@code plugins/Artisan/modules/daily/} there once. */
+    private File moduleDir() {
+        return new File(getDataFolder(), DailyRewardsModule.MODULE_DIR);
     }
 }
