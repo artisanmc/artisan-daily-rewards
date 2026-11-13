@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
- * The files the plugin ships for its folder {@code plugins/Artisan/modules/daily/}: the calendar
+ * The files the plugin ships for its folder {@code plugins/ArtisanDailyRewards/artisan_module/}: the calendar
  * menu, the settings, the rewards and their models, a system template Artisan keeps there
  * ({@code TemplateDeclaration.system()}). A missing file is written again, an untouched one
  * follows each new version, an edited one stays the admin's until Reset in the editor, and a

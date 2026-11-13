@@ -1,4 +1,4 @@
-# Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/Artisan/modules/daily/lang/fr.yml.
+# Messages d'ArtisanDailyRewards (MiniMessage). Surcharge une clé dans plugins/ArtisanDailyRewards/artisan_module/lang/fr.yml.
 reminder: "<gold>Ta récompense du jour t'attend !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>La réclamer'><green>[Réclamer]</green></hover></click>"
 reminder_many: "<gold><count> récompenses quotidiennes t'attendent !</gold> <click:run_command:/daily claim><hover:show_text:'<gray>Les réclamer'><green>[Réclamer]</green></hover></click>"
 # Envoyé la première fois que le joueur compte dans la journée (connexion ou reset), sauf en auto-claim.
