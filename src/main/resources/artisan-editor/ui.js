@@ -19,7 +19,7 @@ const O = {
   editDefault: "Edit the reward of the other days",
   reset: "Back to the reward of the other days",
   icon: "Icon",
-  iconHint: "Shown in the /daily menu: name it after the reward.",
+  iconHint: "Shown in the calendar menu: name it after the reward.",
   actions: "Actions",
   actionsHint: "Run when the day is claimed: give_item, give_money, a command… ({streak}, {cycle_day}, {cycle_length}).",
   steps: "{{count}} step(s)",
@@ -46,7 +46,7 @@ const O = {
   editDefault: "Modifier la récompense des autres jours",
   reset: "Revenir à la récompense des autres jours",
   icon: "Icône",
-  iconHint: "Affichée dans le menu /daily : nomme-la d'après la récompense.",
+  iconHint: "Affichée dans le calendrier : nomme-la d'après la récompense.",
   actions: "Actions",
   actionsHint: "Exécutées quand le jour est réclamé : give_item, give_money, une commande… ({streak}, {cycle_day}, {cycle_length}).",
   steps: "{{count}} étape(s)",
@@ -74,8 +74,8 @@ function w(e) {
 function F(e) {
   const a = v(e), n = w(e), l = c(e.default_day);
   return Array.from({ length: a }, (t, r) => {
-    const u = r + 1, y = n.get(u);
-    return { day: u, own: y !== void 0, reward: y ?? l };
+    const u = r + 1, p = n.get(u);
+    return { day: u, own: p !== void 0, reward: p ?? l };
   });
 }
 function G(e) {
@@ -109,7 +109,7 @@ function $(e, a, n) {
   if (typeof t.key == "string") return n(t.key);
   const r = t[a];
   if (typeof r == "string") return r;
-  const u = Object.values(t).find((y) => typeof y == "string");
+  const u = Object.values(t).find((p) => typeof p == "string");
   return typeof u == "string" ? u : "";
 }
 function U(e, a) {
@@ -122,7 +122,7 @@ function U(e, a) {
   return n;
 }
 function Q({ projectId: e, value: a, set: n, readOnly: l }) {
-  const t = g(), r = c(a) ?? {}, u = F(r), y = G(r), p = c(r.default_day), [o, m] = M(null), h = k(e), A = (d) => h ? C(h, d, S(h)[0] ?? "en") : "", x = (d, f) => n(["days"], V(r, d, f));
+  const t = g(), r = c(a) ?? {}, u = F(r), p = G(r), y = c(r.default_day), [o, m] = M(null), h = k(e), A = (d) => h ? C(h, d, S(h)[0] ?? "en") : "", x = (d, f) => n(["days"], V(r, d, f));
   return /* @__PURE__ */ s("div", { className: "daily-rewards", children: [
     /* @__PURE__ */ s("div", { className: "daily-toolbar", children: [
       /* @__PURE__ */ s("label", { className: "daily-cycle", children: [
@@ -148,10 +148,10 @@ function Q({ projectId: e, value: a, set: n, readOnly: l }) {
         /* @__PURE__ */ i("span", { className: "daily-legend-default", children: t("legendDefault") })
       ] })
     ] }),
-    y.length > 0 && /* @__PURE__ */ s("div", { className: "daily-outside", role: "alert", children: [
+    p.length > 0 && /* @__PURE__ */ s("div", { className: "daily-outside", role: "alert", children: [
       /* @__PURE__ */ i("strong", { children: t("outsideTitle") }),
       /* @__PURE__ */ i("span", { children: t("outsideHint") }),
-      /* @__PURE__ */ i("div", { className: "daily-outside-days", children: y.map((d) => /* @__PURE__ */ s(
+      /* @__PURE__ */ i("div", { className: "daily-outside-days", children: p.map((d) => /* @__PURE__ */ s(
         "button",
         {
           type: "button",
@@ -175,10 +175,10 @@ function Q({ projectId: e, value: a, set: n, readOnly: l }) {
             className: `daily-default${o === "default" ? " is-selected" : ""}`,
             onClick: () => m("default"),
             children: [
-              /* @__PURE__ */ i(N, { reward: p }),
+              /* @__PURE__ */ i(N, { reward: y }),
               /* @__PURE__ */ s("span", { className: "daily-default-text", children: [
                 /* @__PURE__ */ i("span", { className: "daily-default-title", children: t("defaultTitle") }),
-                /* @__PURE__ */ i("span", { className: "daily-faint", children: t(p ? "defaultHint" : "defaultNone") })
+                /* @__PURE__ */ i("span", { className: "daily-faint", children: t(y ? "defaultHint" : "defaultNone") })
               ] })
             ]
           }
@@ -194,12 +194,12 @@ function Q({ projectId: e, value: a, set: n, readOnly: l }) {
           d.day
         )) })
       ] }),
-      /* @__PURE__ */ i("aside", { className: "daily-panel", children: o === null ? /* @__PURE__ */ i("p", { className: "daily-faint", children: t("pick") }) : o === "default" ? /* @__PURE__ */ i(b, { title: t("defaultTitle"), hint: t(p ? "defaultHint" : "defaultNone"), children: p ? /* @__PURE__ */ s(I, { children: [
+      /* @__PURE__ */ i("aside", { className: "daily-panel", children: o === null ? /* @__PURE__ */ i("p", { className: "daily-faint", children: t("pick") }) : o === "default" ? /* @__PURE__ */ i(b, { title: t("defaultTitle"), hint: t(y ? "defaultHint" : "defaultNone"), children: y ? /* @__PURE__ */ s(I, { children: [
         /* @__PURE__ */ i(
           T,
           {
             projectId: e,
-            reward: p,
+            reward: y,
             readOnly: l,
             onChange: (d, f) => n(["default_day", ...d], f)
           }
@@ -229,9 +229,9 @@ function Q({ projectId: e, value: a, set: n, readOnly: l }) {
           day: o,
           projectId: e,
           own: w(r).get(o),
-          fallback: p,
+          fallback: y,
           readOnly: l,
-          onCustomize: () => x(o, U(p, A) ?? { icon: { material: "CHEST" }, actions: [] }),
+          onCustomize: () => x(o, U(y, A) ?? { icon: { material: "CHEST" }, actions: [] }),
           onReset: () => x(o, void 0),
           onChange: (d, f) => n(["days", X(r, o), ...d], f),
           onEditDefault: () => m("default")
@@ -284,8 +284,8 @@ function ee({
   readOnly: t,
   onCustomize: r,
   onReset: u,
-  onChange: y,
-  onEditDefault: p
+  onChange: p,
+  onEditDefault: y
 }) {
   const o = g(), m = H(a, (n ?? l)?.icon);
   if (!n) {
@@ -299,11 +299,11 @@ function ee({
         ] })
       ] }),
       /* @__PURE__ */ i("button", { type: "button", className: "btn btn-sm", disabled: t, onClick: r, children: o("customize") }),
-      /* @__PURE__ */ i("button", { type: "button", className: "btn btn-ghost btn-sm", onClick: p, children: o("editDefault") })
+      /* @__PURE__ */ i("button", { type: "button", className: "btn btn-ghost btn-sm", onClick: y, children: o("editDefault") })
     ] });
   }
   return /* @__PURE__ */ s(b, { title: o("day", { day: e }), hint: o("ownHint"), children: [
-    /* @__PURE__ */ i(T, { projectId: a, reward: n, readOnly: t, onChange: y }),
+    /* @__PURE__ */ i(T, { projectId: a, reward: n, readOnly: t, onChange: p }),
     /* @__PURE__ */ i("button", { type: "button", className: "btn btn-ghost btn-sm", disabled: t, onClick: u, children: o("reset") })
   ] });
 }

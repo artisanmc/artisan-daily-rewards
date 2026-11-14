@@ -285,7 +285,7 @@ public final class DailyService {
 
     /**
      * The first time the player is counted on a game day: today's reward is unlocked, a click on
-     * the message opens {@code /daily}; with the rewards of the days before when some still wait.
+     * the message opens {@code /dailyrewards}; with the rewards of the days before when some still wait.
      */
     private void unlocked(Player player, CheckInResult result, CalendarSettings current) {
         int waiting = unclaimed(player.getUniqueId());
@@ -332,7 +332,7 @@ public final class DailyService {
     /**
      * Claims every reward that waits for {@code player}: today's, counted first when the player
      * has played long enough, and those of the days before when they were there without claiming.
-     * From {@code /daily claim}, the menu, the action or auto-claim. Call on the player's thread;
+     * From {@code /dailyrewards claim}, the menu, the action or auto-claim. Call on the player's thread;
      * answers there.
      */
     public void claim(Player player, boolean automatic) {
@@ -431,7 +431,7 @@ public final class DailyService {
 
     // ---- Auto-claim choice
 
-    /** {@code /daily autoclaim}: sets the choice, or flips it when {@code enabled} is null. */
+    /** {@code /dailyrewards autoclaim}: sets the choice, or flips it when {@code enabled} is null. */
     public void setAutoClaim(Player player, @Nullable Boolean enabled) {
         if (settings.autoClaim() != CalendarSettings.AutoClaim.PLAYER) {
             messages.send(player, "autoclaim.fixed");
