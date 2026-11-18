@@ -39,8 +39,8 @@ is written again, an edited one stays yours until Reset in the editor):
   their own reward highlighted, the others showing `default_day` faded; a click on a day edits it,
   gives it its own reward or sends it back to `default_day`.
 - `menus/calendar.yml`: what `/daily` opens. The last 7 days as they went (claimed, waiting to be
-  claimed, missed), today (a click claims everything that waits), and the next 20 days with the
-  reward each one pays if the player comes every day.
+  claimed, missed), today (a click claims everything that waits), and the next 104 days with the
+  reward each one pays if the player comes every day, 28 days a page (arrows at the bottom).
 
 Before version 2 of these files, everything was in `data/calendar.yml`. At startup an edited
 `data/calendar.yml` is split into the two files (the old one is copied to

@@ -14,4 +14,5 @@ sidebar:
   **Settings** and **Rewards** screens; an older `data/calendar.yml` is split on start.
 - The calendar menu previews in the editor with a sample player (every state of a day) and the rewards
   being edited; previewed as a player, its days as they went with the draft's rewards.
+- The calendar menu pages through the next 104 days, 28 a page.
 - Not yet: paid restore, tiers, milestones, `daily:*` actions, placeholders.
