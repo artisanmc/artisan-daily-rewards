@@ -1,13 +1,13 @@
-import { createModuleI18n as z, useProject as T, useItemTexture as M, McText as A, ItemValueInput as U, ActionChainEditor as O, useContentLang as I, textValue as j, projectLangs as P, injectModuleStyles as F } from "@artisan/editor-sdk";
-import { jsxs as d, jsx as s, Fragment as $ } from "react/jsx-runtime";
-import { useState as q } from "react";
-const J = 28, Y = 7;
+import { createModuleI18n as z, useProject as T, useItemTexture as U, McText as A, ItemValueInput as O, ActionChainEditor as P, useContentLang as I, textValue as j, projectLangs as F, injectModuleStyles as $ } from "@artisan/editor-sdk";
+import { jsxs as d, jsx as s, Fragment as q } from "react/jsx-runtime";
+import { useState as J } from "react";
+const W = 28, Y = 7;
 function f(e) {
   return e && typeof e == "object" && !Array.isArray(e) ? e : void 0;
 }
 function b(e) {
   const t = Number(e.cycle_length);
-  return Number.isInteger(t) && t >= 1 ? t : J;
+  return Number.isInteger(t) && t >= 1 ? t : W;
 }
 function w(e) {
   const t = /* @__PURE__ */ new Map();
@@ -17,37 +17,37 @@ function w(e) {
   }
   return t;
 }
-function W(e) {
+function G(e) {
   const t = b(e), a = w(e), i = f(e.default_day);
   return Array.from({ length: t }, (n, r) => {
     const l = r + 1, u = a.get(l);
     return { day: l, own: u !== void 0, reward: u ?? i };
   });
 }
-function G(e) {
+function V(e) {
   const t = b(e);
   return [...w(e).keys()].filter((a) => a > t).sort((a, i) => a - i);
 }
-function V(e, t, a) {
+function B(e, t, a) {
   const i = Object.entries(f(e.days) ?? {}).filter(([n]) => Number(n) !== t);
   return a !== void 0 && i.push([String(t), a]), i.sort(([n], [r]) => Number(n) - Number(r)), Object.fromEntries(i);
 }
-function B(e) {
+function K(e) {
   return e === void 0 ? e : JSON.parse(JSON.stringify(e));
 }
-function K(e) {
+function X(e) {
   if (typeof e == "string") return e;
   const t = f(e), a = t?.extends ?? t?.item ?? t?.material;
   return typeof a == "string" ? a : "";
 }
-function X(e) {
+function Q(e) {
   const t = f(e)?.count;
   return typeof t == "number" && t > 1 ? t : 1;
 }
-function Q(e) {
+function Z(e) {
   return Array.isArray(e?.actions) ? e.actions.length : 0;
 }
-function Z(e, t, a) {
+function ee(e, t, a) {
   const i = f(e)?.title;
   if (typeof i == "string") return i;
   const n = f(i);
@@ -58,8 +58,8 @@ function Z(e, t, a) {
   const l = Object.values(n).find((u) => typeof u == "string");
   return typeof l == "string" ? l : "";
 }
-function ee(e, t) {
-  const a = B(e), i = f(a?.icon);
+function te(e, t) {
+  const a = K(e), i = f(a?.icon);
   if (!i) return a;
   for (const n of ["title", "lore"]) {
     const r = f(i[n]);
@@ -67,18 +67,23 @@ function ee(e, t) {
   }
   return a;
 }
-const te = "daily:calendar", D = "daily:status", ae = "rewards", ne = 7, ie = 20, se = 35, S = { material: "PAPER" }, re = 864e5;
-function le(e) {
+const ae = "daily:calendar", D = "daily:status", ne = "rewards", ie = 7, se = 20, re = 35, S = { material: "PAPER" }, le = 864e5;
+function R(e) {
   const t = e?.dataSources?.find(
-    (a) => String(a.id) === ae
+    (a) => String(a.id) === ne
   );
   if (!(!t || t.shape !== "config"))
     return f(t.value);
 }
+function oe(e) {
+  if (R(e)) return !0;
+  const t = e;
+  return t?.ownerModule === "daily" || String(t?.id ?? "") === "daily" || String(t?.id ?? "").endsWith(":daily");
+}
 function x(e, t) {
   return e < 1 ? 1 : (e - 1) % t + 1;
 }
-function R(e, t) {
+function H(e, t) {
   if (!(t < 1))
     return w(e).get(t) ?? f(e.default_day);
 }
@@ -88,7 +93,7 @@ function C(e, t, a) {
   const n = Number.parseInt(String(i).trim(), 10);
   return Number.isNaN(n) ? a : n;
 }
-function oe(e, t, a) {
+function de(e, t, a) {
   const i = [
     { status: "claimed", streak: 1 },
     { status: "claimed", streak: 2 },
@@ -111,8 +116,8 @@ function oe(e, t, a) {
 function g(e) {
   return String(e).padStart(2, "0");
 }
-function de(e, t, a) {
-  const i = new Date(Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()) + e.offset * re), n = R(t, e.cycleDay);
+function ce(e, t, a) {
+  const i = new Date(Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()) + e.offset * le), n = H(t, e.cycleDay);
   return {
     id: `${i.getUTCFullYear()}-${g(i.getUTCMonth() + 1)}-${g(i.getUTCDate())}`,
     date: `${g(i.getUTCDate())}/${g(i.getUTCMonth() + 1)}`,
@@ -129,11 +134,11 @@ function de(e, t, a) {
     icon: n?.icon ?? S
   };
 }
-function ce(e, t) {
-  const a = R(t, Number(e.cycle_day) || 0);
+function ue(e, t) {
+  const a = H(t, Number(e.cycle_day) || 0);
   return { ...e, has_reward: a !== void 0, icon: a?.icon ?? S };
 }
-function ue(e) {
+function fe(e) {
   return {
     id: "status",
     loaded: !0,
@@ -153,18 +158,16 @@ function ue(e) {
     until_reset: "3h 12m"
   };
 }
-function fe(e, t, a, i = /* @__PURE__ */ new Date()) {
-  if (t !== te && t !== D) return null;
-  const n = le(e);
-  if (!n) return null;
-  const r = b(n), l = a?.serverRows;
+function ye(e, t, a, i = /* @__PURE__ */ new Date()) {
+  if (t !== ae && t !== D || !oe(e)) return null;
+  const n = R(e) ?? {}, r = b(n), l = a?.serverRows;
   if (t === D) {
-    const o = l?.filter((y) => y.loaded === !0) ?? [];
-    return o.length > 0 ? o.map((y) => ({ ...y, cycle_length: r })) : [ue(r)];
+    const o = l?.filter((p) => p.loaded === !0) ?? [];
+    return o.length > 0 ? o.map((p) => ({ ...p, cycle_length: r })) : [fe(r)];
   }
-  if (l && l.length > 0) return l.map((o) => ce(o, n));
-  const u = Math.max(0, Math.min(se, C(a?.params, "past", ne))), p = Math.max(0, C(a?.params, "future", ie));
-  return oe(u, p, r).map((o) => de(o, n, i));
+  if (l && l.length > 0) return l.map((o) => ue(o, n));
+  const u = Math.max(0, Math.min(re, C(a?.params, "past", ie))), y = Math.max(0, C(a?.params, "future", se));
+  return de(u, y, r).map((o) => ce(o, n, i));
 }
 const pe = {
   cycleLength: "Cycle length",
@@ -193,7 +196,7 @@ const pe = {
   outsideHint: "The plugin refuses the file while these days are listed: lengthen the cycle or remove them.",
   remove: "Remove day {{day}}",
   pick: "Click a day to edit its reward."
-}, ye = {
+}, me = {
   cycleLength: "Longueur du cycle",
   cycleHint: "Jours avant que les récompenses reprennent au jour 1. Le streak continue.",
   days: "{{count}} jours",
@@ -220,9 +223,9 @@ const pe = {
   outsideHint: "Le plugin refuse le fichier tant que ces jours y sont : allonge le cycle ou retire-les.",
   remove: "Retirer le jour {{day}}",
   pick: "Clique sur un jour pour modifier sa récompense."
-}, v = z({ en: pe, fr: ye });
-function me({ projectId: e, value: t, set: a, readOnly: i }) {
-  const n = v(), r = f(t) ?? {}, l = W(r), u = G(r), p = f(r.default_day), [o, y] = q(null), h = T(e), L = (c) => h ? j(h, c, P(h)[0] ?? "en") : "", N = (c, m) => a(["days"], V(r, c, m));
+}, v = z({ en: pe, fr: me });
+function he({ projectId: e, value: t, set: a, readOnly: i }) {
+  const n = v(), r = f(t) ?? {}, l = G(r), u = V(r), y = f(r.default_day), [o, p] = J(null), h = T(e), M = (c) => h ? j(h, c, F(h)[0] ?? "en") : "", N = (c, m) => a(["days"], B(r, c, m));
   return /* @__PURE__ */ d("div", { className: "daily-rewards", children: [
     /* @__PURE__ */ d("div", { className: "daily-toolbar", children: [
       /* @__PURE__ */ d("label", { className: "daily-cycle", children: [
@@ -273,33 +276,33 @@ function me({ projectId: e, value: t, set: a, readOnly: i }) {
           {
             type: "button",
             className: `daily-default${o === "default" ? " is-selected" : ""}`,
-            onClick: () => y("default"),
+            onClick: () => p("default"),
             children: [
-              /* @__PURE__ */ s(k, { reward: p }),
+              /* @__PURE__ */ s(k, { reward: y }),
               /* @__PURE__ */ d("span", { className: "daily-default-text", children: [
                 /* @__PURE__ */ s("span", { className: "daily-default-title", children: n("defaultTitle") }),
-                /* @__PURE__ */ s("span", { className: "daily-faint", children: n(p ? "defaultHint" : "defaultNone") })
+                /* @__PURE__ */ s("span", { className: "daily-faint", children: n(y ? "defaultHint" : "defaultNone") })
               ] })
             ]
           }
         ),
         /* @__PURE__ */ s("div", { className: "daily-grid", style: { gridTemplateColumns: `repeat(${Y}, minmax(0, 1fr))` }, children: l.map((c) => /* @__PURE__ */ s(
-          ge,
+          xe,
           {
             cell: c,
             projectId: e,
             selected: o === c.day,
-            onSelect: () => y(c.day)
+            onSelect: () => p(c.day)
           },
           c.day
         )) })
       ] }),
-      /* @__PURE__ */ s("aside", { className: "daily-panel", children: o === null ? /* @__PURE__ */ s("p", { className: "daily-faint", children: n("pick") }) : o === "default" ? /* @__PURE__ */ s(_, { title: n("defaultTitle"), hint: n(p ? "defaultHint" : "defaultNone"), children: p ? /* @__PURE__ */ d($, { children: [
+      /* @__PURE__ */ s("aside", { className: "daily-panel", children: o === null ? /* @__PURE__ */ s("p", { className: "daily-faint", children: n("pick") }) : o === "default" ? /* @__PURE__ */ s(_, { title: n("defaultTitle"), hint: n(y ? "defaultHint" : "defaultNone"), children: y ? /* @__PURE__ */ d(q, { children: [
         /* @__PURE__ */ s(
-          E,
+          L,
           {
             projectId: e,
-            reward: p,
+            reward: y,
             readOnly: i,
             onChange: (c, m) => a(["default_day", ...c], m)
           }
@@ -324,32 +327,32 @@ function me({ projectId: e, value: t, set: a, readOnly: i }) {
           children: n("defaultAdd")
         }
       ) }) : /* @__PURE__ */ s(
-        xe,
+        be,
         {
           day: o,
           projectId: e,
           own: w(r).get(o),
-          fallback: p,
+          fallback: y,
           readOnly: i,
-          onCustomize: () => N(o, ee(p, L) ?? { icon: { material: "CHEST" }, actions: [] }),
+          onCustomize: () => N(o, te(y, M) ?? { icon: { material: "CHEST" }, actions: [] }),
           onReset: () => N(o, void 0),
-          onChange: (c, m) => a(["days", he(r, o), ...c], m),
-          onEditDefault: () => y("default")
+          onChange: (c, m) => a(["days", ge(r, o), ...c], m),
+          onEditDefault: () => p("default")
         }
       ) })
     ] })
   ] });
 }
-function he(e, t) {
+function ge(e, t) {
   return Object.keys(f(e.days) ?? {}).find((a) => Number(a) === t) ?? String(t);
 }
-function ge({
+function xe({
   cell: e,
   projectId: t,
   selected: a,
   onSelect: i
 }) {
-  const n = v(), r = H(t, e.reward?.icon), l = ["daily-cell", e.own ? "is-own" : "is-default", a ? "is-selected" : ""];
+  const n = v(), r = E(t, e.reward?.icon), l = ["daily-cell", e.own ? "is-own" : "is-default", a ? "is-selected" : ""];
   return /* @__PURE__ */ d("button", { type: "button", className: l.join(" "), onClick: i, title: n("day", { day: e.day }), children: [
     /* @__PURE__ */ s("span", { className: "daily-cell-day", children: e.day }),
     /* @__PURE__ */ s(k, { reward: e.reward }),
@@ -357,15 +360,15 @@ function ge({
   ] });
 }
 function k({ reward: e }) {
-  const t = e?.icon, a = K(t), i = M(a), n = X(t);
+  const t = e?.icon, a = X(t), i = U(a), n = Q(t);
   return /* @__PURE__ */ d("span", { className: "daily-slot", children: [
     i ? /* @__PURE__ */ s("img", { src: i, alt: a, draggable: !1 }) : /* @__PURE__ */ s("span", { className: "daily-slot-name", children: a ? a.slice(0, 3) : "—" }),
     n > 1 && /* @__PURE__ */ s("span", { className: "daily-slot-count", children: n })
   ] });
 }
-function H(e, t) {
+function E(e, t) {
   const a = T(e), i = I();
-  return Z(t, i, (n) => a ? j(a, n, i) : "");
+  return ee(t, i, (n) => a ? j(a, n, i) : "");
 }
 function _({ title: e, hint: t, children: a }) {
   return /* @__PURE__ */ d("div", { className: "daily-panel-body", children: [
@@ -376,7 +379,7 @@ function _({ title: e, hint: t, children: a }) {
     a
   ] });
 }
-function xe({
+function be({
   day: e,
   projectId: t,
   own: a,
@@ -385,29 +388,29 @@ function xe({
   onCustomize: r,
   onReset: l,
   onChange: u,
-  onEditDefault: p
+  onEditDefault: y
 }) {
-  const o = v(), y = H(t, (a ?? i)?.icon);
+  const o = v(), p = E(t, (a ?? i)?.icon);
   if (!a) {
-    const h = Q(i);
+    const h = Z(i);
     return /* @__PURE__ */ d(_, { title: o("day", { day: e }), hint: o("inheritHint"), children: [
       /* @__PURE__ */ d("div", { className: "daily-inherited", children: [
         /* @__PURE__ */ s(k, { reward: i }),
         /* @__PURE__ */ d("span", { className: "daily-inherited-text", children: [
-          y ? /* @__PURE__ */ s(A, { source: y, scale: 1 }) : /* @__PURE__ */ s("span", { className: "daily-faint", children: o("defaultNone") }),
+          p ? /* @__PURE__ */ s(A, { source: p, scale: 1 }) : /* @__PURE__ */ s("span", { className: "daily-faint", children: o("defaultNone") }),
           /* @__PURE__ */ s("span", { className: "daily-faint", children: h > 0 ? o("steps", { count: h }) : o("noActions") })
         ] })
       ] }),
       /* @__PURE__ */ s("button", { type: "button", className: "btn btn-sm", disabled: n, onClick: r, children: o("customize") }),
-      /* @__PURE__ */ s("button", { type: "button", className: "btn btn-ghost btn-sm", onClick: p, children: o("editDefault") })
+      /* @__PURE__ */ s("button", { type: "button", className: "btn btn-ghost btn-sm", onClick: y, children: o("editDefault") })
     ] });
   }
   return /* @__PURE__ */ d(_, { title: o("day", { day: e }), hint: o("ownHint"), children: [
-    /* @__PURE__ */ s(E, { projectId: t, reward: a, readOnly: n, onChange: u }),
+    /* @__PURE__ */ s(L, { projectId: t, reward: a, readOnly: n, onChange: u }),
     /* @__PURE__ */ s("button", { type: "button", className: "btn btn-ghost btn-sm", disabled: n, onClick: l, children: o("reset") })
   ] });
 }
-function E({
+function L({
   projectId: e,
   reward: t,
   readOnly: a,
@@ -418,13 +421,13 @@ function E({
     /* @__PURE__ */ d("div", { children: [
       /* @__PURE__ */ s("div", { className: "field-label", children: n("icon") }),
       /* @__PURE__ */ s("div", { className: "daily-faint", children: n("iconHint") }),
-      /* @__PURE__ */ s(U, { projectId: e, value: t.icon, onChange: (r) => i(["icon"], r) })
+      /* @__PURE__ */ s(O, { projectId: e, value: t.icon, onChange: (r) => i(["icon"], r) })
     ] }),
     /* @__PURE__ */ d("div", { children: [
       /* @__PURE__ */ s("div", { className: "field-label", children: n("actions") }),
       /* @__PURE__ */ s("div", { className: "daily-faint", children: n("actionsHint") }),
       /* @__PURE__ */ s(
-        O,
+        P,
         {
           projectId: e,
           value: Array.isArray(t.actions) ? t.actions : [],
@@ -434,7 +437,7 @@ function E({
     ] })
   ] });
 }
-const be = `
+const we = `
 .daily-rewards { display: flex; flex-direction: column; gap: 16px; }
 .daily-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .daily-cycle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -484,17 +487,17 @@ const be = `
   background: var(--surface-inset); }
 .daily-inherited-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 `;
-F("daily", be);
-const we = {
+$("daily", we);
+const ve = {
   id: "daily",
   displayName: "Daily rewards",
   schemaVersion: "daily/v1",
   sidebar: { icon: () => null, label: "Daily rewards", to: "/m/daily" },
   routes: [],
-  screens: { rewards: me },
+  screens: { rewards: he },
   // The calendar menu previewed in the editor: its days, from the rewards draft.
-  localPreviewRows: fe
-}, ke = { ...we, sdk: "1.20.0" };
+  localPreviewRows: ye
+}, De = { ...ve, sdk: "1.20.0" };
 export {
-  ke as default
+  De as default
 };

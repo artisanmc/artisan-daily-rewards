@@ -48,6 +48,13 @@ export function rewardsOf(project: unknown): RewardsValue | undefined {
   return asObject(source.value) as RewardsValue | undefined;
 }
 
+/** The daily folder: it holds the calendar menu or the rewards (`project-id` `addon:daily`). */
+export function isDailyProject(project: unknown): boolean {
+  if (rewardsOf(project)) return true;
+  const p = project as { id?: unknown; ownerModule?: unknown } | undefined;
+  return p?.ownerModule === "daily" || String(p?.id ?? "") === "daily" || String(p?.id ?? "").endsWith(":daily");
+}
+
 /** `StreakRules.cycleDay`. */
 export function cycleDayOf(streak: number, length: number): number {
   if (streak < 1) return 1;
@@ -160,8 +167,11 @@ export function dailyPreviewRows(
   today: Date = new Date(),
 ): Record<string, unknown>[] | null {
   if (ref !== CALENDAR && ref !== STATUS) return null;
-  const value = rewardsOf(project);
-  if (!value) return null;
+  // Not the daily folder: another module's project answers nothing.
+  if (!isDailyProject(project)) return null;
+  // The shipped rewards sit under originals/, which the editor does not read as a source yet:
+  // the days still show, with the paper of a day without a reward.
+  const value = rewardsOf(project) ?? {};
   const length = cycleLength(value);
   const server = ctx?.serverRows;
   if (ref === STATUS) {

@@ -11,7 +11,13 @@ const today = new Date(2026, 10, 18);
 describe("the calendar preview", () => {
   it("answers only the daily sources, and only with a rewards draft", () => {
     expect(dailyPreviewRows(project, "boutique:items")).toBeNull();
-    expect(dailyPreviewRows({ dataSources: [] }, "daily:calendar")).toBeNull();
+    expect(dailyPreviewRows({ id: "guilds", dataSources: [] }, "daily:calendar")).toBeNull();
+  });
+
+  it("still fills the days of the daily folder without a rewards source, with paper", () => {
+    const rows = dailyPreviewRows({ id: "addon:daily", dataSources: [] }, "daily:calendar", {}, today)!;
+    expect(rows).toHaveLength(28);
+    expect(rows.every((r) => JSON.stringify(r.icon) === JSON.stringify(NO_REWARD_ICON))).toBe(true);
   });
 
   it("gives every day an icon when the server has no row (previewed as nobody)", () => {
