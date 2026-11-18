@@ -80,7 +80,9 @@ public final class DailyRepository {
                 "CREATE INDEX " + prefix + "ledger_player ON " + ledger + " (uuid, created_at)",
                 "CREATE INDEX " + prefix + "players_streak ON " + players + " (streak)",
                 // A counted day's reward waits until it is claimed; the rows before were claimed at once.
-                "ALTER TABLE " + claims + " ADD COLUMN claimed BOOLEAN NOT NULL DEFAULT TRUE");
+                "ALTER TABLE " + claims + " ADD COLUMN claimed BOOLEAN NOT NULL DEFAULT TRUE",
+                // The day also pays the milestones of its streak, decided when it is counted.
+                "ALTER TABLE " + claims + " ADD COLUMN milestone BOOLEAN NOT NULL DEFAULT FALSE");
     }
 
     private static final String STATE_COLUMNS = "streak, longest, last_day, total_claims, freezes, milestone_mark, "
@@ -155,7 +157,7 @@ public final class DailyRepository {
                     PlayerState after = claim.state();
                     int cycleDay = StreakRules.cycleDay(after.streak(), settings.cycleLength());
                     try {
-                        insertDay(c, uuid, today, after.streak(), cycleDay, server, now);
+                        insertDay(c, uuid, today, after.streak(), cycleDay, claim.milestone(), server, now);
                     } catch (SQLException e) {
                         c.rollback();
                         if (!isDuplicateKey(e)) throw e;
@@ -172,9 +174,10 @@ public final class DailyRepository {
                         ledger(c, uuid, now, LedgerKind.BREAK, before.streak(), "from day " + after.brokenFromDay());
                     }
                     if (claim.freezeEarned()) ledger(c, uuid, now, LedgerKind.FREEZE_EARNED, 1, "streak " + after.streak());
+                    if (claim.milestone()) ledger(c, uuid, now, LedgerKind.MILESTONE, after.streak(), "day " + today);
                     c.commit();
                     return CheckInResult.counted(before, after.withVersion(before.version() + 1), claim.outcome(),
-                            freezesUsed, claim.freezeEarned(), cycleDay);
+                            freezesUsed, claim.freezeEarned(), cycleDay, claim.milestone());
                 }
                 return CheckInResult.conflict(PlayerState.fresh(uuid));
             } catch (SQLException | RuntimeException e) {
@@ -186,8 +189,14 @@ public final class DailyRepository {
         }
     }
 
-    /** A counted day's reward: the day, the streak it reached, the day of the cycle it pays. */
-    public record Reward(long day, int streak, int cycleDay) {
+    /**
+     * A counted day's reward: the day, the streak it reached, the day of the cycle it pays, and
+     * whether it also pays the milestones of that streak.
+     */
+    public record Reward(long day, int streak, int cycleDay, boolean milestone) {
+        public Reward(long day, int streak, int cycleDay) {
+            this(day, streak, cycleDay, false);
+        }
     }
 
     /** The counted days whose reward waits to be claimed, oldest first. */
@@ -244,11 +253,11 @@ public final class DailyRepository {
 
     private List<Reward> rewards(Connection c, UUID uuid, String condition) throws SQLException {
         List<Reward> found = new ArrayList<>();
-        try (PreparedStatement p = c.prepareStatement("SELECT game_day, streak_after, cycle_day FROM " + claims
+        try (PreparedStatement p = c.prepareStatement("SELECT game_day, streak_after, cycle_day, milestone FROM " + claims
                 + " WHERE uuid = ? AND " + condition + " ORDER BY game_day")) {
             p.setString(1, uuid.toString());
             try (ResultSet r = p.executeQuery()) {
-                while (r.next()) found.add(new Reward(r.getLong(1), r.getInt(2), r.getInt(3)));
+                while (r.next()) found.add(new Reward(r.getLong(1), r.getInt(2), r.getInt(3), r.getBoolean(4)));
             }
         }
         return found;
@@ -268,20 +277,25 @@ public final class DailyRepository {
                 }
             }
             Map<Long, Integer> days = new HashMap<>();
-            try (PreparedStatement p = c.prepareStatement("SELECT game_day, cycle_day FROM " + claims
+            Map<Long, Integer> milestones = new HashMap<>();
+            try (PreparedStatement p = c.prepareStatement("SELECT game_day, cycle_day, milestone, streak_after FROM " + claims
                     + " WHERE uuid = ? AND game_day >= ?")) {
                 p.setString(1, uuid.toString());
                 p.setLong(2, fromDay);
                 try (ResultSet r = p.executeQuery()) {
-                    while (r.next()) days.put(r.getLong(1), r.getInt(2));
+                    while (r.next()) {
+                        days.put(r.getLong(1), r.getInt(2));
+                        if (r.getBoolean(3)) milestones.put(r.getLong(1), r.getInt(4));
+                    }
                 }
             }
             List<Long> waiting = new ArrayList<>();
             for (Reward reward : rewards(c, uuid, "claimed = FALSE")) {
                 waiting.add(reward.day());
                 days.putIfAbsent(reward.day(), reward.cycleDay());
+                if (reward.milestone()) milestones.putIfAbsent(reward.day(), reward.streak());
             }
-            return ClaimHistory.of(first, days, waiting);
+            return ClaimHistory.of(first, days, waiting, milestones);
         }
     }
 
@@ -427,16 +441,17 @@ public final class DailyRepository {
     }
 
     /** A counted day, its reward waiting: {@code claimed_at} holds when it was counted until it is claimed. */
-    private void insertDay(Connection c, UUID uuid, long day, int streak, int cycleDay, String server, long now)
-            throws SQLException {
+    private void insertDay(Connection c, UUID uuid, long day, int streak, int cycleDay, boolean milestone,
+                           String server, long now) throws SQLException {
         try (PreparedStatement p = c.prepareStatement("INSERT INTO " + claims + " (uuid, game_day, streak_after, "
-                + "cycle_day, server, claimed_at, claimed, delivered) VALUES (?, ?, ?, ?, ?, ?, FALSE, FALSE)")) {
+                + "cycle_day, milestone, server, claimed_at, claimed, delivered) VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, FALSE)")) {
             p.setString(1, uuid.toString());
             p.setLong(2, day);
             p.setInt(3, streak);
             p.setInt(4, cycleDay);
-            p.setString(5, server);
-            p.setLong(6, now);
+            p.setBoolean(5, milestone);
+            p.setString(6, server);
+            p.setLong(7, now);
             p.executeUpdate();
         }
     }

@@ -25,16 +25,24 @@ import {
   iconCount,
   iconMaterial,
   iconTitle,
+  milestoneEntries,
+  milestoneRule,
+  milestones,
+  noneRepeats,
   ownDays,
+  readMilestone,
+  upcoming,
   withDay,
 } from "./rewards";
 
-type Selection = number | "default" | null;
+/** A day of the cycle, the other days, or the milestone at that place of `milestones`. */
+type Selection = number | "default" | { milestone: number } | null;
 
 /**
  * The Rewards screen of the daily folder: the cycle as a grid of weeks. A day with its own
  * reward stands out, the others show the reward of the other days, faded. A click opens the
- * day beside the grid: its icon and actions, or the button that gives it its own reward.
+ * day beside the grid: its icon and actions, or the button that gives it its own reward. Under
+ * the grid, the streak milestones: a click edits one beside the grid too.
  */
 export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenProps) {
   const t = useT();
@@ -49,6 +57,13 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
     project ? textValue(project, key, projectLangs(project)[0] ?? "en") : "";
 
   const setDay = (day: number, reward: Reward | undefined) => set(["days"], withDay(rewards, day, reward));
+  const entries = milestoneEntries(rewards);
+  const setMilestones = (next: Reward[]) => set(["milestones"], next.length > 0 ? next : undefined);
+  const addMilestone = (entry: Reward) => {
+    setMilestones([...entries, entry]);
+    setSelected({ milestone: entries.length });
+  };
+  const selectedMilestone = typeof selected === "object" && selected !== null ? selected.milestone : -1;
 
   return (
     <div className="daily-rewards">
@@ -118,11 +133,35 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
               />
             ))}
           </div>
+          <MilestoneList
+            rewards={rewards}
+            entries={entries}
+            projectId={projectId}
+            selected={selectedMilestone}
+            readOnly={readOnly}
+            onSelect={(index) => setSelected({ milestone: index })}
+            onAdd={addMilestone}
+          />
         </div>
 
         <aside className="daily-panel">
           {selected === null ? (
             <p className="daily-faint">{t("pick")}</p>
+          ) : typeof selected === "object" ? (
+            entries[selected.milestone] ? (
+              <MilestonePanel
+                projectId={projectId}
+                entry={entries[selected.milestone]}
+                readOnly={readOnly}
+                onChange={(next) => setMilestones(entries.map((e, i) => (i === selected.milestone ? next : e)))}
+                onRemove={() => {
+                  setMilestones(entries.filter((_, i) => i !== selected.milestone));
+                  setSelected(null);
+                }}
+              />
+            ) : (
+              <p className="daily-faint">{t("pick")}</p>
+            )
           ) : selected === "default" ? (
             <Panel title={t("defaultTitle")} hint={fallback ? t("defaultHint") : t("defaultNone")}>
               {fallback ? (
@@ -299,11 +338,15 @@ function RewardFields({
   projectId,
   reward,
   readOnly,
+  iconHint,
+  actionsHint,
   onChange,
 }: {
   projectId: string;
   reward: Reward;
   readOnly: boolean;
+  iconHint?: string;
+  actionsHint?: string;
   onChange: (path: string[], value: unknown) => void;
 }) {
   const t = useT();
@@ -311,12 +354,12 @@ function RewardFields({
     <fieldset className="daily-fields" disabled={readOnly}>
       <div>
         <div className="field-label">{t("icon")}</div>
-        <div className="daily-faint">{t("iconHint")}</div>
+        <div className="daily-faint">{iconHint ?? t("iconHint")}</div>
         <ItemValueInput projectId={projectId} value={reward.icon} onChange={(next) => onChange(["icon"], next)} />
       </div>
       <div>
         <div className="field-label">{t("actions")}</div>
-        <div className="daily-faint">{t("actionsHint")}</div>
+        <div className="daily-faint">{actionsHint ?? t("actionsHint")}</div>
         <ActionChainEditor
           projectId={projectId}
           value={Array.isArray(reward.actions) ? reward.actions : []}
@@ -324,5 +367,205 @@ function RewardFields({
         />
       </div>
     </fieldset>
+  );
+}
+
+/** The streak milestones under the grid, each a card; the add buttons; the warnings. */
+function MilestoneList({
+  rewards,
+  entries,
+  projectId,
+  selected,
+  readOnly,
+  onSelect,
+  onAdd,
+}: {
+  rewards: RewardsValue;
+  entries: Reward[];
+  projectId: string;
+  selected: number;
+  readOnly: boolean;
+  onSelect: (index: number) => void;
+  onAdd: (entry: Reward) => void;
+}) {
+  const t = useT();
+  const read = milestones(rewards);
+  const next = upcoming(read, 1, 8).map((o) => o.streak);
+  return (
+    <section className="daily-milestones">
+      <div>
+        <div className="daily-panel-title">{t("milestonesTitle")}</div>
+        <div className="daily-faint">{t("milestonesHint")}</div>
+      </div>
+      {noneRepeats(read) && (
+        <div className="daily-outside" role="alert">
+          {t("milestoneNoRepeat")}
+        </div>
+      )}
+      {entries.length === 0 ? (
+        <span className="daily-faint">{t("milestonesNone")}</span>
+      ) : (
+        <div className="daily-milestone-list">
+          {entries.map((entry, index) => (
+            <MilestoneCard
+              key={index}
+              entry={entry}
+              projectId={projectId}
+              selected={selected === index}
+              onSelect={() => onSelect(index)}
+            />
+          ))}
+        </div>
+      )}
+      {next.length > 0 && <span className="daily-faint">{t("milestoneNext", { list: next.join(", ") })}</span>}
+      <div className="daily-milestone-add">
+        <button
+          type="button"
+          className="btn btn-sm"
+          disabled={readOnly}
+          onClick={() => onAdd({ at: 30, icon: { material: "NETHER_STAR" }, actions: [] })}
+        >
+          {t("milestoneAddAt")}
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm"
+          disabled={readOnly}
+          onClick={() => onAdd({ every: 50, icon: { material: "NETHER_STAR" }, actions: [] })}
+        >
+          {t("milestoneAddEvery")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function MilestoneCard({
+  entry,
+  projectId,
+  selected,
+  onSelect,
+}: {
+  entry: Reward;
+  projectId: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const t = useT();
+  const title = useIconTitle(projectId, entry.icon);
+  const m = readMilestone(entry);
+  const classes = ["daily-default", "daily-milestone", selected ? "is-selected" : "", m ? "" : "is-invalid"];
+  return (
+    <button type="button" className={classes.join(" ")} onClick={onSelect}>
+      <Slot reward={entry} />
+      <span className="daily-default-text">
+        <span className="daily-default-title">{m ? milestoneRule(m, t) : t("milestoneInvalid")}</span>
+        {title && <McText source={title} maxLines={1} scale={1} />}
+      </span>
+    </button>
+  );
+}
+
+/** A whole number from 1 typed in `value`, else undefined (the key leaves the file). */
+function wholeOrUndefined(value: string): number | undefined {
+  const n = Number.parseInt(value, 10);
+  return Number.isInteger(n) && n >= 1 ? n : undefined;
+}
+
+function MilestonePanel({
+  projectId,
+  entry,
+  readOnly,
+  onChange,
+  onRemove,
+}: {
+  projectId: string;
+  entry: Reward;
+  readOnly: boolean;
+  onChange: (next: Reward) => void;
+  onRemove: () => void;
+}) {
+  const t = useT();
+  const m = readMilestone(entry);
+  const repeats = entry.at === undefined && entry.every !== undefined;
+  /** The entry with `key` set (or removed when undefined), its keys in the file's usual order. */
+  const withKey = (key: string, value: unknown): Reward => {
+    const next: Reward = { ...entry, [key]: value };
+    if (value === undefined) delete next[key];
+    const { at, every, from, ...rest } = next;
+    return Object.fromEntries(
+      Object.entries({ at, every, from, ...rest }).filter(([, v]) => v !== undefined),
+    ) as Reward;
+  };
+  const setKind = (repeat: boolean) => {
+    if (repeat === repeats) return;
+    const { at, every, from, ...rest } = entry;
+    const step = Number(at) || Number(every) || 30;
+    onChange(repeat ? { every: step, ...rest } : { at: step, ...rest });
+  };
+  return (
+    <Panel title={m ? milestoneRule(m, t) : t("milestoneInvalid")} hint={t("milestonesHint")}>
+      <fieldset className="daily-fields" disabled={readOnly}>
+        <div>
+          <div className="field-label">{t("milestoneKind")}</div>
+          <div className="daily-milestone-kind">
+            <button type="button" className={`chip${repeats ? "" : " is-active"}`} onClick={() => setKind(false)}>
+              {t("milestoneOnce")}
+            </button>
+            <button type="button" className={`chip${repeats ? " is-active" : ""}`} onClick={() => setKind(true)}>
+              {t("milestoneRepeat")}
+            </button>
+          </div>
+        </div>
+        {repeats ? (
+          <>
+            <label>
+              <span className="field-label">{t("milestoneEveryLabel")}</span>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={String(entry.every ?? "")}
+                onChange={(e) => onChange(withKey("every", wholeOrUndefined(e.target.value)))}
+              />
+            </label>
+            <label>
+              <span className="field-label">{t("milestoneFromLabel")}</span>
+              <span className="daily-faint">{t("milestoneFromHint")}</span>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={String(entry.from ?? "")}
+                placeholder={String(entry.every ?? "")}
+                onChange={(e) => onChange(withKey("from", wholeOrUndefined(e.target.value)))}
+              />
+            </label>
+          </>
+        ) : (
+          <label>
+            <span className="field-label">{t("milestoneAtLabel")}</span>
+            <input
+              className="input"
+              type="number"
+              min={1}
+              value={String(entry.at ?? "")}
+              onChange={(e) => onChange(withKey("at", wholeOrUndefined(e.target.value)))}
+            />
+          </label>
+        )}
+      </fieldset>
+      <RewardFields
+        projectId={projectId}
+        reward={entry}
+        readOnly={readOnly}
+        iconHint={t("milestoneIconHint")}
+        actionsHint={t("milestoneActionsHint")}
+        onChange={(path, next) => onChange(withKey(path[0], next))}
+      />
+      <button type="button" className="btn btn-ghost btn-sm" disabled={readOnly} onClick={onRemove}>
+        {t("milestoneRemove")}
+      </button>
+    </Panel>
   );
 }

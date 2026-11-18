@@ -48,7 +48,8 @@ describe("the calendar preview", () => {
   it("keeps the server's days, with the draft's rewards", () => {
     const server = [{ id: "x", cycle_day: 7, status: "upcoming", icon: { material: "STONE" }, has_reward: true }];
     const rows = dailyPreviewRows(project, "daily:calendar", { serverRows: server }, today)!;
-    expect(rows).toEqual([{ ...server[0], icon: diamond.icon }]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ ...server[0], icon: diamond.icon, is_milestone: false });
   });
 
   it("uses the sample status unless the server's row is loaded", () => {
@@ -56,5 +57,38 @@ describe("the calendar preview", () => {
     expect(notLoaded[0]).toMatchObject({ loaded: true, streak: 4, cycle_length: 7 });
     const loaded = dailyPreviewRows(project, "daily:status", { serverRows: [{ loaded: true, streak: 9 }] })!;
     expect(loaded[0]).toMatchObject({ streak: 9, cycle_length: 7 });
+  });
+});
+
+describe("the milestones preview", () => {
+  const star = { material: "NETHER_STAR" };
+  const withMilestones = {
+    dataSources: [
+      {
+        id: "rewards",
+        shape: "config",
+        value: { cycle_length: 7, default_day: bread, milestones: [{ at: 6, icon: star }, { every: 3 }] },
+      },
+    ],
+  };
+
+  it("marks the sample days that reach a milestone, with its icon", () => {
+    const rows = dailyPreviewRows(withMilestones, "daily:calendar", { params: { past: "7", future: "4" } }, today)!;
+    const marked = rows.filter((r) => r.is_milestone).map((r) => r.streak);
+    expect(marked).toEqual([3, 6, 9]);
+    expect(rows.find((r) => r.streak === 6)).toMatchObject({ milestone_count: 2, milestone_icon: star });
+    expect(rows.find((r) => r.streak === 9)).toMatchObject({ milestone_count: 1, milestone_icon: bread.icon });
+  });
+
+  it("lists the sample player's next milestones", () => {
+    const rows = dailyPreviewRows(withMilestones, "daily:milestones", { params: { count: "4" } }, today)!;
+    expect(rows.map((r) => r.id)).toEqual(["6-1", "6-2", "9-2", "12-2"]);
+    expect(rows[0]).toMatchObject({ streak: 6, offset: 1, date: "19/11", repeats: false, icon: star });
+    expect(rows[1]).toMatchObject({ repeats: true, every: 3, icon: NO_REWARD_ICON });
+  });
+
+  it("gives the next milestone in the sample status", () => {
+    const status = dailyPreviewRows(withMilestones, "daily:status", {})!;
+    expect(status[0]).toMatchObject({ next_milestone: 6, next_milestone_in: 1 });
   });
 });

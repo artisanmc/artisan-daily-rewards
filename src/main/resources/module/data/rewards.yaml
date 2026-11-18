@@ -39,3 +39,20 @@ days:
       title: { en: "<aqua>3 diamonds", fr: "<aqua>3 diamants" }
     actions:
       - give_item: { material: DIAMOND, count: 3 }
+# Bonuses of the streak, paid on top of the day's reward: at (once per streak) or every (again and
+# again, from "from", by default every). Everything a day reaches is paid. A break starts the
+# streak again, and its milestones with it: end with an every milestone, so that going on always
+# pays more than starting over.
+milestones:
+  - at: 30
+    icon:
+      material: ENCHANTED_GOLDEN_APPLE
+      title: { en: "<light_purple>30-day streak: an enchanted golden apple", fr: "<light_purple>Streak de 30 jours : une pomme dorée enchantée" }
+    actions:
+      - give_item: { material: ENCHANTED_GOLDEN_APPLE, count: 1 }
+  - every: 50
+    icon:
+      material: NETHERITE_INGOT
+      title: { en: "<dark_purple>Every 50 days of streak: a netherite ingot", fr: "<dark_purple>Tous les 50 jours de streak : un lingot de netherite" }
+    actions:
+      - give_item: { material: NETHERITE_INGOT, count: 1 }

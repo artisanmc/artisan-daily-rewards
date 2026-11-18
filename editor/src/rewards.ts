@@ -1,6 +1,6 @@
 /**
  * The rewards file (`data/rewards.yml`) as the Rewards screen reads it: `cycle_length`,
- * `days` keyed by the day of the cycle, `default_day` for the others. Pure: no React, no host.
+ * `days` keyed by the day of the cycle, `default_day` for the others, `milestones` of the streak. Pure: no React, no host.
  */
 
 export const DEFAULT_CYCLE_LENGTH = 28;
@@ -13,6 +13,7 @@ export interface RewardsValue {
   cycle_length?: unknown;
   days?: unknown;
   default_day?: unknown;
+  milestones?: unknown;
 }
 
 /** One case of the grid. */
@@ -128,4 +129,98 @@ export function detachTexts(reward: Reward | undefined, text: (key: string) => s
     if (node && typeof node.key === "string") icon[field] = text(node.key);
   }
   return copy;
+}
+
+// ---- Milestones
+
+/** A milestone of `milestones`, as the plugin reads it (`Milestone.read`). */
+export interface Milestone {
+  /** The streak of a one-time milestone, 0 for a repeating one. */
+  at: number;
+  /** The step of a repeating milestone, 0 for a one-time one. */
+  every: number;
+  /** The first streak a repeating milestone pays, `every` when the file leaves it out. */
+  from: number;
+  icon: unknown;
+  actions: unknown;
+}
+
+function whole(value: unknown): number {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 ? n : 0;
+}
+
+/** The entries of `milestones` as written: a list of sections (anything else: none). */
+export function milestoneEntries(value: RewardsValue): Reward[] {
+  const list = value.milestones;
+  return Array.isArray(list) ? list.map((m) => asObject(m) ?? {}) : [];
+}
+
+/** One entry read: `at` wins when both are there (the plugin refuses that file), none when neither. */
+export function readMilestone(entry: Reward): Milestone | undefined {
+  const at = whole(entry.at);
+  const every = whole(entry.every);
+  if (at > 0) return { at, every: 0, from: 0, icon: entry.icon, actions: entry.actions };
+  if (every > 0) return { at: 0, every, from: whole(entry.from) || every, icon: entry.icon, actions: entry.actions };
+  return undefined;
+}
+
+/** The milestones the plugin pays, in the file's order; an unreadable entry is left out. */
+export function milestones(value: RewardsValue): Milestone[] {
+  return milestoneEntries(value)
+    .map(readMilestone)
+    .filter((m): m is Milestone => m !== undefined);
+}
+
+/** `Milestone.matches`. */
+export function matches(m: Milestone, streak: number): boolean {
+  if (streak < 1) return false;
+  if (m.every === 0) return streak === m.at;
+  return streak >= m.from && (streak - m.from) % m.every === 0;
+}
+
+/** `Milestone.nextFrom`: the smallest streak from `streak` on that pays `m`, -1 for none. */
+export function nextFrom(m: Milestone, streak: number): number {
+  const s = Math.max(streak, 1);
+  if (m.every === 0) return m.at >= s ? m.at : -1;
+  if (s <= m.from) return m.from;
+  return m.from + Math.ceil((s - m.from) / m.every) * m.every;
+}
+
+/** The milestones a streak pays, in the file's order. */
+export function paidAt(list: Milestone[], streak: number): Milestone[] {
+  return list.filter((m) => matches(m, streak));
+}
+
+/** `Milestone.upcoming`: the next `count` (streak, milestone), by streak then file order. */
+export function upcoming(list: Milestone[], fromStreak: number, count: number): { streak: number; milestone: Milestone }[] {
+  const found: { streak: number; milestone: Milestone }[] = [];
+  const next = list.map((m) => nextFrom(m, fromStreak));
+  while (found.length < count) {
+    const candidates = next.filter((n) => n > 0);
+    if (candidates.length === 0) break;
+    const lowest = Math.min(...candidates);
+    for (let i = 0; i < next.length && found.length < count; i++) {
+      if (next[i] !== lowest) continue;
+      const m = list[i];
+      found.push({ streak: lowest, milestone: m });
+      next[i] = m.every > 0 ? nextFrom(m, lowest + 1) : -1;
+    }
+  }
+  return found;
+}
+
+/**
+ * A one-time milestone is paid again after a break: when none repeats, a player past the last
+ * one earns more by breaking their streak than by going on. True when there are milestones and
+ * none of them repeats.
+ */
+export function noneRepeats(list: Milestone[]): boolean {
+  return list.length > 0 && !list.some((m) => m.every > 0);
+}
+
+/** A short label: "At 30" / "Every 50 from 100". */
+export function milestoneRule(m: Milestone, t: (key: "milestoneAt" | "milestoneEvery" | "milestoneEveryFrom", vars: Record<string, number>) => string): string {
+  if (m.every === 0) return t("milestoneAt", { at: m.at });
+  return m.from === m.every ? t("milestoneEvery", { every: m.every }) : t("milestoneEveryFrom", { every: m.every, from: m.from });
 }

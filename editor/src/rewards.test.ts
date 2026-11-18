@@ -9,6 +9,9 @@ import {
   iconCount,
   iconMaterial,
   iconTitle,
+  milestones,
+  noneRepeats,
+  upcoming,
   withDay,
 } from "./rewards";
 
@@ -71,5 +74,28 @@ describe("a day made from the other days", () => {
     expect(copy).toEqual({ icon: { extends: "BREAD", title: "<white>Pain", lore: "Miam" }, actions: [] });
     expect(reward.icon.title).toEqual({ key: "t" });
     expect(detachTexts(undefined, () => "")).toBeUndefined();
+  });
+});
+
+describe("milestones", () => {
+  it("reads at and every, from defaulting to every, and leaves out an entry with neither", () => {
+    const value = { milestones: [{ at: 7 }, { every: 30 }, { every: 10, from: 50 }, { icon: "x" }] };
+    expect(milestones(value).map((m) => [m.at, m.every, m.from])).toEqual([
+      [7, 0, 0],
+      [0, 30, 30],
+      [0, 10, 50],
+    ]);
+  });
+
+  it("finds the next ones by streak, as the plugin does", () => {
+    const list = milestones({ milestones: [{ every: 30 }, { at: 7 }, { every: 10, from: 50 }] });
+    expect(upcoming(list, 1, 6).map((o) => o.streak)).toEqual([7, 30, 50, 60, 60, 70]);
+    expect(upcoming(milestones({ milestones: [{ at: 7 }] }), 8, 3)).toEqual([]);
+  });
+
+  it("warns when no milestone repeats", () => {
+    expect(noneRepeats(milestones({ milestones: [{ at: 7 }, { at: 30 }] }))).toBe(true);
+    expect(noneRepeats(milestones({ milestones: [{ at: 7 }, { every: 30 }] }))).toBe(false);
+    expect(noneRepeats([])).toBe(false);
   });
 });

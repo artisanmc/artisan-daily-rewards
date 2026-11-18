@@ -9,9 +9,9 @@ Artisan Daily Rewards pays players for coming back: each day they play counts fo
 unlocks the reward of that day of the cycle, which they claim then or later. Jokers keep a streak alive
 over a missed day.
 
-What works today: the daily claim, the streak, the jokers, one reward per day of the cycle, auto-claim and
-the calendar menu. The paid restore of a broken streak, tiers, milestones, `daily:*` actions and
-placeholders are not there yet.
+What works today: the daily claim, the streak, the jokers, one reward per day of the cycle, the streak
+milestones (bonuses at 30 days, every 50…), auto-claim, the calendar menu and the milestones menu. The paid
+restore of a broken streak, tiers, `daily:*` actions and placeholders are not there yet.
 
 ## Requirements
 

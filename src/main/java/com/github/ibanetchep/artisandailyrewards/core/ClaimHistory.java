@@ -18,15 +18,18 @@ import java.util.TreeSet;
  * @param firstDay  game day the player was first counted, null before it: the days before it are
  *                  not missed, the player was not there yet
  * @param days      game day to the day of the cycle it pays, for the recent days only
- * @param unclaimed the counted days whose reward waits to be claimed, all of them however old
+ * @param unclaimed  the counted days whose reward waits to be claimed, all of them however old
+ * @param milestones the days of {@code days} that also pay milestones, to the streak they reached
  */
-public record ClaimHistory(@Nullable Long firstDay, NavigableMap<Long, Integer> days, NavigableSet<Long> unclaimed) {
+public record ClaimHistory(@Nullable Long firstDay, NavigableMap<Long, Integer> days, NavigableSet<Long> unclaimed,
+                           NavigableMap<Long, Integer> milestones) {
 
-    public static final ClaimHistory EMPTY = new ClaimHistory(null, new TreeMap<>(), new TreeSet<>());
+    public static final ClaimHistory EMPTY = new ClaimHistory(null, new TreeMap<>(), new TreeSet<>(), new TreeMap<>());
 
     public ClaimHistory {
         days = Collections.unmodifiableNavigableMap(new TreeMap<>(days));
         unclaimed = Collections.unmodifiableNavigableSet(new TreeSet<>(unclaimed));
+        milestones = Collections.unmodifiableNavigableMap(new TreeMap<>(milestones));
     }
 
     public static ClaimHistory of(@Nullable Long firstDay, Map<Long, Integer> days) {
@@ -34,7 +37,17 @@ public record ClaimHistory(@Nullable Long firstDay, NavigableMap<Long, Integer> 
     }
 
     public static ClaimHistory of(@Nullable Long firstDay, Map<Long, Integer> days, Collection<Long> unclaimed) {
-        return new ClaimHistory(firstDay, new TreeMap<>(days), new TreeSet<>(unclaimed));
+        return of(firstDay, days, unclaimed, Map.of());
+    }
+
+    public static ClaimHistory of(@Nullable Long firstDay, Map<Long, Integer> days, Collection<Long> unclaimed,
+                                  Map<Long, Integer> milestones) {
+        return new ClaimHistory(firstDay, new TreeMap<>(days), new TreeSet<>(unclaimed), new TreeMap<>(milestones));
+    }
+
+    /** The streak {@code day} reached when it pays milestones on top of its reward, else null. */
+    public @Nullable Integer milestoneOn(long day) {
+        return milestones.get(day);
     }
 
     /** The day of the cycle {@code day} pays, or null when it was not counted (or is not known). */
@@ -49,17 +62,28 @@ public record ClaimHistory(@Nullable Long firstDay, NavigableMap<Long, Integer> 
 
     /** With {@code day} counted, its reward waiting. */
     public ClaimHistory with(long day, int cycleDay) {
+        return with(day, cycleDay, 0);
+    }
+
+    /**
+     * With {@code day} counted, its reward waiting, and its milestones with it when
+     * {@code milestoneStreak} (the streak it reached) is above 0.
+     */
+    public ClaimHistory with(long day, int cycleDay, int milestoneStreak) {
         TreeMap<Long, Integer> next = new TreeMap<>(days);
         next.put(day, cycleDay);
         TreeSet<Long> waiting = new TreeSet<>(unclaimed);
         waiting.add(day);
-        return new ClaimHistory(firstDay == null ? day : Math.min(firstDay, day), next, waiting);
+        TreeMap<Long, Integer> bonus = new TreeMap<>(milestones);
+        if (milestoneStreak > 0) bonus.put(day, milestoneStreak);
+        else bonus.remove(day);
+        return new ClaimHistory(firstDay == null ? day : Math.min(firstDay, day), next, waiting, bonus);
     }
 
     /** With the rewards of {@code claimedDays} claimed. */
     public ClaimHistory claimed(Collection<Long> claimedDays) {
         TreeSet<Long> waiting = new TreeSet<>(unclaimed);
         waiting.removeAll(claimedDays);
-        return new ClaimHistory(firstDay, days, waiting);
+        return new ClaimHistory(firstDay, days, waiting, milestones);
     }
 }

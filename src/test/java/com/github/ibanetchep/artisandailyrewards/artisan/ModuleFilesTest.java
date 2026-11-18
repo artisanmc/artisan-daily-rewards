@@ -62,8 +62,12 @@ class ModuleFilesTest {
         CalendarSettings shipped = CalendarSettings.read(calendar);
         CalendarSettings d = CalendarSettings.DEFAULTS;
         assertEquals(new CalendarSettings(d.resetTime(), d.cycleLength(), d.autoClaim(), d.minPlaytimeMinutes(),
-                d.joinReminder(), d.freezeEarnEvery(), d.freezeMaxStock(), shipped.days(), shipped.defaultDay()), shipped);
+                d.joinReminder(), d.freezeEarnEvery(), d.freezeMaxStock(), shipped.days(), shipped.defaultDay(),
+                shipped.milestones()), shipped);
         assertNotNull(shipped.defaultDay());
+        // Going on must always pay more than starting over: the last milestone repeats.
+        assertFalse(shipped.milestones().isEmpty());
+        assertTrue(shipped.milestones().get(shipped.milestones().size() - 1).repeats());
         for (int day = 1; day <= shipped.cycleLength(); day++) {
             assertNotNull(shipped.reward(day).icon(), "day " + day);
             assertNotNull(shipped.reward(day).actions(), "day " + day);
