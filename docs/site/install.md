@@ -13,7 +13,7 @@ sidebar:
    [ArtisanDailyRewards] Enabled in Europe/Paris (Artisan API 1.0.0).
    ```
 
-4. Join, type `/daily`: the calendar opens, today's reward waits. A click on today claims it.
+4. Join, type `/dailyrewards`: the calendar opens, today's reward waits. A click on today claims it.
 
 ## What the first start writes
 
@@ -23,7 +23,7 @@ Artisan keeps these files in `plugins/Artisan/modules/daily/`:
 |---|---|
 | `data/settings.yml` | [Settings](../configuration/settings/): reset time, auto-claim, playtime, reminder, jokers |
 | `data/rewards.yml` | [Rewards](../configuration/rewards/): the cycle and the reward of each day |
-| `menus/calendar.yml` | What `/daily` opens |
+| `menus/calendar.yml` | What `/dailyrewards` opens |
 | `lang/<code>.yml` | Your overrides of the messages |
 
 They are system elements: a missing file is written again, an untouched one follows each new version,

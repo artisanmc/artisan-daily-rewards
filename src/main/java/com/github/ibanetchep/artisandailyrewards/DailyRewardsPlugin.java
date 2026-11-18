@@ -58,8 +58,9 @@ public final class DailyRewardsPlugin extends JavaPlugin {
             return;
         }
 
+        File moduleDir = moduleDir();
         Messages messages = new Messages(api.getTranslations().register(
-                messageFiles(api)));
+                messageFiles(api)), () -> DailyCommand.nameIn(moduleDir));
         // H2 is a file of this server; MySQL/MariaDB may be shared by the network.
         boolean shared = api.getDatabase().getDialect() != DatabaseDialect.H2;
         service = new DailyService(api.getScheduler().forPlugin(this), repository, messages, getLogger(),

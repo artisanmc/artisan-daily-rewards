@@ -14,5 +14,5 @@ auto_claim: "on"
 join_reminder: true
 ```
 
-Before the 15 minutes, `/daily claim` answers how long is left. With `auto_claim: "on"`, the reward is
+Before the 15 minutes, `/dailyrewards claim` answers how long is left. With `auto_claim: "on"`, the reward is
 also claimed at the reset for players online then.

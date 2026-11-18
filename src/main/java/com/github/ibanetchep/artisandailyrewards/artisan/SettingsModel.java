@@ -31,7 +31,7 @@ public final class SettingsModel {
                         .withPattern("^([01]\\d|2[0-3]):[0-5]\\d$").withDefault("00:00"),
                 new ModelField("auto_claim", ModelFieldType.enumOf(List.of("off", "on", "player"))).withLabel("Auto-claim")
                         .withHelp("off: the player claims. on: claimed at join and at the reset. player: each player "
-                                + "chooses with /daily autoclaim.")
+                                + "chooses with /dailyrewards autoclaim.")
                         .withDefault("off"),
                 integer("min_playtime_minutes", "Playtime before the day counts",
                         "Minutes of the current session before the day counts for the streak and its reward can be claimed.",

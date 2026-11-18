@@ -23,4 +23,4 @@ days:
 ```
 
 `give_money` needs Vault and an economy plugin. Test the week without waiting: `/dailyadmin day +1`, then
-`/daily claim`, seven times; `/dailyadmin day reset` puts the day back.
+`/dailyrewards claim`, seven times; `/dailyadmin day reset` puts the day back.

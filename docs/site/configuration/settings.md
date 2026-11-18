@@ -21,7 +21,7 @@ freeze:
 | Key | Type | Default | Effect |
 |---|---|---|---|
 | `reset_time` | `HH:MM` | `"00:00"` | When the game day ends, in the server's time zone. |
-| `auto_claim` | `off`, `on`, `player` | `off` | `off`: the player claims. `on`: claimed at join and at the reset. `player`: each player chooses with `/daily autoclaim`. |
+| `auto_claim` | `off`, `on`, `player` | `off` | `off`: the player claims. `on`: claimed at join and at the reset. `player`: each player chooses with `/dailyrewards autoclaim`. |
 | `min_playtime_minutes` | integer ≥ 0 | `0` | Minutes of the current session before the day counts and its reward can be claimed. |
 | `join_reminder` | boolean | `true` | Tell a player their reward is unlocked when the day counts, and remind them of rewards that wait. |
 | `freeze.earn_every` | integer ≥ 0 | `7` | Days of streak per joker. `0`: never. |
@@ -31,7 +31,7 @@ freeze:
 
 A day counts for the streak when the player is there: they join (or are online at the reset) and play
 `min_playtime_minutes`. Its reward then waits, with the day of the cycle and the streak of that day, until
-they claim: `/daily claim`, the menu or auto-claim pays every reward that waits, however old.
+they claim: `/dailyrewards claim`, the menu or auto-claim pays every reward that waits, however old.
 
 A day the player was not there is missed: a joker covers it and the streak goes on; without one, the
 streak breaks and that day's reward is lost.

@@ -21,11 +21,11 @@ import java.util.logging.Logger;
  *       screen ({@link SettingsModel}, a generated form) and Rewards screen ({@link RewardsModel},
  *       a grid of the cycle from the module's editor bundle, {@link #EDITOR_BUNDLE});</li>
  *   <li>its system files ({@link ModuleFiles}), kept there by Artisan: the calendar menu
- *       {@code daily:calendar}, which {@code /daily} opens, the milestones menu
+ *       {@code daily:calendar}, which {@code /dailyrewards} opens, the milestones menu
  *       {@code daily:milestones} it links to, the two files and their models;</li>
  *   <li>the data sources {@code daily:calendar}, {@code daily:status} and
  *       {@code daily:milestones} of those menus ({@link CalendarData});</li>
- *   <li>the {@code /daily} and {@code /dailyadmin} commands; the menu's claim button runs
+ *   <li>the {@code /dailyrewards} and {@code /dailyadmin} commands; the menu's claim button runs
  *       {@code daily:claim} through {@code module_command}.</li>
  * </ul>
  * The {@code daily:*} actions and the placeholders come with the next steps of the design.

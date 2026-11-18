@@ -19,8 +19,8 @@ User docs: [`docs/site/`](docs/site/), published on
 
 | Command | Permission | Does |
 |---|---|---|
-| `/daily` | `daily.use` (everyone) | Opens the calendar |
-| `/daily claim`, `/daily status`, `/daily autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
+| `/dailyrewards` | `daily.use` (everyone) | Opens the calendar |
+| `/dailyrewards claim`, `/dailyrewards status`, `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
 | `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct, shift this server's game day to test |
 
 `daily.restore` and `daily.restore.free` are declared for the paid restore, not implemented yet.
@@ -42,7 +42,7 @@ is written again, an edited one stays yours until Reset in the editor):
   per streak, `every: N` (from `from`, by default `N`) again and again; everything a day reaches is
   paid. Keep at least one `every` milestone: a one-time milestone pays again after a break, so
   without a repeating one a player past the last milestone gains by breaking their streak.
-- `menus/calendar.yml`: what `/daily` opens. The last 7 days as they went (claimed, waiting to be
+- `menus/calendar.yml`: what `/dailyrewards` opens. The last 7 days as they went (claimed, waiting to be
   claimed, missed), today (a click claims everything that waits), and the next 104 days with the
   reward each one pays if the player comes every day, 28 days a page (arrows at the bottom). A day
   that reaches a milestone glows; the beacon opens `menus/milestones.yml`, the next 112 milestones,
@@ -68,12 +68,12 @@ without claiming.
 
 A day counts for the streak when the player is there: they join (or are online at the reset)
 and play `min_playtime_minutes`. Claiming is separate. The reward of a counted day waits, with
-the day of the cycle and the streak of that day, until the player claims: `/daily claim` (or the
+the day of the cycle and the streak of that day, until the player claims: `/dailyrewards claim` (or the
 menu, or auto-claim) pays every reward that waits, however old. A day the player was not there is
 missed: the jokers may keep the streak, its reward is lost.
 
 The first time a player counts in a game day, the `unlocked` message (in `lang/`, a click opens
-`/daily`) tells them the reward is unlocked; `join_reminder: false` turns it off, auto-claim
+`/dailyrewards`) tells them the reward is unlocked; `join_reminder: false` turns it off, auto-claim
 claims instead.
 
 Whether a day pays milestones is decided when it counts: its streak is above the highest streak
@@ -84,7 +84,7 @@ in chat (`claim.milestone`).
 A claim takes its delivery in the database before the actions run, so two servers never pay one
 reward twice. A player who leaves before the reward is handed out gets it at their next join.
 
-`/daily status` still prints the streak in chat.
+`/dailyrewards status` still prints the streak in chat.
 
 ## Build
 
