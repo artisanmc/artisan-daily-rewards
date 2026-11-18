@@ -55,7 +55,8 @@ days:
 ## The calendar menu
 
 `menus/calendar.yml` shows the last 7 days as they went (claimed, waiting, missed), today (a click claims
-everything that waits) and the next 20 days with the reward each pays if the player comes every day.
+everything that waits) and the next 104 days with the reward each pays if the player comes every day,
+28 days a page (arrows at the bottom: `pagination_prev` / `pagination_next` on the `days` element).
 It reads two data sources, which your own menus can read too:
 
 | Source | Rows | Fields |
