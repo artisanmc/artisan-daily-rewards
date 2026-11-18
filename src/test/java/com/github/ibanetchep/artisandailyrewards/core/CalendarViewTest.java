@@ -102,4 +102,25 @@ class CalendarViewTest {
         assertEquals(1, history.cycleDayOn(TODAY));
         assertEquals(TODAY - 5, ClaimHistory.of(TODAY - 5, Map.of()).with(TODAY, 2).firstDay());
     }
+
+    @Test
+    void theDaysThatPayMilestonesAreMarkedPastTodayAndToCome() {
+        List<Milestone> milestones = List.of(Milestone.at(5, null, null), Milestone.every(3, 3, null, null));
+        // Streak 4 yesterday (its milestones paid at 3: mark 3), today not counted yet.
+        PlayerState state = new PlayerState(ID, 4, 4, TODAY - 1, 4, 0, 3, 0, 0, null, null, 1);
+        ClaimHistory history = ClaimHistory.of(TODAY - 4, Map.of(TODAY - 2, 3, TODAY - 1, 4), List.of(), Map.of(TODAY - 2, 3));
+        List<CalendarView.Day> days = CalendarView.around(state, history, TODAY, 28, milestones, 2, 3);
+        assertEquals(List.of(true, false, true, true, false, false),
+                days.stream().map(CalendarView.Day::milestone).toList());
+        assertEquals(List.of(3, 0, 5, 6, 7, 8), days.stream().map(CalendarView.Day::streak).toList());
+    }
+
+    @Test
+    void aBrokenStreakMarksItsMilestonesAgain() {
+        List<Milestone> milestones = List.of(Milestone.at(2, null, null));
+        // Mark 10, last counted 5 days ago with no joker: broken, today is streak 1.
+        PlayerState state = new PlayerState(ID, 10, 10, TODAY - 5, 10, 0, 10, 0, 0, null, null, 1);
+        List<CalendarView.Day> days = CalendarView.around(state, ClaimHistory.EMPTY, TODAY, 28, milestones, 0, 2);
+        assertEquals(List.of(false, true, false), days.stream().map(CalendarView.Day::milestone).toList());
+    }
 }

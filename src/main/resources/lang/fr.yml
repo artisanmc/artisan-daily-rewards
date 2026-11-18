@@ -9,6 +9,7 @@ claim:
   success_auto: "<green>Récompense du jour réclamée automatiquement. Streak : <white><streak></white> <gray>(jour <cycle_day>/<cycle_length>)"
   success_many: "<green><white><count></white> récompenses quotidiennes réclamées ! Streak : <white><streak></white>"
   success_many_auto: "<green><white><count></white> récompenses quotidiennes réclamées automatiquement. Streak : <white><streak></white>"
+  milestone: "<light_purple>Palier de streak atteint : <white><streak> jours</white> ! Bonus réclamé."
   covered: "<aqua>Ton streak est conservé : <white><count></white> joker(s) utilisé(s) pour les jours manqués."
   broken: "<red>Tu as manqué un jour : ton streak de <white><lost></white> est cassé. Il repart aujourd'hui."
   freeze_earned: "<aqua>Tu as gagné un joker ! <gray>(<freezes>/<max>)"

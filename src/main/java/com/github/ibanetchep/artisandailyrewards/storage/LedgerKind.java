@@ -10,6 +10,8 @@ public enum LedgerKind {
     BREAK,
     RESTORE,
     ADMIN_SET,
+    /** A day reached milestones: amount is the streak. */
+    MILESTONE,
     /** A kind written by a newer version of the plugin. */
     OTHER;
 

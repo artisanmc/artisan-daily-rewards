@@ -30,11 +30,19 @@ public final class CalendarView {
     }
 
     /**
-     * @param offset   days from today: negative in the past, 0 today
-     * @param cycleDay the day of the cycle paid (claimed) or to be paid (available, upcoming); 0
-     *                 for a day missed or before the first one
+     * @param offset    days from today: negative in the past, 0 today
+     * @param cycleDay  the day of the cycle paid (claimed) or to be paid (available, upcoming); 0
+     *                  for a day missed or before the first one
+     * @param streak    the streak that day reaches (today and to come: if the player comes every
+     *                  day); for a day before today, the streak it reached when it paid milestones,
+     *                  else 0
+     * @param milestone the day pays milestones on top of its reward (paid, waiting, or to come if
+     *                  the player comes every day)
      */
-    public record Day(long day, int offset, Status status, int cycleDay) {
+    public record Day(long day, int offset, Status status, int cycleDay, int streak, boolean milestone) {
+        public Day(long day, int offset, Status status, int cycleDay) {
+            this(day, offset, status, cycleDay, 0, false);
+        }
     }
 
     /**
@@ -45,6 +53,17 @@ public final class CalendarView {
      */
     public static List<Day> around(PlayerState state, ClaimHistory history, long today, int cycleLength,
                                    int past, int future) {
+        return around(state, history, today, cycleLength, List.of(), past, future);
+    }
+
+    /**
+     * As {@link #around(PlayerState, ClaimHistory, long, int, int, int)}, with the days that pay
+     * {@code milestones}: before today as they were counted, today and after as
+     * {@link StreakRules#checkIn} will decide if the player comes every day (a streak above the
+     * milestone mark that a milestone matches; the mark is 0 once the streak is broken).
+     */
+    public static List<Day> around(PlayerState state, ClaimHistory history, long today, int cycleLength,
+                                   List<Milestone> milestones, int past, int future) {
         List<Day> days = new ArrayList<>(past + 1 + future);
         for (int offset = -past; offset < 0; offset++) {
             long day = today + offset;
@@ -53,7 +72,9 @@ public final class CalendarView {
             if (counted != null) status = history.unclaimedOn(day) ? Status.AVAILABLE : Status.CLAIMED;
             else if (history.firstDay() == null || day < history.firstDay()) status = Status.BEFORE;
             else status = Status.MISSED;
-            days.add(new Day(day, offset, status, counted != null ? counted : 0));
+            Integer milestoneStreak = history.milestoneOn(day);
+            days.add(new Day(day, offset, status, counted != null ? counted : 0,
+                    milestoneStreak != null ? milestoneStreak : 0, milestoneStreak != null));
         }
 
         StreakRules.Displayed shown = StreakRules.display(state, today);
@@ -64,11 +85,20 @@ public final class CalendarView {
                 ? countedToday
                 : StreakRules.cycleDay(todayStreak, cycleLength);
         boolean claimedToday = shown.countedToday() && !history.unclaimedOn(today);
-        days.add(new Day(today, 0, claimedToday ? Status.CLAIMED : Status.AVAILABLE, todayCycleDay));
+        // The mark today's streak is checked against: the stored one, unless the streak is broken.
+        int mark = shown.broken() ? 0 : state.milestoneMark();
+        boolean todayMilestone = shown.countedToday()
+                ? history.milestoneOn(today) != null
+                : todayStreak > mark && Milestone.paidAt(milestones, todayStreak).size() > 0;
+        days.add(new Day(today, 0, claimedToday ? Status.CLAIMED : Status.AVAILABLE, todayCycleDay,
+                todayStreak, todayMilestone));
+        if (todayMilestone) mark = Math.max(mark, todayStreak);
 
         for (int offset = 1; offset <= future; offset++) {
+            int streak = todayStreak + offset;
+            boolean milestone = streak > mark && !Milestone.paidAt(milestones, streak).isEmpty();
             days.add(new Day(today + offset, offset, Status.UPCOMING,
-                    StreakRules.cycleDay(todayStreak + offset, cycleLength)));
+                    StreakRules.cycleDay(streak, cycleLength), streak, milestone));
         }
         return days;
     }

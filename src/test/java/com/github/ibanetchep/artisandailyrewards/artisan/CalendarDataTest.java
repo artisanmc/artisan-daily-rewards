@@ -2,9 +2,12 @@ package com.github.ibanetchep.artisandailyrewards.artisan;
 
 import com.github.ibanetchep.artisandailyrewards.core.CalendarSettings;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarView;
+import com.github.ibanetchep.artisandailyrewards.core.Milestone;
+import com.github.ibanetchep.artisandailyrewards.DailyService;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,5 +51,32 @@ class CalendarDataTest {
         assertEquals(4, CalendarData.param(Map.of("past", " 4 "), "past", 7));
         assertEquals(7, CalendarData.param(Map.of("past", "x"), "past", 7));
         assertEquals(7, CalendarData.param(Map.of(), "past", 7));
+    }
+
+    @Test
+    void aMilestoneDayCarriesItsCountAndTheFirstIcon() {
+        CalendarSettings settings = new CalendarSettings(SETTINGS.resetTime(), 7, CalendarSettings.AutoClaim.OFF, 0, true,
+                7, 2, Map.of(7, DIAMONDS), null, List.of(Milestone.every(5, 5, null, null),
+                Milestone.at(10, Map.of("material", "NETHER_STAR"), null)));
+        Map<String, Object> row = CalendarData.row(new CalendarView.Day(DAY + 3, 3, CalendarView.Status.UPCOMING, 3, 10, true), settings);
+        assertEquals(true, row.get("is_milestone"));
+        assertEquals(10, row.get("streak"));
+        assertEquals(2, row.get("milestone_count"));
+        assertEquals(Map.of("material", "NETHER_STAR"), row.get("milestone_icon"));
+        Map<String, Object> plain = CalendarData.row(new CalendarView.Day(DAY + 1, 1, CalendarView.Status.UPCOMING, 1, 8, false), settings);
+        assertEquals(false, plain.get("is_milestone"));
+        assertEquals(0, plain.get("milestone_count"));
+    }
+
+    @Test
+    void aMilestoneRowSaysWhenAndWhetherItRepeats() {
+        Map<String, Object> row = CalendarData.milestoneRow(
+                new DailyService.UpcomingMilestone(60, 4, Milestone.every(30, 30, null, null)), 2, DAY);
+        assertEquals("60-2", row.get("id"));
+        assertEquals(4, row.get("offset"));
+        assertEquals("29/10", row.get("date"));
+        assertEquals(true, row.get("repeats"));
+        assertEquals(30, row.get("every"));
+        assertEquals(CalendarData.NO_REWARD_ICON, row.get("icon"));
     }
 }

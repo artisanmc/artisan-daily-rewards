@@ -8,6 +8,7 @@ import com.github.ibanetchep.artisandailyrewards.core.CalendarView;
 import com.github.ibanetchep.artisandailyrewards.core.ClaimHistory;
 import com.github.ibanetchep.artisandailyrewards.core.Durations;
 import com.github.ibanetchep.artisandailyrewards.core.GameClock;
+import com.github.ibanetchep.artisandailyrewards.core.Milestone;
 import com.github.ibanetchep.artisandailyrewards.core.PlayerState;
 import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
 import com.github.ibanetchep.artisandailyrewards.storage.CheckInResult;
@@ -278,7 +279,8 @@ public final class DailyService {
         CheckInResult result = repository.checkIn(uuid, today, current, server, System.currentTimeMillis());
         if (result.status() != CheckInResult.Status.CONFLICT) cache.put(uuid, result.state());
         if (result.counted()) {
-            history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay()));
+            history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay(),
+                    result.milestone() ? result.state().streak() : 0));
         }
         return result;
     }
@@ -397,6 +399,9 @@ public final class DailyService {
                     "count", rewards.size(),
                     "streak", state != null ? state.streak() : last.streak()));
         }
+        for (DailyRepository.Reward reward : rewards) {
+            if (reward.milestone()) messages.send(player, "claim.milestone", Map.of("streak", reward.streak()));
+        }
         // Today could not be counted yet: its reward comes once the player has played long enough.
         Duration wait = playtimeLeft(uuid);
         if (!countedToday && !automatic && !wait.isZero()) {
@@ -406,7 +411,8 @@ public final class DailyService {
 
     /**
      * Hands out a claimed reward: the actions of its day of the cycle ({@code days}, else
-     * {@code default_day}), run by Artisan with {@code {streak}}, {@code {cycle_day}} and
+     * {@code default_day}), then those of every milestone its streak reaches when the day pays
+     * milestones (decided when it was counted, {@link StreakRules#checkIn}), run by Artisan with {@code {streak}}, {@code {cycle_day}} and
      * {@code {cycle_length}} of the day it was counted. Off the game threads. The delivery is taken
      * in the database first, so two servers never pay one reward twice; a player who left keeps it
      * for their next join.
@@ -421,12 +427,18 @@ public final class DailyService {
                     + "; it is tried again at their next join", e);
             return;
         }
-        CalendarSettings.DayReward reward = current.reward(cycleDay);
-        if (reward == null || reward.actions() == null) return;
-        actions.run(player, reward.actions(), Map.of(
+        Map<String, Object> variables = Map.of(
                 "streak", claimed.streak(),
                 "cycle_day", cycleDay,
-                "cycle_length", current.cycleLength()), DailyRewardsModule.FOLDER);
+                "cycle_length", current.cycleLength());
+        CalendarSettings.DayReward reward = current.reward(cycleDay);
+        if (reward != null && reward.actions() != null) {
+            actions.run(player, reward.actions(), variables, DailyRewardsModule.FOLDER);
+        }
+        if (!claimed.milestone()) return;
+        for (Milestone milestone : current.milestonesAt(claimed.streak())) {
+            if (milestone.actions() != null) actions.run(player, milestone.actions(), variables, DailyRewardsModule.FOLDER);
+        }
     }
 
     // ---- Auto-claim choice
@@ -466,8 +478,40 @@ public final class DailyService {
         PlayerState state = cache.get(uuid);
         if (state == null) return null;
         ClaimHistory claims = history.getOrDefault(uuid, ClaimHistory.EMPTY);
-        return CalendarView.around(state, claims, clock.today(), settings.cycleLength(),
+        CalendarSettings current = settings;
+        return CalendarView.around(state, claims, clock.today(), current.cycleLength(), current.milestones(),
                 Math.clamp(past, 0, HISTORY_DAYS), Math.clamp(future, 0, MAX_FUTURE_DAYS));
+    }
+
+    /** How many coming milestones the milestones menu can ask for. */
+    public static final int MAX_MILESTONES = 200;
+
+    /**
+     * A coming milestone for the milestones menu.
+     *
+     * @param offset days from today until the player reaches it, coming every day: 0 today
+     */
+    public record UpcomingMilestone(int streak, int offset, Milestone milestone) {
+    }
+
+    /**
+     * The next {@code count} milestones the player reaches if they come every day, from the
+     * cache: from today's streak (counted or to count) when today still pays them, else from
+     * tomorrow's, and above the milestone mark of the current streak. Null until the player's
+     * streak is loaded; capped to {@link #MAX_MILESTONES}.
+     */
+    public @Nullable List<UpcomingMilestone> upcomingMilestones(UUID uuid, int count) {
+        PlayerState state = cache.get(uuid);
+        if (state == null) return null;
+        CalendarSettings current = settings;
+        StreakRules.Displayed shown = displayed(state);
+        int todayStreak = shown.countedToday() ? shown.streak() : shown.streak() + 1;
+        int mark = shown.broken() ? 0 : state.milestoneMark();
+        // A day counted today has made its milestones' decision: the list starts tomorrow.
+        int from = Math.max(shown.countedToday() ? todayStreak + 1 : todayStreak, mark + 1);
+        return Milestone.upcoming(current.milestones(), from, Math.clamp(count, 0, MAX_MILESTONES)).stream()
+                .map(o -> new UpcomingMilestone(o.streak(), o.streak() - todayStreak, o.milestone()))
+                .toList();
     }
 
     /** Opens again a menu of the module's folder the player has open: what it shows changed. */

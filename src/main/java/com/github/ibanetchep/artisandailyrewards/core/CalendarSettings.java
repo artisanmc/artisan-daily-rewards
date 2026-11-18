@@ -12,14 +12,16 @@ import java.util.Map;
 /**
  * The settings of {@code data/settings.yml} and {@code data/rewards.yml} ({@code CalendarFiles}) the streak rule, the claim flow and the calendar
  * menu read. The rewards are one per day of the cycle ({@code days}, keyed by the day's number,
- * else {@code default_day}); the base reward, the tiers, the milestones and the restore settings
- * come with the next steps, and this reader ignores them.
+ * else {@code default_day}), plus the {@code milestones} of the streak, paid on top of the day's
+ * reward ({@link Milestone}). The restore settings come with the next steps, and this reader
+ * ignores them.
  *
  * @param minPlaytimeMinutes playtime of the current session before the day counts for the streak
  *                           and its reward can be claimed
  * @param joinReminder       remind a player whose rewards wait, on join and at the reset
  * @param days               the reward of each listed day of the cycle, 1 to {@code cycleLength}
  * @param defaultDay         the reward of a day {@code days} does not list, null for none
+ * @param milestones         the bonuses of the streak, in the file's order
  */
 public record CalendarSettings(
         LocalTime resetTime,
@@ -30,14 +32,29 @@ public record CalendarSettings(
         int freezeEarnEvery,
         int freezeMaxStock,
         Map<Integer, DayReward> days,
-        @Nullable DayReward defaultDay
+        @Nullable DayReward defaultDay,
+        List<Milestone> milestones
 ) {
 
     public static final CalendarSettings DEFAULTS =
-            new CalendarSettings(LocalTime.MIDNIGHT, 28, AutoClaim.OFF, 0, true, 7, 2, Map.of(), null);
+            new CalendarSettings(LocalTime.MIDNIGHT, 28, AutoClaim.OFF, 0, true, 7, 2, Map.of(), null, List.of());
 
     public CalendarSettings {
         days = Map.copyOf(days);
+        milestones = List.copyOf(milestones);
+    }
+
+    /** Without milestones. */
+    public CalendarSettings(LocalTime resetTime, int cycleLength, AutoClaim autoClaim, int minPlaytimeMinutes,
+                            boolean joinReminder, int freezeEarnEvery, int freezeMaxStock,
+                            Map<Integer, DayReward> days, @Nullable DayReward defaultDay) {
+        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder, freezeEarnEvery, freezeMaxStock,
+                days, defaultDay, List.of());
+    }
+
+    /** The milestones a streak of {@code streak} pays, in the file's order. */
+    public List<Milestone> milestonesAt(int streak) {
+        return Milestone.paidAt(milestones, streak);
     }
 
     /**
@@ -96,8 +113,9 @@ public record CalendarSettings(
         Map<Integer, DayReward> days = days(root.get("days"), cycleLength);
         Object defaultSection = root.get("default_day");
         DayReward defaultDay = defaultSection != null ? reward("default_day", defaultSection) : null;
+        List<Milestone> milestones = Milestone.read(root.get("milestones"));
         return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytime, joinReminder,
-                earnEvery, maxStock, days, defaultDay);
+                earnEvery, maxStock, days, defaultDay, milestones);
     }
 
     /** {@code days}: a section keyed by day number, each within the cycle. */

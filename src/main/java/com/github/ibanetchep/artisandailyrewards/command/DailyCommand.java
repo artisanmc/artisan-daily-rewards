@@ -83,7 +83,7 @@ public final class DailyCommand {
                 .build();
     }
 
-    /** {@code /daily status}: the streak in chat, what the menu's top item shows. */
+    /** {@code /dailyrewards status}: the streak in chat, what the menu's top item shows. */
     private void status(PlayerCommandContext ctx) {
         withPlayer(ctx, player -> {
             PlayerState state = service.state(player.getUniqueId());

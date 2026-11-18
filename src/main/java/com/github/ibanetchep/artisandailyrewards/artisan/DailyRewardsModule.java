@@ -21,9 +21,10 @@ import java.util.logging.Logger;
  *       screen ({@link SettingsModel}, a generated form) and Rewards screen ({@link RewardsModel},
  *       a grid of the cycle from the module's editor bundle, {@link #EDITOR_BUNDLE});</li>
  *   <li>its system files ({@link ModuleFiles}), kept there by Artisan: the calendar menu
- *       {@code daily:calendar}, which {@code /dailyrewards} opens, the two files and their models;</li>
- *   <li>the data sources {@code daily:calendar} and {@code daily:status} of that menu
- *       ({@link CalendarData});</li>
+ *       {@code daily:calendar}, which {@code /dailyrewards} opens, the milestones menu
+ *       {@code daily:milestones} it links to, the two files and their models;</li>
+ *   <li>the data sources {@code daily:calendar}, {@code daily:status} and
+ *       {@code daily:milestones} of those menus ({@link CalendarData});</li>
  *   <li>the {@code /dailyrewards} and {@code /dailyadmin} commands; the menu's claim button runs
  *       {@code daily:claim} through {@code module_command}.</li>
  * </ul>
@@ -76,6 +77,7 @@ public final class DailyRewardsModule implements ArtisanModule {
         CalendarData data = new CalendarData(service);
         api.getDataSources().register(data.calendar());
         api.getDataSources().register(data.status());
+        api.getDataSources().register(data.milestones());
         // A first start reads the calendar before Artisan writes the shipped files (off the game
         // thread): it runs on the defaults until the next reload.
         service.loadCalendar(folder);

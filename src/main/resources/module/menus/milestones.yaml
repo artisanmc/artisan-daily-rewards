@@ -1,0 +1,92 @@
+schema: menu/v1
+# The streak milestones to come (milestones of data/rewards), 28 a page: the next ones the player
+# reaches if they come every day, a repeating one again and again. Opened from the calendar
+# (/daily); the button at the bottom goes back to it.
+title:
+  - kind: plain
+    value: { en: "<dark_gray>Streak milestones", fr: "<dark_gray>Paliers de streak" }
+size: 54
+inputs:
+  - name: status
+    type: list
+    source: { ref: "daily:status" }
+  - name: milestones
+    type: list
+    source:
+      ref: "daily:milestones"
+      params: { count: "112" }
+elements:
+  - id: border
+    positions: "0-3,5-8,9,17,18,26,27,35,36,44,46,47,51,52"
+    material: GRAY_STAINED_GLASS_PANE
+    title: " "
+  - id: streak
+    positions: 4
+    material: NETHER_STAR
+    title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
+    lore:
+      - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
+      - ""
+      - { en: "<gray>A milestone is paid with the day that reaches it,", fr: "<gray>Un palier est payé avec le jour qui l'atteint," }
+      - { en: "<gray>on top of the day's reward.", fr: "<gray>en plus de la récompense du jour." }
+      - { en: "<gray>A broken streak starts them again.", fr: "<gray>Un streak cassé les fait recommencer." }
+  - id: milestones
+    positions: "10-16,19-25,28-34,37-43"
+    iterates: { source: milestones, alias: m }
+    states:
+      - if:
+          - expression: m.is_today
+        item: "{m.icon}"
+        enchanted: true
+        lore:
+          - ""
+          - { en: "<light_purple>{m.streak} days of streak <yellow>· today", fr: "<light_purple>{m.streak} jours de streak <yellow>· aujourd'hui" }
+          - { en: "{m.repeats ? \"<dark_gray>Again every \" + m.every + \" days\" : \"<dark_gray>Once per streak\"}", fr: "{m.repeats ? \"<dark_gray>Puis tous les \" + m.every + \" jours\" : \"<dark_gray>Une fois par streak\"}" }
+    item: "{m.icon}"
+    lore:
+      - ""
+      - { en: "<light_purple>{m.streak} days of streak", fr: "<light_purple>{m.streak} jours de streak" }
+      - { en: "<gray>In {m.offset} days <dark_gray>· on {m.date}", fr: "<gray>Dans {m.offset} jours <dark_gray>· le {m.date}" }
+      - { en: "{m.repeats ? \"<dark_gray>Again every \" + m.every + \" days\" : \"<dark_gray>Once per streak\"}", fr: "{m.repeats ? \"<dark_gray>Puis tous les \" + m.every + \" jours\" : \"<dark_gray>Une fois par streak\"}" }
+      - { en: "<dark_gray>If you come every day until then", fr: "<dark_gray>Si tu viens chaque jour d'ici là" }
+  - id: back
+    positions: 45
+    material: ARROW
+    title: { en: "<yellow>Back to the calendar", fr: "<yellow>Retour au calendrier" }
+    click: { left: [ { open_menu: "daily:calendar" } ] }
+  - id: previous
+    positions: 48
+    states:
+      - if:
+          - pagination_at_first: milestones
+        material: GRAY_STAINED_GLASS_PANE
+        title: " "
+    material: ARROW
+    title: { en: "<yellow>Previous milestones", fr: "<yellow>Paliers précédents" }
+    click: { left: [ { pagination_prev: milestones } ] }
+  - id: empty
+    positions: 49
+    states:
+      - if:
+          - expression: status[0].next_milestone > 0
+        material: GRAY_STAINED_GLASS_PANE
+        title: " "
+    material: BARRIER
+    title: { en: "<gray>No milestone left", fr: "<gray>Plus aucun palier" }
+    lore:
+      - { en: "<dark_gray>The server has no milestone to come.", fr: "<dark_gray>Le serveur n'a plus de palier à venir." }
+  - id: next
+    positions: 50
+    states:
+      - if:
+          - pagination_at_last: milestones
+        material: GRAY_STAINED_GLASS_PANE
+        title: " "
+    material: ARROW
+    title: { en: "<yellow>Next milestones", fr: "<yellow>Paliers suivants" }
+    click: { left: [ { pagination_next: milestones } ] }
+  - id: close
+    positions: 53
+    material: BARRIER
+    title: { en: "<red>Close", fr: "<red>Fermer" }
+    click: { left: [ close_menu ] }

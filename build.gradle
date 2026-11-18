@@ -3,7 +3,9 @@ plugins {
 }
 
 group = 'com.github.ibanetchep'
-version = '1.0.0'
+// The version in preparation. The release workflow sets the real one with -PpluginVersion: the tag's, or
+// <version>-dev.<run> for a build of main (.github/workflows/release.yml).
+version = findProperty('pluginVersion') ?: '1.0.0'
 
 repositories {
     mavenCentral()
