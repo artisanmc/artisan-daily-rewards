@@ -22,7 +22,7 @@ import java.util.Set;
  * The calendar's two files in the module's folder, each edited by its own screen of the editor:
  * <ul>
  *   <li>{@code data/settings.yml}: reset time, auto-claim, playtime, reminder, jokers (Settings);</li>
- *   <li>{@code data/rewards.yml}: the cycle length and the reward of each day (Rewards).</li>
+ *   <li>{@code data/rewards.yml}: the cycle length, the reward of each day and the milestones (Rewards).</li>
  * </ul>
  * Each is the owner's copy when there is one, else the shipped one Artisan keeps under
  * {@code originals/}. Before them, everything was in {@code data/calendar.yml}: {@link #migrate}
@@ -38,7 +38,7 @@ public final class CalendarFiles {
     static final String ORIGINALS = "originals";
 
     /** The keys of {@code data/rewards.yml}; every other key of the calendar is a setting. */
-    static final Set<String> REWARD_KEYS = Set.of("cycle_length", "days", "default_day");
+    static final Set<String> REWARD_KEYS = Set.of("cycle_length", "days", "default_day", "milestones");
 
     private CalendarFiles() {
     }

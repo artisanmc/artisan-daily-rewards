@@ -10,6 +10,7 @@ claim:
   success_auto: "<green>Daily reward claimed automatically. Streak: <white><streak></white> <gray>(day <cycle_day>/<cycle_length>)"
   success_many: "<green><white><count></white> daily rewards claimed! Streak: <white><streak></white>"
   success_many_auto: "<green><white><count></white> daily rewards claimed automatically. Streak: <white><streak></white>"
+  milestone: "<light_purple>Streak milestone reached: <white><streak> days</white>! Bonus claimed."
   covered: "<aqua>Your streak was kept: <white><count></white> freeze(s) used for the missed days."
   broken: "<red>You missed a day: your streak of <white><lost></white> is broken. It starts again today."
   freeze_earned: "<aqua>You earned a freeze! <gray>(<freezes>/<max>)"

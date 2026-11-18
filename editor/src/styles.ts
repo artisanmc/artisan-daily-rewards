@@ -48,4 +48,11 @@ export const STYLES = `
 .daily-inherited { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--r-md);
   background: var(--surface-inset); }
 .daily-inherited-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.daily-milestones { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border-soft); }
+.daily-milestone-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.daily-milestone { border-style: solid; }
+.daily-milestone.is-invalid { border-color: var(--warning); }
+.daily-milestone-add { display: flex; flex-wrap: wrap; gap: 8px; }
+.daily-milestone-kind { display: flex; flex-wrap: wrap; gap: 6px; }
+.daily-fields label { display: flex; flex-direction: column; gap: 6px; }
 `;

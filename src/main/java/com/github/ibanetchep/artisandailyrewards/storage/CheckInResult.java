@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @param outcome     null when nothing was counted: see {@link #status}
  * @param freezesUsed jokers spent on missed days
  * @param cycleDay    day of the cycle this day pays when its reward is claimed
+ * @param milestone   this day also pays the milestones of its streak
  */
 public record CheckInResult(
         Status status,
@@ -19,7 +20,8 @@ public record CheckInResult(
         @Nullable StreakRules.Outcome outcome,
         int freezesUsed,
         boolean freezeEarned,
-        int cycleDay
+        int cycleDay,
+        boolean milestone
 ) {
 
     public enum Status {
@@ -31,16 +33,16 @@ public record CheckInResult(
     }
 
     static CheckInResult counted(PlayerState before, PlayerState after, StreakRules.Outcome outcome,
-                                 int freezesUsed, boolean freezeEarned, int cycleDay) {
-        return new CheckInResult(Status.COUNTED, before, after, outcome, freezesUsed, freezeEarned, cycleDay);
+                                 int freezesUsed, boolean freezeEarned, int cycleDay, boolean milestone) {
+        return new CheckInResult(Status.COUNTED, before, after, outcome, freezesUsed, freezeEarned, cycleDay, milestone);
     }
 
     static CheckInResult alreadyCounted(PlayerState state) {
-        return new CheckInResult(Status.ALREADY_COUNTED, state, state, null, 0, false, 0);
+        return new CheckInResult(Status.ALREADY_COUNTED, state, state, null, 0, false, 0, false);
     }
 
     static CheckInResult conflict(PlayerState state) {
-        return new CheckInResult(Status.CONFLICT, state, state, null, 0, false, 0);
+        return new CheckInResult(Status.CONFLICT, state, state, null, 0, false, 0, false);
     }
 
     public boolean counted() {

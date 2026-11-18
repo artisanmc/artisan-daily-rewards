@@ -4,6 +4,7 @@ import com.github.ibanetchep.artisandailyrewards.DailyService;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarSettings;
 import com.github.ibanetchep.artisandailyrewards.core.CalendarView;
 import com.github.ibanetchep.artisandailyrewards.core.Durations;
+import com.github.ibanetchep.artisandailyrewards.core.Milestone;
 import com.github.ibanetchep.artisandailyrewards.core.PlayerState;
 import com.github.ibanetchep.artisandailyrewards.core.StreakRules;
 import net.artisanmc.modules.api.datasource.DataSourceDeclaration;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * What the calendar menu shows, from the service's cache (no I/O, any thread):
@@ -26,16 +28,22 @@ import java.util.Map;
  *       waiting to be claimed, missed), today, and
  *       the days to come with the reward each one will pay. Params {@code past} (7 by default, at
  *       most {@link DailyService#HISTORY_DAYS}) and {@code future} (20);</li>
- *   <li>{@code daily:status}, one row: the viewer's streak, jokers and today's claim.</li>
+ *   <li>{@code daily:status}, one row: the viewer's streak, jokers, today's claim and the next
+ *       milestone;</li>
+ *   <li>{@code daily:milestones}, one row per coming milestone, the next ones the viewer reaches
+ *       if they come every day. Param {@code count} (28 by default, at most
+ *       {@link DailyService#MAX_MILESTONES}).</li>
  * </ul>
  */
 public final class CalendarData {
 
     public static final String CALENDAR = "daily:calendar";
     public static final String STATUS = "daily:status";
+    public static final String MILESTONES = "daily:milestones";
 
     static final int DEFAULT_PAST = 7;
     static final int DEFAULT_FUTURE = 20;
+    static final int DEFAULT_MILESTONES = 28;
     /** A day without a reward still has an item to show. */
     static final Map<String, Object> NO_REWARD_ICON = Map.of("material", "PAPER");
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM", Locale.ROOT);
@@ -63,7 +71,26 @@ public final class CalendarData {
                         "The day of the cycle paid or to be paid if the viewer comes every day; 0 when missed or before"),
                 new DataSourceField("has_reward", ModelFieldType.bool(), "That day of the cycle has a reward"),
                 new DataSourceField("icon", ModelFieldType.item(),
-                        "The reward's icon (days, else default_day of the calendar), for item: \"{d.icon}\"")));
+                        "The reward's icon (days, else default_day of the calendar), for item: \"{d.icon}\""),
+                new DataSourceField("streak", ModelFieldType.integer(),
+                        "The streak that day reaches (today and to come: if the viewer comes every day); before today, 0 unless it paid milestones"),
+                new DataSourceField("is_milestone", ModelFieldType.bool(),
+                        "The day pays milestones on top of its reward: paid, waiting, or to come if the viewer comes every day"),
+                new DataSourceField("milestone_count", ModelFieldType.integer(), "How many milestones the day pays, 0 for none"),
+                new DataSourceField("milestone_icon", ModelFieldType.item(),
+                        "The icon of the day's first milestone, else the day's icon")));
+    }
+
+    public DataSourceDeclaration milestones() {
+        return new DataSourceDeclaration(MILESTONES, (player, params) -> milestones(player, params), List.of(
+                new DataSourceField("id", ModelFieldType.string(), "The streak and the milestone's place in the file: 30-2"),
+                new DataSourceField("streak", ModelFieldType.integer(), "The streak that pays it"),
+                new DataSourceField("offset", ModelFieldType.integer(), "Days from today if the viewer comes every day: 0 today"),
+                new DataSourceField("date", ModelFieldType.string(), "dd/MM, if the viewer comes every day"),
+                new DataSourceField("is_today", ModelFieldType.bool(), null),
+                new DataSourceField("repeats", ModelFieldType.bool(), "An every milestone, paid again and again"),
+                new DataSourceField("every", ModelFieldType.integer(), "The step of a repeating milestone, 0 for an at one"),
+                new DataSourceField("icon", ModelFieldType.item(), "The milestone's icon, for item: \"{m.icon}\"")));
     }
 
     public DataSourceDeclaration status() {
@@ -83,7 +110,11 @@ public final class CalendarData {
                 new DataSourceField("lost", ModelFieldType.integer(), "The streak a break loses, 0 when not broken"),
                 new DataSourceField("cycle_day", ModelFieldType.integer(), "Today's day of the cycle, counted or to count"),
                 new DataSourceField("cycle_length", ModelFieldType.integer(), null),
-                new DataSourceField("until_reset", ModelFieldType.string(), "Time left in the game day: 3h 12m")));
+                new DataSourceField("until_reset", ModelFieldType.string(), "Time left in the game day: 3h 12m"),
+                new DataSourceField("next_milestone", ModelFieldType.integer(),
+                        "The streak of the next milestone the viewer reaches, 0 when none is left"),
+                new DataSourceField("next_milestone_in", ModelFieldType.integer(),
+                        "Days until then if the viewer comes every day: 0 today, -1 when none is left")));
     }
 
     List<Map<String, Object>> calendar(@Nullable Player player, Map<String, Object> params) {
@@ -113,6 +144,36 @@ public final class CalendarData {
         row.put("cycle_day", day.cycleDay());
         row.put("has_reward", reward != null);
         row.put("icon", icon);
+        row.put("streak", day.streak());
+        List<Milestone> paid = day.milestone() ? settings.milestonesAt(day.streak()) : List.of();
+        row.put("is_milestone", day.milestone());
+        row.put("milestone_count", paid.size());
+        row.put("milestone_icon", paid.stream().map(Milestone::icon).filter(Objects::nonNull).findFirst().orElse(icon));
+        return row;
+    }
+
+    List<Map<String, Object>> milestones(@Nullable Player player, Map<String, Object> params) {
+        if (player == null) return List.of();
+        List<DailyService.UpcomingMilestone> coming = service.upcomingMilestones(player.getUniqueId(),
+                param(params, "count", DEFAULT_MILESTONES));
+        if (coming == null) return List.of();
+        List<Milestone> all = service.settings().milestones();
+        long today = service.clock().today();
+        return coming.stream().map(m -> milestoneRow(m, all.indexOf(m.milestone()) + 1, today)).toList();
+    }
+
+    static Map<String, Object> milestoneRow(DailyService.UpcomingMilestone coming, int place, long today) {
+        Milestone milestone = coming.milestone();
+        LocalDate date = LocalDate.ofEpochDay(today + coming.offset());
+        Map<String, Object> row = new HashMap<>();
+        row.put("id", coming.streak() + "-" + place);
+        row.put("streak", coming.streak());
+        row.put("offset", coming.offset());
+        row.put("date", DATE.format(date));
+        row.put("is_today", coming.offset() == 0);
+        row.put("repeats", milestone.repeats());
+        row.put("every", milestone.every());
+        row.put("icon", milestone.icon() != null ? milestone.icon() : NO_REWARD_ICON);
         return row;
     }
 
@@ -129,6 +190,8 @@ public final class CalendarData {
             row.putAll(Map.of("streak", 0, "longest", 0, "total", 0, "freezes", 0, "claimed_today", false,
                     "unclaimed", 0, "can_claim", false, "at_risk", false, "broken", false, "lost", 0));
             row.put("cycle_day", 1);
+            row.put("next_milestone", 0);
+            row.put("next_milestone_in", -1);
             return List.of(row);
         }
         StreakRules.Displayed shown = service.displayed(state);
@@ -145,6 +208,10 @@ public final class CalendarData {
         row.put("broken", shown.broken());
         row.put("lost", shown.broken() ? state.streak() : 0);
         row.put("cycle_day", StreakRules.cycleDay(todayStreak, settings.cycleLength()));
+        List<DailyService.UpcomingMilestone> next = service.upcomingMilestones(player.getUniqueId(), 1);
+        boolean any = next != null && !next.isEmpty();
+        row.put("next_milestone", any ? next.get(0).streak() : 0);
+        row.put("next_milestone_in", any ? next.get(0).offset() : -1);
         return List.of(row);
     }
 

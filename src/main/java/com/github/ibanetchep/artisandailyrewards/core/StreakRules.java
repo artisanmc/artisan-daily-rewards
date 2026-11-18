@@ -19,8 +19,9 @@ public final class StreakRules {
      *
      * @param freezesUsed  jokers spent on the missed days
      * @param freezeEarned whether this day earned a joker
+     * @param milestone    whether this day pays the milestones of its streak, on top of its reward
      */
-    public record CheckIn(PlayerState state, Outcome outcome, int freezesUsed, boolean freezeEarned) {
+    public record CheckIn(PlayerState state, Outcome outcome, int freezesUsed, boolean freezeEarned, boolean milestone) {
         public boolean counted() {
             return outcome != Outcome.ALREADY_COUNTED;
         }
@@ -48,11 +49,13 @@ public final class StreakRules {
      *   <li>otherwise the streak breaks: it is kept aside for a restore, from the first missed
      *       day, and starts again at 1. No joker is used.</li>
      * </ul>
-     * Then the longest streak, the days counted, and one joker every {@code freeze_earn_every} days of
-     * streak, up to {@code freeze_max_stock}.
+     * Then the longest streak, the days counted, one joker every {@code freeze_earn_every} days of
+     * streak, up to {@code freeze_max_stock}, and the milestones: a streak above the milestone
+     * mark that some milestone matches pays them and raises the mark to it. The mark goes back to 0
+     * at a break, so a milestone is paid once per streak and step, never twice.
      */
     public static CheckIn checkIn(PlayerState state, long today, CalendarSettings settings) {
-        if (state.countedOn(today)) return new CheckIn(state, Outcome.ALREADY_COUNTED, 0, false);
+        if (state.countedOn(today)) return new CheckIn(state, Outcome.ALREADY_COUNTED, 0, false, false);
 
         int streak;
         int freezes = state.freezes();
@@ -91,10 +94,13 @@ public final class StreakRules {
         boolean earned = earnEvery > 0 && streak % earnEvery == 0 && freezes < settings.freezeMaxStock();
         if (earned) freezes++;
 
+        boolean milestone = streak > milestoneMark && !settings.milestonesAt(streak).isEmpty();
+        if (milestone) milestoneMark = streak;
+
         PlayerState next = new PlayerState(state.uuid(), streak, Math.max(state.longest(), streak), today,
                 state.totalDays() + 1, freezes, milestoneMark, brokenStreak, brokenMark, brokenFromDay,
                 state.autoClaim(), state.version());
-        return new CheckIn(next, outcome, freezesUsed, earned);
+        return new CheckIn(next, outcome, freezesUsed, earned, milestone);
     }
 
     /** What a player sees on {@code today}: the stored streak, unless it is already lost. */

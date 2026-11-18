@@ -2,7 +2,9 @@ schema: menu/v1
 # /daily: the last 7 days as they went (claimed, waiting to be claimed, missed), today, then the
 # days to come with the reward each one pays if the player comes every day: 20 on the first page,
 # 28 on each of the 3 next (the arrows at the bottom). A day the player was there counts for the streak, claimed or not: its reward waits. The rewards are those of
-# data/rewards (days, else default_day): edit them in the Rewards screen.
+# data/rewards (days, else default_day): edit them in the Rewards screen. A day that reaches a
+# milestone of the streak (milestones of data/rewards) glows and says so; the button at the bottom
+# left opens the milestones menu.
 title:
   - kind: plain
     value: { en: "<dark_gray>Daily rewards", fr: "<dark_gray>Récompenses quotidiennes" }
@@ -18,7 +20,7 @@ inputs:
       params: { past: "7", future: "104" }
 elements:
   - id: border
-    positions: "0-3,5-8,9,17,18,26,27,35,36,44,46,47,51,52"
+    positions: "0-3,5-8,9,17,18,26,27,35,36,44,46,51,52"
     material: GRAY_STAINED_GLASS_PANE
     title: " "
   - id: streak
@@ -44,6 +46,7 @@ elements:
         lore:
           - ""
           - { en: "<yellow>Today <gray>· day {d.cycle_day}", fr: "<yellow>Aujourd'hui <gray>· jour {d.cycle_day}" }
+          - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
           - { en: "<green>Click to claim", fr: "<green>Cliquer pour réclamer" }
         click:
           left:
@@ -57,6 +60,7 @@ elements:
           - ""
           - { en: "<yellow>{d.date} <gray>· day {d.cycle_day}", fr: "<yellow>{d.date} <gray>· jour {d.cycle_day}" }
           - { en: "<gray>You were there: not claimed yet", fr: "<gray>Tu étais là : pas encore réclamée" }
+          - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
           - { en: "<green>Click to claim", fr: "<green>Cliquer pour réclamer" }
         click:
           left:
@@ -68,12 +72,14 @@ elements:
           - ""
           - { en: "<yellow>Today <gray>· day {d.cycle_day}", fr: "<yellow>Aujourd'hui <gray>· jour {d.cycle_day}" }
           - { en: "<green>✔ Claimed <gray>· next in {status[0].until_reset}", fr: "<green>✔ Réclamée <gray>· prochaine dans {status[0].until_reset}" }
+          - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
       - if:
           - expression: d.is_claimed
         item: "{d.icon}"
         lore:
           - ""
           - { en: "<green>✔ Claimed on {d.date} <gray>· day {d.cycle_day}", fr: "<green>✔ Réclamée le {d.date} <gray>· jour {d.cycle_day}" }
+          - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
       - if:
           - expression: d.is_missed
         material: RED_STAINED_GLASS_PANE
@@ -84,6 +90,16 @@ elements:
           - expression: d.is_before
         material: LIGHT_GRAY_STAINED_GLASS_PANE
         title: { en: "<gray>{d.date}", fr: "<gray>{d.date}" }
+      # A day to come that reaches a milestone: its icon glows.
+      - if:
+          - expression: d.is_milestone
+        item: "{d.milestone_icon}"
+        enchanted: true
+        lore:
+          - ""
+          - { en: "<gray>On {d.date} <dark_gray>· day {d.cycle_day}", fr: "<gray>Le {d.date} <dark_gray>· jour {d.cycle_day}" }
+          - { en: "<light_purple>+ streak bonus: {d.streak} days", fr: "<light_purple>+ bonus de streak : {d.streak} jours" }
+          - { en: "<dark_gray>If you come every day until then", fr: "<dark_gray>Si tu viens chaque jour d'ici là" }
     # A day to come.
     item: "{d.icon}"
     lore:
@@ -97,6 +113,17 @@ elements:
     lore:
       - { en: "<gray>A joker covers a missed day:", fr: "<gray>Un joker couvre un jour manqué :" }
       - { en: "<gray>your streak goes on, the day's reward is lost.", fr: "<gray>ton streak continue, la récompense du jour est perdue." }
+  - id: milestones
+    positions: 47
+    material: BEACON
+    title: { en: "<light_purple>Streak milestones", fr: "<light_purple>Paliers de streak" }
+    lore:
+      - { en: "{status[0].next_milestone > 0 ? \"<gray>Next: <white>\" + status[0].next_milestone + \" days</white> of streak\" : \"<gray>No milestone left\"}", fr: "{status[0].next_milestone > 0 ? \"<gray>Prochain : <white>\" + status[0].next_milestone + \" jours</white> de streak\" : \"<gray>Plus aucun palier\"}" }
+      - { en: "{status[0].next_milestone_in == 0 ? \"<yellow>Today\" : \"\"}", fr: "{status[0].next_milestone_in == 0 ? \"<yellow>Aujourd'hui\" : \"\"}" }
+      - { en: "{status[0].next_milestone_in > 0 ? \"<gray>In <white>\" + status[0].next_milestone_in + \"</white> days\" : \"\"}", fr: "{status[0].next_milestone_in > 0 ? \"<gray>Dans <white>\" + status[0].next_milestone_in + \"</white> jours\" : \"\"}" }
+      - ""
+      - { en: "<green>Click to see them all", fr: "<green>Cliquer pour tous les voir" }
+    click: { left: [ { open_menu: "daily:milestones" } ] }
   - id: previous
     positions: 48
     states:

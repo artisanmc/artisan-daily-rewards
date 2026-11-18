@@ -10,12 +10,31 @@
  * - without them, a sample player shows every state of a day: before the first day counted,
  *   claimed, missed (a joker kept the streak), waiting to be claimed, today and the days to come.
  *
- * Mirrors `CalendarData.row` and `CalendarView.around` of the plugin.
+ * The milestones menu's `daily:milestones` has no row without a player either: the sample
+ * player's next milestones come from the draft's `milestones`.
+ *
+ * Mirrors `CalendarData.row`, `CalendarData.milestoneRow` and `CalendarView.around` of the plugin.
  */
-import { type Reward, type RewardsValue, asObject, cycleLength, ownDays } from "./rewards";
+import {
+  type Milestone,
+  type Reward,
+  type RewardsValue,
+  asObject,
+  cycleLength,
+  milestones,
+  ownDays,
+  paidAt,
+  upcoming,
+} from "./rewards";
 
 export const CALENDAR = "daily:calendar";
 export const STATUS = "daily:status";
+export const MILESTONES = "daily:milestones";
+const DEFAULT_MILESTONES = 28;
+/** `DailyService.MAX_MILESTONES`. */
+const MAX_MILESTONES = 200;
+/** The sample player's streak today, not counted yet. */
+const SAMPLE_TODAY = 5;
 /** The rewards file, a config source of the daily folder. */
 export const REWARDS_SOURCE = "rewards";
 const DEFAULT_PAST = 7;
@@ -33,6 +52,8 @@ export interface SampleDay {
   offset: number;
   status: Status;
   cycleDay: number;
+  /** The streak the day reaches, 0 for before / missed. */
+  streak: number;
 }
 
 interface ProjectSources {
@@ -94,14 +115,19 @@ export function sampleDays(past: number, future: number, length: number): Sample
     const told = story[story.length + offset];
     days.push(
       told
-        ? { offset, status: told.status, cycleDay: told.streak > 0 ? cycleDayOf(told.streak, length) : 0 }
-        : { offset, status: "before", cycleDay: 0 },
+        ? {
+            offset,
+            status: told.status,
+            cycleDay: told.streak > 0 ? cycleDayOf(told.streak, length) : 0,
+            streak: told.streak,
+          }
+        : { offset, status: "before", cycleDay: 0, streak: 0 },
     );
   }
-  const today = 5;
-  days.push({ offset: 0, status: "available", cycleDay: cycleDayOf(today, length) });
+  const today = SAMPLE_TODAY;
+  days.push({ offset: 0, status: "available", cycleDay: cycleDayOf(today, length), streak: today });
   for (let offset = 1; offset <= future; offset++) {
-    days.push({ offset, status: "upcoming", cycleDay: cycleDayOf(today + offset, length) });
+    days.push({ offset, status: "upcoming", cycleDay: cycleDayOf(today + offset, length), streak: today + offset });
   }
   return days;
 }
@@ -128,17 +154,53 @@ export function row(day: SampleDay, value: RewardsValue, today: Date): Record<st
     cycle_day: day.cycleDay,
     has_reward: reward !== undefined,
     icon: reward?.icon ?? NO_REWARD_ICON,
+    // The sample player's streak never broke: each streak that a milestone matches pays it.
+    ...milestoneFields(milestones(value), day.streak, day.streak > 0, reward?.icon ?? NO_REWARD_ICON),
   };
+}
+
+/** `streak`, `is_milestone`, `milestone_count`, `milestone_icon` of a calendar row. */
+function milestoneFields(list: Milestone[], streak: number, paying: boolean, dayIcon: unknown): Record<string, unknown> {
+  const paid = paying ? paidAt(list, streak) : [];
+  return {
+    streak,
+    is_milestone: paid.length > 0,
+    milestone_count: paid.length,
+    milestone_icon: paid.find((m) => m.icon != null)?.icon ?? dayIcon,
+  };
+}
+
+/** `CalendarData.milestoneRow` of the sample player's next milestones. */
+export function sampleMilestones(value: RewardsValue, count: number, today: Date): Record<string, unknown>[] {
+  const list = milestones(value);
+  return upcoming(list, SAMPLE_TODAY, count).map(({ streak, milestone }) => {
+    const offset = streak - SAMPLE_TODAY;
+    const date = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) + offset * DAY_MS);
+    return {
+      id: `${streak}-${list.indexOf(milestone) + 1}`,
+      streak,
+      offset,
+      date: `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}`,
+      is_today: offset === 0,
+      repeats: milestone.every > 0,
+      every: milestone.every,
+      icon: milestone.icon ?? NO_REWARD_ICON,
+    };
+  });
 }
 
 /** A server row with its reward taken from the draft, by its day of the cycle. */
 export function withDraftReward(server: Record<string, unknown>, value: RewardsValue): Record<string, unknown> {
   const reward = rewardOf(value, Number(server.cycle_day) || 0);
-  return { ...server, has_reward: reward !== undefined, icon: reward?.icon ?? NO_REWARD_ICON };
+  const icon = reward?.icon ?? NO_REWARD_ICON;
+  // Whether the day pays milestones is the server's (the player's mark); which ones, the draft's.
+  const fields = milestoneFields(milestones(value), Number(server.streak) || 0, server.is_milestone === true, icon);
+  return { ...server, has_reward: reward !== undefined, icon, ...fields, is_milestone: server.is_milestone === true };
 }
 
 /** The sample player's `daily:status`, beside its calendar. */
-export function sampleStatus(length: number): Record<string, unknown> {
+export function sampleStatus(length: number, value: RewardsValue = {}): Record<string, unknown> {
+  const next = upcoming(milestones(value), SAMPLE_TODAY, 1)[0];
   return {
     id: "status",
     loaded: true,
@@ -156,6 +218,8 @@ export function sampleStatus(length: number): Record<string, unknown> {
     cycle_day: cycleDayOf(5, length),
     cycle_length: length,
     until_reset: "3h 12m",
+    next_milestone: next ? next.streak : 0,
+    next_milestone_in: next ? next.streak - SAMPLE_TODAY : -1,
   };
 }
 
@@ -166,7 +230,7 @@ export function dailyPreviewRows(
   ctx?: { serverRows?: Record<string, unknown>[]; params?: Record<string, string> },
   today: Date = new Date(),
 ): Record<string, unknown>[] | null {
-  if (ref !== CALENDAR && ref !== STATUS) return null;
+  if (ref !== CALENDAR && ref !== STATUS && ref !== MILESTONES) return null;
   // Not the daily folder: another module's project answers nothing.
   if (!isDailyProject(project)) return null;
   // The shipped rewards sit under originals/, which the editor does not read as a source yet:
@@ -178,7 +242,13 @@ export function dailyPreviewRows(
     // Previewed as nobody, the server's row is not loaded: the sample goes with the sample days.
     const loaded = server?.filter((r) => r.loaded === true) ?? [];
     if (loaded.length > 0) return loaded.map((r) => ({ ...r, cycle_length: length }));
-    return [sampleStatus(length)];
+    return [sampleStatus(length, value)];
+  }
+  if (ref === MILESTONES) {
+    // The server's rows follow the saved milestones and the player's mark: kept as they are.
+    if (server && server.length > 0) return server;
+    const count = Math.max(0, Math.min(MAX_MILESTONES, param(ctx?.params, "count", DEFAULT_MILESTONES)));
+    return sampleMilestones(value, count, today);
   }
   if (server && server.length > 0) return server.map((r) => withDraftReward(r, value));
   const past = Math.max(0, Math.min(MAX_PAST, param(ctx?.params, "past", DEFAULT_PAST)));

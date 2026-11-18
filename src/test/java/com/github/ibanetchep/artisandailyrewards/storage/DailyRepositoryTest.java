@@ -44,7 +44,7 @@ class DailyRepositoryTest {
         repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
         repository.migrate();
         assertEquals(1, repository.load(id).streak());
-        assertEquals("6", repository.meta(DailyRepository.SCHEMA_VERSION));
+        assertEquals("7", repository.meta(DailyRepository.SCHEMA_VERSION));
     }
 
     @Test
@@ -221,5 +221,22 @@ class DailyRepositoryTest {
         repository.putMeta(DailyRepository.ZONE, "Europe/Paris");
         repository.putMeta(DailyRepository.ZONE, "UTC");
         assertEquals("UTC", repository.meta(DailyRepository.ZONE));
+    }
+
+    @Test
+    void aDayThatReachesAMilestoneCarriesItToTheClaim() throws Exception {
+        CalendarSettings d = CalendarSettings.DEFAULTS;
+        CalendarSettings settings = new CalendarSettings(d.resetTime(), d.cycleLength(), d.autoClaim(), 0, true,
+                d.freezeEarnEvery(), d.freezeMaxStock(), java.util.Map.of(), null,
+                List.of(com.github.ibanetchep.artisandailyrewards.core.Milestone.at(2, null, null)));
+        UUID id = UUID.randomUUID();
+        assertFalse(repository.checkIn(id, DAY, settings, "a", 1).milestone());
+        CheckInResult second = repository.checkIn(id, DAY + 1, settings, "a", 2);
+        assertTrue(second.milestone());
+        assertEquals(2, second.state().milestoneMark());
+        assertEquals(2, repository.load(id).milestoneMark());
+        assertEquals(java.util.Map.of(DAY + 1, 2), repository.history(id, DAY).milestones());
+        assertEquals(List.of(new DailyRepository.Reward(DAY, 1, 1, false), new DailyRepository.Reward(DAY + 1, 2, 2, true)),
+                repository.claimAll(id, 3));
     }
 }
