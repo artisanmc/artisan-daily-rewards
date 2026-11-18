@@ -1,7 +1,172 @@
-import { createModuleI18n as D, useProject as k, useItemTexture as _, McText as j, ItemValueInput as L, ActionChainEditor as E, useContentLang as R, textValue as C, projectLangs as S, injectModuleStyles as z } from "@artisan/editor-sdk";
-import { jsxs as s, jsx as i, Fragment as I } from "react/jsx-runtime";
-import { useState as M } from "react";
-const O = {
+import { createModuleI18n as z, useProject as T, useItemTexture as M, McText as A, ItemValueInput as U, ActionChainEditor as O, useContentLang as I, textValue as j, projectLangs as P, injectModuleStyles as F } from "@artisan/editor-sdk";
+import { jsxs as d, jsx as s, Fragment as $ } from "react/jsx-runtime";
+import { useState as q } from "react";
+const J = 28, Y = 7;
+function f(e) {
+  return e && typeof e == "object" && !Array.isArray(e) ? e : void 0;
+}
+function b(e) {
+  const t = Number(e.cycle_length);
+  return Number.isInteger(t) && t >= 1 ? t : J;
+}
+function w(e) {
+  const t = /* @__PURE__ */ new Map();
+  for (const [a, i] of Object.entries(f(e.days) ?? {})) {
+    const n = Number(a);
+    Number.isInteger(n) && n >= 1 && t.set(n, f(i) ?? {});
+  }
+  return t;
+}
+function W(e) {
+  const t = b(e), a = w(e), i = f(e.default_day);
+  return Array.from({ length: t }, (n, r) => {
+    const l = r + 1, u = a.get(l);
+    return { day: l, own: u !== void 0, reward: u ?? i };
+  });
+}
+function G(e) {
+  const t = b(e);
+  return [...w(e).keys()].filter((a) => a > t).sort((a, i) => a - i);
+}
+function V(e, t, a) {
+  const i = Object.entries(f(e.days) ?? {}).filter(([n]) => Number(n) !== t);
+  return a !== void 0 && i.push([String(t), a]), i.sort(([n], [r]) => Number(n) - Number(r)), Object.fromEntries(i);
+}
+function B(e) {
+  return e === void 0 ? e : JSON.parse(JSON.stringify(e));
+}
+function K(e) {
+  if (typeof e == "string") return e;
+  const t = f(e), a = t?.extends ?? t?.item ?? t?.material;
+  return typeof a == "string" ? a : "";
+}
+function X(e) {
+  const t = f(e)?.count;
+  return typeof t == "number" && t > 1 ? t : 1;
+}
+function Q(e) {
+  return Array.isArray(e?.actions) ? e.actions.length : 0;
+}
+function Z(e, t, a) {
+  const i = f(e)?.title;
+  if (typeof i == "string") return i;
+  const n = f(i);
+  if (!n) return "";
+  if (typeof n.key == "string") return a(n.key);
+  const r = n[t];
+  if (typeof r == "string") return r;
+  const l = Object.values(n).find((u) => typeof u == "string");
+  return typeof l == "string" ? l : "";
+}
+function ee(e, t) {
+  const a = B(e), i = f(a?.icon);
+  if (!i) return a;
+  for (const n of ["title", "lore"]) {
+    const r = f(i[n]);
+    r && typeof r.key == "string" && (i[n] = t(r.key));
+  }
+  return a;
+}
+const te = "daily:calendar", D = "daily:status", ae = "rewards", ne = 7, ie = 20, se = 35, S = { material: "PAPER" }, re = 864e5;
+function le(e) {
+  const t = e?.dataSources?.find(
+    (a) => String(a.id) === ae
+  );
+  if (!(!t || t.shape !== "config"))
+    return f(t.value);
+}
+function x(e, t) {
+  return e < 1 ? 1 : (e - 1) % t + 1;
+}
+function R(e, t) {
+  if (!(t < 1))
+    return w(e).get(t) ?? f(e.default_day);
+}
+function C(e, t, a) {
+  const i = e?.[t];
+  if (i === void 0) return a;
+  const n = Number.parseInt(String(i).trim(), 10);
+  return Number.isNaN(n) ? a : n;
+}
+function oe(e, t, a) {
+  const i = [
+    { status: "claimed", streak: 1 },
+    { status: "claimed", streak: 2 },
+    { status: "claimed", streak: 3 },
+    { status: "missed", streak: 0 },
+    { status: "available", streak: 4 }
+  ], n = [];
+  for (let l = -e; l < 0; l++) {
+    const u = i[i.length + l];
+    n.push(
+      u ? { offset: l, status: u.status, cycleDay: u.streak > 0 ? x(u.streak, a) : 0 } : { offset: l, status: "before", cycleDay: 0 }
+    );
+  }
+  const r = 5;
+  n.push({ offset: 0, status: "available", cycleDay: x(r, a) });
+  for (let l = 1; l <= t; l++)
+    n.push({ offset: l, status: "upcoming", cycleDay: x(r + l, a) });
+  return n;
+}
+function g(e) {
+  return String(e).padStart(2, "0");
+}
+function de(e, t, a) {
+  const i = new Date(Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()) + e.offset * re), n = R(t, e.cycleDay);
+  return {
+    id: `${i.getUTCFullYear()}-${g(i.getUTCMonth() + 1)}-${g(i.getUTCDate())}`,
+    date: `${g(i.getUTCDate())}/${g(i.getUTCMonth() + 1)}`,
+    offset: e.offset,
+    status: e.status,
+    is_today: e.offset === 0,
+    is_claimed: e.status === "claimed",
+    is_missed: e.status === "missed",
+    is_before: e.status === "before",
+    is_available: e.status === "available",
+    is_upcoming: e.status === "upcoming",
+    cycle_day: e.cycleDay,
+    has_reward: n !== void 0,
+    icon: n?.icon ?? S
+  };
+}
+function ce(e, t) {
+  const a = R(t, Number(e.cycle_day) || 0);
+  return { ...e, has_reward: a !== void 0, icon: a?.icon ?? S };
+}
+function ue(e) {
+  return {
+    id: "status",
+    loaded: !0,
+    streak: 4,
+    longest: 12,
+    total: 31,
+    freezes: 0,
+    freeze_max: 3,
+    claimed_today: !1,
+    unclaimed: 2,
+    can_claim: !0,
+    at_risk: !1,
+    broken: !1,
+    lost: 0,
+    cycle_day: x(5, e),
+    cycle_length: e,
+    until_reset: "3h 12m"
+  };
+}
+function fe(e, t, a, i = /* @__PURE__ */ new Date()) {
+  if (t !== te && t !== D) return null;
+  const n = le(e);
+  if (!n) return null;
+  const r = b(n), l = a?.serverRows;
+  if (t === D) {
+    const o = l?.filter((y) => y.loaded === !0) ?? [];
+    return o.length > 0 ? o.map((y) => ({ ...y, cycle_length: r })) : [ue(r)];
+  }
+  if (l && l.length > 0) return l.map((o) => ce(o, n));
+  const u = Math.max(0, Math.min(se, C(a?.params, "past", ne))), p = Math.max(0, C(a?.params, "future", ie));
+  return oe(u, p, r).map((o) => de(o, n, i));
+}
+const pe = {
   cycleLength: "Cycle length",
   cycleHint: "Days before the rewards start again at day 1. The streak goes on.",
   days: "{{count}} days",
@@ -28,7 +193,7 @@ const O = {
   outsideHint: "The plugin refuses the file while these days are listed: lengthen the cycle or remove them.",
   remove: "Remove day {{day}}",
   pick: "Click a day to edit its reward."
-}, q = {
+}, ye = {
   cycleLength: "Longueur du cycle",
   cycleHint: "Jours avant que les récompenses reprennent au jour 1. Le streak continue.",
   days: "{{count}} jours",
@@ -55,286 +220,221 @@ const O = {
   outsideHint: "Le plugin refuse le fichier tant que ces jours y sont : allonge le cycle ou retire-les.",
   remove: "Retirer le jour {{day}}",
   pick: "Clique sur un jour pour modifier sa récompense."
-}, g = D({ en: O, fr: q }), J = 28, P = 7;
-function c(e) {
-  return e && typeof e == "object" && !Array.isArray(e) ? e : void 0;
-}
-function v(e) {
-  const a = Number(e.cycle_length);
-  return Number.isInteger(a) && a >= 1 ? a : J;
-}
-function w(e) {
-  const a = /* @__PURE__ */ new Map();
-  for (const [n, l] of Object.entries(c(e.days) ?? {})) {
-    const t = Number(n);
-    Number.isInteger(t) && t >= 1 && a.set(t, c(l) ?? {});
-  }
-  return a;
-}
-function F(e) {
-  const a = v(e), n = w(e), l = c(e.default_day);
-  return Array.from({ length: a }, (t, r) => {
-    const u = r + 1, y = n.get(u);
-    return { day: u, own: y !== void 0, reward: y ?? l };
-  });
-}
-function G(e) {
-  const a = v(e);
-  return [...w(e).keys()].filter((n) => n > a).sort((n, l) => n - l);
-}
-function V(e, a, n) {
-  const l = Object.entries(c(e.days) ?? {}).filter(([t]) => Number(t) !== a);
-  return n !== void 0 && l.push([String(a), n]), l.sort(([t], [r]) => Number(t) - Number(r)), Object.fromEntries(l);
-}
-function B(e) {
-  return e === void 0 ? e : JSON.parse(JSON.stringify(e));
-}
-function K(e) {
-  if (typeof e == "string") return e;
-  const a = c(e), n = a?.extends ?? a?.item ?? a?.material;
-  return typeof n == "string" ? n : "";
-}
-function W(e) {
-  const a = c(e)?.count;
-  return typeof a == "number" && a > 1 ? a : 1;
-}
-function Y(e) {
-  return Array.isArray(e?.actions) ? e.actions.length : 0;
-}
-function $(e, a, n) {
-  const l = c(e)?.title;
-  if (typeof l == "string") return l;
-  const t = c(l);
-  if (!t) return "";
-  if (typeof t.key == "string") return n(t.key);
-  const r = t[a];
-  if (typeof r == "string") return r;
-  const u = Object.values(t).find((y) => typeof y == "string");
-  return typeof u == "string" ? u : "";
-}
-function U(e, a) {
-  const n = B(e), l = c(n?.icon);
-  if (!l) return n;
-  for (const t of ["title", "lore"]) {
-    const r = c(l[t]);
-    r && typeof r.key == "string" && (l[t] = a(r.key));
-  }
-  return n;
-}
-function Q({ projectId: e, value: a, set: n, readOnly: l }) {
-  const t = g(), r = c(a) ?? {}, u = F(r), y = G(r), p = c(r.default_day), [o, m] = M(null), h = k(e), A = (d) => h ? C(h, d, S(h)[0] ?? "en") : "", x = (d, f) => n(["days"], V(r, d, f));
-  return /* @__PURE__ */ s("div", { className: "daily-rewards", children: [
-    /* @__PURE__ */ s("div", { className: "daily-toolbar", children: [
-      /* @__PURE__ */ s("label", { className: "daily-cycle", children: [
-        /* @__PURE__ */ i("span", { className: "field-label", children: t("cycleLength") }),
-        /* @__PURE__ */ i(
+}, v = z({ en: pe, fr: ye });
+function me({ projectId: e, value: t, set: a, readOnly: i }) {
+  const n = v(), r = f(t) ?? {}, l = W(r), u = G(r), p = f(r.default_day), [o, y] = q(null), h = T(e), L = (c) => h ? j(h, c, P(h)[0] ?? "en") : "", N = (c, m) => a(["days"], V(r, c, m));
+  return /* @__PURE__ */ d("div", { className: "daily-rewards", children: [
+    /* @__PURE__ */ d("div", { className: "daily-toolbar", children: [
+      /* @__PURE__ */ d("label", { className: "daily-cycle", children: [
+        /* @__PURE__ */ s("span", { className: "field-label", children: n("cycleLength") }),
+        /* @__PURE__ */ s(
           "input",
           {
             className: "input daily-cycle-input",
             type: "number",
             min: 1,
-            value: v(r),
-            disabled: l,
-            onChange: (d) => {
-              const f = Number.parseInt(d.target.value, 10);
-              Number.isInteger(f) && f >= 1 && n(["cycle_length"], f);
+            value: b(r),
+            disabled: i,
+            onChange: (c) => {
+              const m = Number.parseInt(c.target.value, 10);
+              Number.isInteger(m) && m >= 1 && a(["cycle_length"], m);
             }
           }
         ),
-        /* @__PURE__ */ i("span", { className: "daily-faint", children: t("cycleHint") })
+        /* @__PURE__ */ s("span", { className: "daily-faint", children: n("cycleHint") })
       ] }),
-      /* @__PURE__ */ s("div", { className: "daily-legend", children: [
-        /* @__PURE__ */ i("span", { className: "daily-legend-own", children: t("legendOwn") }),
-        /* @__PURE__ */ i("span", { className: "daily-legend-default", children: t("legendDefault") })
+      /* @__PURE__ */ d("div", { className: "daily-legend", children: [
+        /* @__PURE__ */ s("span", { className: "daily-legend-own", children: n("legendOwn") }),
+        /* @__PURE__ */ s("span", { className: "daily-legend-default", children: n("legendDefault") })
       ] })
     ] }),
-    y.length > 0 && /* @__PURE__ */ s("div", { className: "daily-outside", role: "alert", children: [
-      /* @__PURE__ */ i("strong", { children: t("outsideTitle") }),
-      /* @__PURE__ */ i("span", { children: t("outsideHint") }),
-      /* @__PURE__ */ i("div", { className: "daily-outside-days", children: y.map((d) => /* @__PURE__ */ s(
+    u.length > 0 && /* @__PURE__ */ d("div", { className: "daily-outside", role: "alert", children: [
+      /* @__PURE__ */ s("strong", { children: n("outsideTitle") }),
+      /* @__PURE__ */ s("span", { children: n("outsideHint") }),
+      /* @__PURE__ */ s("div", { className: "daily-outside-days", children: u.map((c) => /* @__PURE__ */ d(
         "button",
         {
           type: "button",
           className: "chip",
-          disabled: l,
-          onClick: () => x(d, void 0),
+          disabled: i,
+          onClick: () => N(c, void 0),
           children: [
-            t("remove", { day: d }),
+            n("remove", { day: c }),
             " ×"
           ]
         },
-        d
+        c
       )) })
     ] }),
-    /* @__PURE__ */ s("div", { className: "daily-layout", children: [
-      /* @__PURE__ */ s("div", { className: "daily-board", children: [
-        /* @__PURE__ */ s(
+    /* @__PURE__ */ d("div", { className: "daily-layout", children: [
+      /* @__PURE__ */ d("div", { className: "daily-board", children: [
+        /* @__PURE__ */ d(
           "button",
           {
             type: "button",
             className: `daily-default${o === "default" ? " is-selected" : ""}`,
-            onClick: () => m("default"),
+            onClick: () => y("default"),
             children: [
-              /* @__PURE__ */ i(N, { reward: p }),
-              /* @__PURE__ */ s("span", { className: "daily-default-text", children: [
-                /* @__PURE__ */ i("span", { className: "daily-default-title", children: t("defaultTitle") }),
-                /* @__PURE__ */ i("span", { className: "daily-faint", children: t(p ? "defaultHint" : "defaultNone") })
+              /* @__PURE__ */ s(k, { reward: p }),
+              /* @__PURE__ */ d("span", { className: "daily-default-text", children: [
+                /* @__PURE__ */ s("span", { className: "daily-default-title", children: n("defaultTitle") }),
+                /* @__PURE__ */ s("span", { className: "daily-faint", children: n(p ? "defaultHint" : "defaultNone") })
               ] })
             ]
           }
         ),
-        /* @__PURE__ */ i("div", { className: "daily-grid", style: { gridTemplateColumns: `repeat(${P}, minmax(0, 1fr))` }, children: u.map((d) => /* @__PURE__ */ i(
-          Z,
+        /* @__PURE__ */ s("div", { className: "daily-grid", style: { gridTemplateColumns: `repeat(${Y}, minmax(0, 1fr))` }, children: l.map((c) => /* @__PURE__ */ s(
+          ge,
           {
-            cell: d,
+            cell: c,
             projectId: e,
-            selected: o === d.day,
-            onSelect: () => m(d.day)
+            selected: o === c.day,
+            onSelect: () => y(c.day)
           },
-          d.day
+          c.day
         )) })
       ] }),
-      /* @__PURE__ */ i("aside", { className: "daily-panel", children: o === null ? /* @__PURE__ */ i("p", { className: "daily-faint", children: t("pick") }) : o === "default" ? /* @__PURE__ */ i(b, { title: t("defaultTitle"), hint: t(p ? "defaultHint" : "defaultNone"), children: p ? /* @__PURE__ */ s(I, { children: [
-        /* @__PURE__ */ i(
-          T,
+      /* @__PURE__ */ s("aside", { className: "daily-panel", children: o === null ? /* @__PURE__ */ s("p", { className: "daily-faint", children: n("pick") }) : o === "default" ? /* @__PURE__ */ s(_, { title: n("defaultTitle"), hint: n(p ? "defaultHint" : "defaultNone"), children: p ? /* @__PURE__ */ d($, { children: [
+        /* @__PURE__ */ s(
+          E,
           {
             projectId: e,
             reward: p,
-            readOnly: l,
-            onChange: (d, f) => n(["default_day", ...d], f)
+            readOnly: i,
+            onChange: (c, m) => a(["default_day", ...c], m)
           }
         ),
-        /* @__PURE__ */ i(
+        /* @__PURE__ */ s(
           "button",
           {
             type: "button",
             className: "btn btn-ghost btn-sm",
-            disabled: l,
-            onClick: () => n(["default_day"], void 0),
-            children: t("defaultRemove")
+            disabled: i,
+            onClick: () => a(["default_day"], void 0),
+            children: n("defaultRemove")
           }
         )
-      ] }) : /* @__PURE__ */ i(
+      ] }) : /* @__PURE__ */ s(
         "button",
         {
           type: "button",
           className: "btn btn-sm",
-          disabled: l,
-          onClick: () => n(["default_day"], { icon: { material: "BREAD" }, actions: [] }),
-          children: t("defaultAdd")
+          disabled: i,
+          onClick: () => a(["default_day"], { icon: { material: "BREAD" }, actions: [] }),
+          children: n("defaultAdd")
         }
-      ) }) : /* @__PURE__ */ i(
-        ee,
+      ) }) : /* @__PURE__ */ s(
+        xe,
         {
           day: o,
           projectId: e,
           own: w(r).get(o),
           fallback: p,
-          readOnly: l,
-          onCustomize: () => x(o, U(p, A) ?? { icon: { material: "CHEST" }, actions: [] }),
-          onReset: () => x(o, void 0),
-          onChange: (d, f) => n(["days", X(r, o), ...d], f),
-          onEditDefault: () => m("default")
+          readOnly: i,
+          onCustomize: () => N(o, ee(p, L) ?? { icon: { material: "CHEST" }, actions: [] }),
+          onReset: () => N(o, void 0),
+          onChange: (c, m) => a(["days", he(r, o), ...c], m),
+          onEditDefault: () => y("default")
         }
       ) })
     ] })
   ] });
 }
-function X(e, a) {
-  return Object.keys(c(e.days) ?? {}).find((n) => Number(n) === a) ?? String(a);
+function he(e, t) {
+  return Object.keys(f(e.days) ?? {}).find((a) => Number(a) === t) ?? String(t);
 }
-function Z({
+function ge({
   cell: e,
-  projectId: a,
-  selected: n,
-  onSelect: l
+  projectId: t,
+  selected: a,
+  onSelect: i
 }) {
-  const t = g(), r = H(a, e.reward?.icon), u = ["daily-cell", e.own ? "is-own" : "is-default", n ? "is-selected" : ""];
-  return /* @__PURE__ */ s("button", { type: "button", className: u.join(" "), onClick: l, title: t("day", { day: e.day }), children: [
-    /* @__PURE__ */ i("span", { className: "daily-cell-day", children: e.day }),
-    /* @__PURE__ */ i(N, { reward: e.reward }),
-    e.own && r && /* @__PURE__ */ i("span", { className: "daily-cell-title", children: /* @__PURE__ */ i(j, { source: r, maxLines: 2, align: "center", scale: 1 }) })
+  const n = v(), r = H(t, e.reward?.icon), l = ["daily-cell", e.own ? "is-own" : "is-default", a ? "is-selected" : ""];
+  return /* @__PURE__ */ d("button", { type: "button", className: l.join(" "), onClick: i, title: n("day", { day: e.day }), children: [
+    /* @__PURE__ */ s("span", { className: "daily-cell-day", children: e.day }),
+    /* @__PURE__ */ s(k, { reward: e.reward }),
+    e.own && r && /* @__PURE__ */ s("span", { className: "daily-cell-title", children: /* @__PURE__ */ s(A, { source: r, maxLines: 2, align: "center", scale: 1 }) })
   ] });
 }
-function N({ reward: e }) {
-  const a = e?.icon, n = K(a), l = _(n), t = W(a);
-  return /* @__PURE__ */ s("span", { className: "daily-slot", children: [
-    l ? /* @__PURE__ */ i("img", { src: l, alt: n, draggable: !1 }) : /* @__PURE__ */ i("span", { className: "daily-slot-name", children: n ? n.slice(0, 3) : "—" }),
-    t > 1 && /* @__PURE__ */ i("span", { className: "daily-slot-count", children: t })
+function k({ reward: e }) {
+  const t = e?.icon, a = K(t), i = M(a), n = X(t);
+  return /* @__PURE__ */ d("span", { className: "daily-slot", children: [
+    i ? /* @__PURE__ */ s("img", { src: i, alt: a, draggable: !1 }) : /* @__PURE__ */ s("span", { className: "daily-slot-name", children: a ? a.slice(0, 3) : "—" }),
+    n > 1 && /* @__PURE__ */ s("span", { className: "daily-slot-count", children: n })
   ] });
 }
-function H(e, a) {
-  const n = k(e), l = R();
-  return $(a, l, (t) => n ? C(n, t, l) : "");
+function H(e, t) {
+  const a = T(e), i = I();
+  return Z(t, i, (n) => a ? j(a, n, i) : "");
 }
-function b({ title: e, hint: a, children: n }) {
-  return /* @__PURE__ */ s("div", { className: "daily-panel-body", children: [
-    /* @__PURE__ */ s("div", { children: [
-      /* @__PURE__ */ i("div", { className: "daily-panel-title", children: e }),
-      /* @__PURE__ */ i("div", { className: "daily-faint", children: a })
+function _({ title: e, hint: t, children: a }) {
+  return /* @__PURE__ */ d("div", { className: "daily-panel-body", children: [
+    /* @__PURE__ */ d("div", { children: [
+      /* @__PURE__ */ s("div", { className: "daily-panel-title", children: e }),
+      /* @__PURE__ */ s("div", { className: "daily-faint", children: t })
     ] }),
-    n
+    a
   ] });
 }
-function ee({
+function xe({
   day: e,
-  projectId: a,
-  own: n,
-  fallback: l,
-  readOnly: t,
+  projectId: t,
+  own: a,
+  fallback: i,
+  readOnly: n,
   onCustomize: r,
-  onReset: u,
-  onChange: y,
+  onReset: l,
+  onChange: u,
   onEditDefault: p
 }) {
-  const o = g(), m = H(a, (n ?? l)?.icon);
-  if (!n) {
-    const h = Y(l);
-    return /* @__PURE__ */ s(b, { title: o("day", { day: e }), hint: o("inheritHint"), children: [
-      /* @__PURE__ */ s("div", { className: "daily-inherited", children: [
-        /* @__PURE__ */ i(N, { reward: l }),
-        /* @__PURE__ */ s("span", { className: "daily-inherited-text", children: [
-          m ? /* @__PURE__ */ i(j, { source: m, scale: 1 }) : /* @__PURE__ */ i("span", { className: "daily-faint", children: o("defaultNone") }),
-          /* @__PURE__ */ i("span", { className: "daily-faint", children: h > 0 ? o("steps", { count: h }) : o("noActions") })
+  const o = v(), y = H(t, (a ?? i)?.icon);
+  if (!a) {
+    const h = Q(i);
+    return /* @__PURE__ */ d(_, { title: o("day", { day: e }), hint: o("inheritHint"), children: [
+      /* @__PURE__ */ d("div", { className: "daily-inherited", children: [
+        /* @__PURE__ */ s(k, { reward: i }),
+        /* @__PURE__ */ d("span", { className: "daily-inherited-text", children: [
+          y ? /* @__PURE__ */ s(A, { source: y, scale: 1 }) : /* @__PURE__ */ s("span", { className: "daily-faint", children: o("defaultNone") }),
+          /* @__PURE__ */ s("span", { className: "daily-faint", children: h > 0 ? o("steps", { count: h }) : o("noActions") })
         ] })
       ] }),
-      /* @__PURE__ */ i("button", { type: "button", className: "btn btn-sm", disabled: t, onClick: r, children: o("customize") }),
-      /* @__PURE__ */ i("button", { type: "button", className: "btn btn-ghost btn-sm", onClick: p, children: o("editDefault") })
+      /* @__PURE__ */ s("button", { type: "button", className: "btn btn-sm", disabled: n, onClick: r, children: o("customize") }),
+      /* @__PURE__ */ s("button", { type: "button", className: "btn btn-ghost btn-sm", onClick: p, children: o("editDefault") })
     ] });
   }
-  return /* @__PURE__ */ s(b, { title: o("day", { day: e }), hint: o("ownHint"), children: [
-    /* @__PURE__ */ i(T, { projectId: a, reward: n, readOnly: t, onChange: y }),
-    /* @__PURE__ */ i("button", { type: "button", className: "btn btn-ghost btn-sm", disabled: t, onClick: u, children: o("reset") })
+  return /* @__PURE__ */ d(_, { title: o("day", { day: e }), hint: o("ownHint"), children: [
+    /* @__PURE__ */ s(E, { projectId: t, reward: a, readOnly: n, onChange: u }),
+    /* @__PURE__ */ s("button", { type: "button", className: "btn btn-ghost btn-sm", disabled: n, onClick: l, children: o("reset") })
   ] });
 }
-function T({
+function E({
   projectId: e,
-  reward: a,
-  readOnly: n,
-  onChange: l
+  reward: t,
+  readOnly: a,
+  onChange: i
 }) {
-  const t = g();
-  return /* @__PURE__ */ s("fieldset", { className: "daily-fields", disabled: n, children: [
-    /* @__PURE__ */ s("div", { children: [
-      /* @__PURE__ */ i("div", { className: "field-label", children: t("icon") }),
-      /* @__PURE__ */ i("div", { className: "daily-faint", children: t("iconHint") }),
-      /* @__PURE__ */ i(L, { projectId: e, value: a.icon, onChange: (r) => l(["icon"], r) })
+  const n = v();
+  return /* @__PURE__ */ d("fieldset", { className: "daily-fields", disabled: a, children: [
+    /* @__PURE__ */ d("div", { children: [
+      /* @__PURE__ */ s("div", { className: "field-label", children: n("icon") }),
+      /* @__PURE__ */ s("div", { className: "daily-faint", children: n("iconHint") }),
+      /* @__PURE__ */ s(U, { projectId: e, value: t.icon, onChange: (r) => i(["icon"], r) })
     ] }),
-    /* @__PURE__ */ s("div", { children: [
-      /* @__PURE__ */ i("div", { className: "field-label", children: t("actions") }),
-      /* @__PURE__ */ i("div", { className: "daily-faint", children: t("actionsHint") }),
-      /* @__PURE__ */ i(
-        E,
+    /* @__PURE__ */ d("div", { children: [
+      /* @__PURE__ */ s("div", { className: "field-label", children: n("actions") }),
+      /* @__PURE__ */ s("div", { className: "daily-faint", children: n("actionsHint") }),
+      /* @__PURE__ */ s(
+        O,
         {
           projectId: e,
-          value: Array.isArray(a.actions) ? a.actions : [],
-          onChange: (r) => l(["actions"], r)
+          value: Array.isArray(t.actions) ? t.actions : [],
+          onChange: (r) => i(["actions"], r)
         }
       )
     ] })
   ] });
 }
-const te = `
+const be = `
 .daily-rewards { display: flex; flex-direction: column; gap: 16px; }
 .daily-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .daily-cycle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -384,15 +484,17 @@ const te = `
   background: var(--surface-inset); }
 .daily-inherited-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 `;
-z("daily", te);
-const ae = {
+F("daily", be);
+const we = {
   id: "daily",
   displayName: "Daily rewards",
   schemaVersion: "daily/v1",
   sidebar: { icon: () => null, label: "Daily rewards", to: "/m/daily" },
   routes: [],
-  screens: { rewards: Q }
-}, re = { ...ae, sdk: "1.20.0" };
+  screens: { rewards: me },
+  // The calendar menu previewed in the editor: its days, from the rewards draft.
+  localPreviewRows: fe
+}, ke = { ...we, sdk: "1.20.0" };
 export {
-  re as default
+  ke as default
 };
