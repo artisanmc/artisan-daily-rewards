@@ -23,7 +23,8 @@ sidebar:
 - `with_default_day` in `data/rewards.yml`: a day with its own reward replaces `default_day` (`false`, as
   before) or pays it too (`true`), for every day or day by day; set in the Rewards screen, a `+` marks the
   days that pay both.
-- A reward or milestone icon whose title is left empty in the Rewards screen keeps the item's own name
-  in the menus (it showed no name). The calendar's claim button shows "Claim" or the time to the next
+- A reward or milestone icon shows its title in the player's language: the editor keeps the other
+  languages in `lang/<lang>.yml` (`sources.rewards.…icon.title`), now read with the rewards. With no title
+  in any language, the item keeps its own name (it showed no name). The calendar's claim button shows "Claim" or the time to the next
   reward (it stayed on "Loading…").
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

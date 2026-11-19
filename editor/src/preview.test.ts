@@ -73,6 +73,18 @@ describe("the calendar preview", () => {
     expect(rows.find((r) => r.streak === 6)?.milestone_icon).toEqual({ material: "APPLE" });
   });
 
+  it("takes the icon titles of the other languages from the project's translations", () => {
+    const translated = {
+      defaultLang: "en",
+      i18nKeys: { "sources.rewards.default_day.icon.title": { fr: "<gold>500$" } },
+      dataSources: [
+        { id: "rewards", shape: "config", value: { cycle_length: 7, default_day: { icon: { extends: "item:ci_1", title: "" } } } },
+      ],
+    };
+    const rows = dailyPreviewRows(translated, "daily:calendar", {}, today)!;
+    expect(rows.find((r) => r.is_today)?.icon).toEqual({ extends: "item:ci_1", title: { fr: "<gold>500$" } });
+  });
+
   it("uses the sample status unless the server's row is loaded", () => {
     const notLoaded = dailyPreviewRows(project, "daily:status", { serverRows: [{ loaded: false, streak: 0 }] })!;
     expect(notLoaded[0]).toMatchObject({ loaded: true, streak: 4, cycle_length: 7 });

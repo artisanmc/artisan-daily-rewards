@@ -36,6 +36,9 @@ public final class CalendarFiles {
     static final String LEGACY = "data/calendar";
     /** Where Artisan keeps the shipped files the owner has not changed. */
     static final String ORIGINALS = "originals";
+    /** The project's lang files, {@code lang/<lang>.yml}. */
+    static final String LANG = "lang";
+    static final String MANIFEST = "artisan-module";
 
     /** The keys of {@code data/rewards.yml}; every other key of the calendar is a setting. */
     static final Set<String> REWARD_KEYS = Set.of("cycle_length", "days", "default_day", "with_default_day", "milestones");
@@ -71,7 +74,41 @@ public final class CalendarFiles {
         Map<String, Object> calendar = new LinkedHashMap<>();
         copy(load(find(folder, SETTINGS)), calendar, false);
         copy(load(find(folder, REWARDS)), calendar, true);
-        return calendar;
+        return RewardTexts.inline(calendar, translations(folder), defaultLang(folder));
+    }
+
+    /** The project's languages: {@code lang/<lang>.yml} (owner's, else shipped), flattened to dotted keys. */
+    static Map<String, Map<String, String>> translations(File folder) {
+        Set<String> langs = new java.util.TreeSet<>();
+        for (File dir : new File[] {new File(folder, LANG), new File(new File(folder, ORIGINALS), LANG)}) {
+            String[] names = dir.list();
+            if (names == null) continue;
+            for (String name : names) {
+                if (name.endsWith(".yml")) langs.add(name.substring(0, name.length() - 4));
+                else if (name.endsWith(".yaml")) langs.add(name.substring(0, name.length() - 5));
+            }
+        }
+        Map<String, Map<String, String>> out = new LinkedHashMap<>();
+        for (String lang : langs) {
+            // A lang file that does not read leaves its language out, never the rewards.
+            try {
+                Map<String, String> keys = RewardTexts.flatten(load(find(folder, LANG + "/" + lang)));
+                if (!keys.isEmpty()) out.put(lang, keys);
+            } catch (IOException | RuntimeException ignored) {
+                // The other languages and the inline texts still show.
+            }
+        }
+        return out;
+    }
+
+    /** {@code default_lang} of {@code artisan-module.yml}, else {@code en}. */
+    static String defaultLang(File folder) {
+        try {
+            Object lang = load(ownerFile(folder, MANIFEST)).get("default_lang");
+            return lang == null || String.valueOf(lang).isBlank() ? "en" : String.valueOf(lang).trim();
+        } catch (IOException | RuntimeException e) {
+            return "en";
+        }
     }
 
     /** True when neither file exists yet, owner's or shipped. */

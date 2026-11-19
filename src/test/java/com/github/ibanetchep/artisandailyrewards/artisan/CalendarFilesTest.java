@@ -85,4 +85,44 @@ class CalendarFilesTest {
         assertTrue(Files.exists(tmp.resolve("data/calendar.yaml")));
         assertEquals(5, CalendarFiles.read(tmp.toFile()).get("cycle_length"));
     }
+
+    @Test
+    void anIconTakesItsTitleInEveryLanguageFromTheLangFiles(@TempDir Path tmp) throws Exception {
+        File folder = tmp.toFile();
+        write(tmp, "artisan-module.yml", "schema: module/v1\ndefault_lang: en\nlanguages: [en, fr]\n");
+        write(tmp, "data/rewards.yml", String.join("\n",
+                "cycle_length: 7",
+                "default_day:",
+                "  icon: { extends: 'item:ci_1', title: '' }",
+                "days:",
+                "  7:",
+                "    icon: { material: IRON_INGOT, title: '' }",
+                "  6:",
+                "    icon: { material: DIAMOND, title: '<aqua>Diamonds', lore: [a, b] }",
+                "milestones:",
+                "  - at: 30",
+                "    icon: { material: APPLE, title: '' }",
+                "  - every: 90",
+                "    icon: { material: STONE, title: '' }",
+                ""));
+        write(tmp, "lang/fr.yml", String.join("\n",
+                "artisan: { duration: { days: '{n}j' } }",
+                "sources:",
+                "  rewards:",
+                "    default_day: { icon: { title: '<gold>500$' } }",
+                "    days:",
+                "      '6': { icon: { title: '<aqua>Diamants', lore_2: b-fr } }",
+                "    milestones_2: { icon: { title: Pierre } }",
+                ""));
+        write(tmp, "lang/en.yml", "artisan: { duration: { days: '{n}d' } }\n");
+        CalendarSettings settings = CalendarSettings.read(CalendarFiles.read(folder));
+        assertEquals(Map.of("extends", "item:ci_1", "title", Map.of("fr", "<gold>500$")), settings.reward(1).icon());
+        // No text in any language: the item keeps its own name.
+        assertEquals(Map.of("material", "IRON_INGOT"), settings.reward(7).icon());
+        assertEquals(Map.of("material", "DIAMOND",
+                "title", Map.of("en", "<aqua>Diamonds", "fr", "<aqua>Diamants"),
+                "lore", Map.of("en", List.of("a", "b"), "fr", List.of("a", "b-fr"))), settings.reward(6).icon());
+        assertEquals(Map.of("material", "APPLE"), settings.milestones().get(0).icon());
+        assertEquals(Map.of("material", "STONE", "title", Map.of("fr", "Pierre")), settings.milestones().get(1).icon());
+    }
 }
