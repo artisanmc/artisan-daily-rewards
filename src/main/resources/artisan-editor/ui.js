@@ -16,7 +16,7 @@ function D(e) {
   const t = Number(e.cycle_length);
   return Number.isInteger(t) && t >= 1 ? t : fe;
 }
-function T(e) {
+function S(e) {
   const t = /* @__PURE__ */ new Map();
   for (const [n, i] of Object.entries(y(e.days) ?? {})) {
     const a = Number(n);
@@ -25,7 +25,7 @@ function T(e) {
   return t;
 }
 function he(e) {
-  const t = D(e), n = T(e), i = y(e.default_day);
+  const t = D(e), n = S(e), i = y(e.default_day);
   return Array.from({ length: t }, (a, s) => {
     const o = s + 1, r = n.get(o), p = r !== void 0 && i !== void 0 && G(e, r);
     return { day: o, own: r !== void 0, reward: r ?? i, stacks: p };
@@ -33,7 +33,7 @@ function he(e) {
 }
 function ge(e) {
   const t = D(e);
-  return [...T(e).keys()].filter((n) => n > t).sort((n, i) => n - i);
+  return [...S(e).keys()].filter((n) => n > t).sort((n, i) => n - i);
 }
 function be(e, t, n) {
   const i = Object.entries(y(e.days) ?? {}).filter(([a]) => Number(a) !== t);
@@ -87,7 +87,7 @@ function O(e) {
   if (t > 0) return { at: t, every: 0, from: 0, icon: e.icon, actions: e.actions };
   if (n > 0) return { at: 0, every: n, from: L(e.from) || n, icon: e.icon, actions: e.actions };
 }
-function S(e) {
+function A(e) {
   return X(e).map(O).filter((t) => t !== void 0);
 }
 function _e(e, t) {
@@ -120,7 +120,7 @@ function Se(e) {
 function Q(e, t) {
   return e.every === 0 ? t("milestoneAt", { at: e.at }) : e.from === e.every ? t("milestoneEvery", { every: e.every }) : t("milestoneEveryFrom", { every: e.every, from: e.from });
 }
-const Ee = "daily:calendar", K = "daily:status", Y = "daily:milestones", je = 28, De = 200, A = 5, Re = "rewards", Ce = 7, He = 20, B = 35, $ = { material: "PAPER" }, Z = 864e5;
+const Ee = "daily:calendar", K = "daily:status", Y = "daily:milestones", je = 28, De = 200, _ = 5, Re = "rewards", Ce = 7, He = 20, B = 35, $ = { material: "PAPER" }, Z = 864e5;
 function ee(e) {
   const t = e?.dataSources?.find(
     (n) => String(n.id) === Re
@@ -133,7 +133,7 @@ function Le(e) {
   const t = e;
   return t?.ownerModule === "daily" || String(t?.id ?? "") === "daily" || String(t?.id ?? "").endsWith(":daily");
 }
-function _(e, t) {
+function T(e, t) {
   return e < 1 ? 1 : (e - 1) % t + 1;
 }
 function R(e) {
@@ -168,7 +168,7 @@ function Me(e, t, n) {
 }
 function ne(e, t) {
   if (!(t < 1))
-    return T(e).get(t) ?? y(e.default_day);
+    return S(e).get(t) ?? y(e.default_day);
 }
 function E(e, t, n) {
   const i = e?.[t];
@@ -193,15 +193,15 @@ function Ie(e, t, n) {
       r ? {
         offset: o,
         status: r.status,
-        cycleDay: r.streak > 0 ? _(r.streak, n) : 0,
+        cycleDay: r.streak > 0 ? T(r.streak, n) : 0,
         streak: r.streak
       } : { offset: o, status: "before", cycleDay: 0, streak: 0 }
     );
   }
-  const s = A;
-  a.push({ offset: 0, status: "available", cycleDay: _(s, n), streak: s });
+  const s = _;
+  a.push({ offset: 0, status: "available", cycleDay: T(s, n), streak: s });
   for (let o = 1; o <= t; o++)
-    a.push({ offset: o, status: "upcoming", cycleDay: _(s + o, n), streak: s + o });
+    a.push({ offset: o, status: "upcoming", cycleDay: T(s + o, n), streak: s + o });
   return a;
 }
 function k(e) {
@@ -224,7 +224,7 @@ function Oe(e, t, n) {
     has_reward: a !== void 0,
     icon: s,
     // The sample player's streak never broke: each streak that a milestone matches pays it.
-    ...ae(S(t), e.streak, e.streak > 0, s)
+    ...ae(A(t), e.streak, e.streak > 0, s)
   };
 }
 function ae(e, t, n, i) {
@@ -237,9 +237,9 @@ function ae(e, t, n, i) {
   };
 }
 function Ue(e, t, n) {
-  const i = S(e);
-  return U(i, A, t).map(({ streak: a, milestone: s }) => {
-    const o = a - A, r = new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) + o * Z);
+  const i = A(e);
+  return U(i, _, t).map(({ streak: a, milestone: s }) => {
+    const o = a - _, r = new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) + o * Z);
     return {
       id: `${a}-${i.indexOf(s) + 1}`,
       streak: a,
@@ -253,11 +253,11 @@ function Ue(e, t, n) {
   });
 }
 function $e(e, t) {
-  const n = ne(t, Number(e.cycle_day) || 0), i = n?.icon != null ? R(n.icon) : $, a = ae(S(t), Number(e.streak) || 0, e.is_milestone === !0, i);
+  const n = ne(t, Number(e.cycle_day) || 0), i = n?.icon != null ? R(n.icon) : $, a = ae(A(t), Number(e.streak) || 0, e.is_milestone === !0, i);
   return { ...e, has_reward: n !== void 0, icon: i, ...a, is_milestone: e.is_milestone === !0 };
 }
 function Pe(e, t = {}) {
-  const n = U(S(t), A, 1)[0];
+  const n = U(A(t), _, 1)[0];
   return {
     id: "status",
     loaded: !0,
@@ -272,11 +272,12 @@ function Pe(e, t = {}) {
     at_risk: !1,
     broken: !1,
     lost: 0,
-    cycle_day: _(5, e),
+    cycle_day: T(5, e),
     cycle_length: e,
     until_reset: "3h 12m",
+    has_milestones: A(t).length > 0,
     next_milestone: n ? n.streak : 0,
-    next_milestone_in: n ? n.streak - A : -1
+    next_milestone_in: n ? n.streak - _ : -1
   };
 }
 function ze(e, t, n, i = /* @__PURE__ */ new Date()) {
@@ -292,7 +293,7 @@ function ze(e, t, n, i = /* @__PURE__ */ new Date()) {
     return Ue(s, d, i);
   }
   if (r && r.length > 0) return r.map((d) => $e(d, s));
-  const p = Math.max(0, Math.min(B, E(n?.params, "past", Ce))), f = Math.max(0, E(n?.params, "future", He)), u = Math.min(Fe(_(A, o), E(n?.params, "week", 0)), f, B - p);
+  const p = Math.max(0, Math.min(B, E(n?.params, "past", Ce))), f = Math.max(0, E(n?.params, "future", He)), u = Math.min(Fe(T(_, o), E(n?.params, "week", 0)), f, B - p);
   return Ie(p + u, f - u, o).map((d) => Oe(d, s, i));
 }
 const qe = {
@@ -558,10 +559,10 @@ function Ye({ projectId: e, value: t, set: n, readOnly: i }) {
         {
           day: f,
           projectId: e,
-          own: T(s).get(f),
+          own: S(s).get(f),
           fallback: p,
           stacksAll: F(s),
-          stacks: G(s, T(s).get(f) ?? {}),
+          stacks: G(s, S(s).get(f) ?? {}),
           readOnly: i,
           onCustomize: () => g(f, Ae(p, h) ?? { icon: { material: "CHEST" }, actions: [] }),
           onReset: () => g(f, void 0),
@@ -693,7 +694,7 @@ function Ve({
   onSelect: s,
   onAdd: o
 }) {
-  const r = w(), p = S(e), f = U(p, 1, 8).map((u) => u.streak);
+  const r = w(), p = A(e), f = U(p, 1, 8).map((u) => u.streak);
   return /* @__PURE__ */ c("section", { className: "daily-milestones", children: [
     /* @__PURE__ */ c("div", { children: [
       /* @__PURE__ */ l("div", { className: "daily-panel-title", children: r("milestonesTitle") }),

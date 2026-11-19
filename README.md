@@ -46,7 +46,7 @@ is written again, an edited one stays yours until Reset in the editor):
 - `menus/calendar.yml`: what `/dailyrewards` opens. The last 7 days as they went (claimed, waiting to be
   claimed, missed), today (a click claims everything that waits), and the next 104 days with the
   reward each one pays if the player comes every day, 28 days a page (arrows at the bottom). A day
-  that reaches a milestone glows; the beacon opens `menus/milestones.yml`, the next 112 milestones,
+  that reaches a milestone glows; the beacon (shown only when `milestones` holds one) opens `menus/milestones.yml`, the next 112 milestones,
   28 a page.
 
 Before version 2 of these files, everything was in `data/calendar.yml`. At startup an edited
@@ -59,7 +59,7 @@ The menus read three data sources:
 | Source | Rows | Fields |
 |---|---|---|
 | `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
-| `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `next_milestone`, `next_milestone_in` |
+| `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `has_milestones`, `next_milestone`, `next_milestone_in` |
 | `daily:milestones` | one per coming milestone; param `count` (28, at most 200) | `id`, `streak`, `offset`, `date`, `is_today`, `repeats`, `every`, `icon` |
 
 `available` is any day whose reward waits: today, or a day before when the player was there

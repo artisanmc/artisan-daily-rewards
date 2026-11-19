@@ -19,7 +19,8 @@ sidebar:
 - Streak milestones (`milestones` in `data/rewards.yml`): bonuses on top of the day's reward, `at` once per
   streak or `every` again and again, edited under the Rewards grid. A day that reaches one glows in the
   calendar; a new milestones menu (`menus/milestones.yml`) pages through the next ones. New data source
-  `daily:milestones`, new fields in `daily:calendar` and `daily:status`.
+  `daily:milestones`, new fields in `daily:calendar` and `daily:status`. The calendar's milestones button shows only when `milestones`
+  holds at least one (`daily:status` field `has_milestones`).
 - `with_default_day` in `data/rewards.yml`: a day with its own reward replaces `default_day` (`false`, as
   before) or pays it too (`true`), for every day or day by day; set in the Rewards screen, a `+` marks the
   days that pay both.

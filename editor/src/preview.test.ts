@@ -122,7 +122,9 @@ describe("the milestones preview", () => {
 
   it("gives the next milestone in the sample status", () => {
     const status = dailyPreviewRows(withMilestones, "daily:status", {})!;
-    expect(status[0]).toMatchObject({ next_milestone: 6, next_milestone_in: 1 });
+    expect(status[0]).toMatchObject({ has_milestones: true, next_milestone: 6, next_milestone_in: 1 });
+    const none = dailyPreviewRows(project, "daily:status", {})!;
+    expect(none[0]).toMatchObject({ has_milestones: false, next_milestone: 0 });
   });
 
   it("lays the days out as the Rewards grid with week: 7", () => {
