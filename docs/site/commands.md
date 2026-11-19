@@ -12,7 +12,7 @@ sidebar:
 | `/dailyrewards status` | `daily.use` | Your streak, best streak and jokers, in chat. | `/dailyrewards status` |
 | `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claim automatically at join; only when the settings say `auto_claim: player`. Without an argument, toggles. | `/dailyrewards autoclaim on` |
 | `/dailyadmin info <player>` | `daily.admin` (op) | A player's streak, jokers and ledger. | `/dailyadmin info Steve` |
-| `/dailyadmin set <player> <streak\|longest\|freezes> <value>` | `daily.admin` | Corrects a counter. | `/dailyadmin set Steve freezes 2` |
+| `/dailyadmin set <player> <streak\|longest\|freezes> <value>` | `daily.admin` | Corrects a counter. `streak` restores a streak that holds: the player counts as there yesterday (or today, if today already counts), so tomorrow continues it, even after a break; the longest streak rises to it; no milestone at or below it is paid (again). `streak 0` starts over. | `/dailyadmin set Steve streak 40` |
 | `/dailyadmin day [+n\|-n\|reset]` | `daily.admin` | Shifts this server's game day, to test the cycle without waiting. | `/dailyadmin day +1` |
 
 | Permission | Default | Allows |

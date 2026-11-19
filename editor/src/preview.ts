@@ -276,6 +276,7 @@ export function sampleStatus(length: number, value: RewardsValue = {}): Record<s
     cycle_day: cycleDayOf(5, length),
     cycle_length: length,
     until_reset: "3h 12m",
+    has_milestones: milestones(value).length > 0,
     next_milestone: next ? next.streak : 0,
     next_milestone_in: next ? next.streak - SAMPLE_TODAY : -1,
   };

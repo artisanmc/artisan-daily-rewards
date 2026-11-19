@@ -582,7 +582,7 @@ public final class DailyService {
         CompletableFuture<PlayerState> done = new CompletableFuture<>();
         scheduler.runAsync(() -> {
             try {
-                PlayerState state = repository.adminSet(uuid, field, value, by, System.currentTimeMillis());
+                PlayerState state = repository.adminSet(uuid, field, value, by, clock.today(), System.currentTimeMillis());
                 cache.computeIfPresent(uuid, (id, old) -> state);
                 done.complete(state);
             } catch (SQLException e) {

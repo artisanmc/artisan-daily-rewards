@@ -113,6 +113,8 @@ public final class CalendarData {
                 new DataSourceField("cycle_day", ModelFieldType.integer(), "Today's day of the cycle, counted or to count"),
                 new DataSourceField("cycle_length", ModelFieldType.integer(), null),
                 new DataSourceField("until_reset", ModelFieldType.string(), "Time left in the game day: 3h 12m"),
+                new DataSourceField("has_milestones", ModelFieldType.bool(),
+                        "The server has milestones in data/rewards (the calendar shows its milestones button only then)"),
                 new DataSourceField("next_milestone", ModelFieldType.integer(),
                         "The streak of the next milestone the viewer reaches, 0 when none is left"),
                 new DataSourceField("next_milestone_in", ModelFieldType.integer(),
@@ -187,6 +189,7 @@ public final class CalendarData {
         row.put("id", "status");
         row.put("loaded", state != null);
         row.put("freeze_max", settings.freezeMaxStock());
+        row.put("has_milestones", !settings.milestones().isEmpty());
         row.put("cycle_length", settings.cycleLength());
         row.put("until_reset", Durations.format(service.clock().untilReset()));
         if (state == null) {

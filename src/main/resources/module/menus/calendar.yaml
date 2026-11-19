@@ -5,7 +5,8 @@ schema: menu/v1
 # of the cycle, days 7, 14, 21 and 28 on the last one; the first page starts 7 to 13 days back. A day the player was there counts for the streak, claimed or not: its reward waits. The rewards are those of
 # data/rewards (days, else default_day): edit them in the Rewards screen. A day that reaches a
 # milestone of the streak (milestones of data/rewards) glows and says so; the button at the bottom
-# left opens the milestones menu.
+# left opens the milestones menu,
+# only when data/rewards has milestones.
 title:
   - kind: plain
     value: { en: "<dark_gray>Daily rewards", fr: "<dark_gray>Récompenses quotidiennes" }
@@ -116,6 +117,12 @@ elements:
       - { en: "<gray>your streak goes on, the day's reward is lost.", fr: "<gray>ton streak continue, la récompense du jour est perdue." }
   - id: milestones
     positions: 47
+    states:
+      # No milestone in data/rewards: the border, no button.
+      - if:
+          - placeholder_equals: { placeholder: "{status[0].has_milestones}", value: "false" }
+        material: GRAY_STAINED_GLASS_PANE
+        title: " "
     material: BEACON
     title: { en: "<light_purple>Streak milestones", fr: "<light_purple>Paliers de streak" }
     lore:

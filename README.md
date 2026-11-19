@@ -21,7 +21,7 @@ User docs: [`docs/site/`](docs/site/), published on
 |---|---|---|
 | `/dailyrewards` | `daily.use` (everyone) | Opens the calendar |
 | `/dailyrewards claim`, `/dailyrewards status`, `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
-| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct, shift this server's game day to test |
+| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct (`set … streak` restores a streak that holds, see below), shift this server's game day to test |
 
 `daily.restore` and `daily.restore.free` are declared for the paid restore, not implemented yet.
 
@@ -46,7 +46,7 @@ is written again, an edited one stays yours until Reset in the editor):
 - `menus/calendar.yml`: what `/dailyrewards` opens. The last 7 days as they went (claimed, waiting to be
   claimed, missed), today (a click claims everything that waits), and the next 104 days with the
   reward each one pays if the player comes every day, 28 days a page (arrows at the bottom). A day
-  that reaches a milestone glows; the beacon opens `menus/milestones.yml`, the next 112 milestones,
+  that reaches a milestone glows; the beacon (shown only when `milestones` holds one) opens `menus/milestones.yml`, the next 112 milestones,
   28 a page.
 
 Before version 2 of these files, everything was in `data/calendar.yml`. At startup an edited
@@ -59,7 +59,7 @@ The menus read three data sources:
 | Source | Rows | Fields |
 |---|---|---|
 | `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
-| `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `next_milestone`, `next_milestone_in` |
+| `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `has_milestones`, `next_milestone`, `next_milestone_in` |
 | `daily:milestones` | one per coming milestone; param `count` (28, at most 200) | `id`, `streak`, `offset`, `date`, `is_today`, `repeats`, `every`, `icon` |
 
 `available` is any day whose reward waits: today, or a day before when the player was there
@@ -81,6 +81,11 @@ Whether a day pays milestones is decided when it counts: its streak is above the
 already paid in this streak (`milestone_mark`, back to 0 at a break) and a milestone matches it.
 The claim then runs the day's actions, then those of each milestone of that streak, and says so
 in chat (`claim.milestone`).
+
+`/dailyadmin set <player> streak <n>` restores a streak: the player counts as there yesterday
+(today if today already counts), so the next day continues it even after a break; `longest`
+rises to `n`, a kept-aside break is dropped, and `milestone_mark` rises to `n` (no milestone at or
+below it is paid again). `streak 0` starts over, the mark with it.
 
 A claim takes its delivery in the database before the actions run, so two servers never pay one
 reward twice. A player who leaves before the reward is handed out gets it at their next join.

@@ -324,26 +324,51 @@ public final class DailyRepository {
         }
     }
 
-    /** An admin's correction, written to the ledger with the old and new value. */
-    public PlayerState adminSet(UUID uuid, AdminField field, int value, String by, long now) throws SQLException {
+    /**
+     * An admin's correction, written to the ledger with the old and new value.
+     *
+     * <p>{@code streak} sets a streak that holds, to restore one: the player was there yesterday
+     * ({@code last_day}, unless today already counts), so the next day continues it and the menus
+     * show it, even after a break. The longest streak rises to it, a kept-aside break is dropped,
+     * and the milestone mark rises to it too, so no milestone at or below it is paid (again); 0
+     * starts everything over, the mark with it. The day of the cycle follows from the streak.
+     *
+     * @param today the game day, for {@code last_day}
+     */
+    public PlayerState adminSet(UUID uuid, AdminField field, int value, String by, long today, long now)
+            throws SQLException {
         try (Connection c = dataSource.getConnection()) {
             ensureRow(c, uuid, now);
-            PlayerState before = select(c, uuid);
-            int old = switch (field) {
-                case STREAK -> before.streak();
-                case LONGEST -> before.longest();
-                case FREEZES -> before.freezes();
-            };
-            try (PreparedStatement p = c.prepareStatement("UPDATE " + players + " SET " + field.column
-                    + " = ?, version = version + 1, updated_at = ? WHERE uuid = ?")) {
-                p.setInt(1, value);
-                p.setLong(2, now);
-                p.setString(3, uuid.toString());
-                p.executeUpdate();
+            for (int attempt = 0; attempt < 3; attempt++) {
+                PlayerState before = select(c, uuid);
+                if (before == null) throw new SQLException(players + " row of " + uuid + " vanished");
+                PlayerState after = switch (field) {
+                    case STREAK -> restored(before, value, today);
+                    case LONGEST -> before.withLongest(value);
+                    case FREEZES -> before.withFreezes(value);
+                };
+                int old = switch (field) {
+                    case STREAK -> before.streak();
+                    case LONGEST -> before.longest();
+                    case FREEZES -> before.freezes();
+                };
+                if (writeState(c, after, before.version(), now) == 0) continue; // written meanwhile elsewhere
+                ledger(c, uuid, now, LedgerKind.ADMIN_SET, value, field.column + " " + old + " -> " + value + " by " + by);
+                return select(c, uuid);
             }
-            ledger(c, uuid, now, LedgerKind.ADMIN_SET, value, field.column + " " + old + " -> " + value + " by " + by);
-            return select(c, uuid);
+            throw new SQLException(players + " row of " + uuid + " kept changing, correction not written");
         }
+    }
+
+    /** {@link #adminSet} of the streak: see there. */
+    static PlayerState restored(PlayerState s, int streak, long today) {
+        if (streak == 0) {
+            return new PlayerState(s.uuid(), 0, s.longest(), s.lastDay(), s.totalDays(), s.freezes(), 0,
+                    0, 0, null, s.autoClaim(), s.version());
+        }
+        Long lastDay = s.countedOn(today) ? s.lastDay() : Long.valueOf(today - 1);
+        return new PlayerState(s.uuid(), streak, Math.max(s.longest(), streak), lastDay, s.totalDays(), s.freezes(),
+                Math.max(s.milestoneMark(), streak), 0, 0, null, s.autoClaim(), s.version());
     }
 
     /** The {@code limit} latest ledger lines of a player, newest first. */
