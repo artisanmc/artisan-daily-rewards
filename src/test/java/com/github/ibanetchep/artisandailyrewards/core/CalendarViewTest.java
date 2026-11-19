@@ -123,4 +123,18 @@ class CalendarViewTest {
         List<CalendarView.Day> days = CalendarView.around(state, ClaimHistory.EMPTY, TODAY, 28, milestones, 0, 2);
         assertEquals(List.of(false, true, false), days.stream().map(CalendarView.Day::milestone).toList());
     }
+
+    @Test
+    void theWeekShiftPutsTodayOnTheColumnOfItsCycleDay() {
+        // Today is day 7 of the cycle (streak 6 counted yesterday): the last column of a week.
+        ClaimHistory history = ClaimHistory.of(TODAY - 10, Map.of(TODAY - 1, 6));
+        assertEquals(6, CalendarView.weekShift(state(6, TODAY - 1, 0), history, TODAY, 28, 7));
+        // Day 1 of the cycle: the first column, nothing to move.
+        assertEquals(0, CalendarView.weekShift(PlayerState.fresh(ID), ClaimHistory.EMPTY, TODAY, 28, 7));
+        // Day 10 of a 28-day cycle: the third column of its week.
+        ClaimHistory ten = ClaimHistory.of(TODAY - 20, Map.of(TODAY - 1, 9));
+        assertEquals(2, CalendarView.weekShift(state(9, TODAY - 1, 0), ten, TODAY, 28, 7));
+        // No grid: no shift.
+        assertEquals(0, CalendarView.weekShift(state(9, TODAY - 1, 0), ten, TODAY, 28, 0));
+    }
 }

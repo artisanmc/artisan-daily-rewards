@@ -96,6 +96,11 @@ export function param(params: Record<string, string> | undefined, key: string, f
   return Number.isNaN(n) ? fallback : n;
 }
 
+/** `CalendarView.weekShift`: days to move before today so it sits on its cycle day's column. */
+export function weekShift(todayCycleDay: number, week: number): number {
+  return week < 2 ? 0 : (todayCycleDay - 1) % week;
+}
+
 /**
  * The sample player's days: `past` days before today, today, `future` days after. Its streak
  * started 5 days ago; it missed the day before yesterday, a joker kept the streak; it was there
@@ -253,5 +258,7 @@ export function dailyPreviewRows(
   if (server && server.length > 0) return server.map((r) => withDraftReward(r, value));
   const past = Math.max(0, Math.min(MAX_PAST, param(ctx?.params, "past", DEFAULT_PAST)));
   const future = Math.max(0, param(ctx?.params, "future", DEFAULT_FUTURE));
-  return sampleDays(past, future, length).map((day) => row(day, value, today));
+  // `week`: today on the column of its day of the cycle, as `DailyService.calendar` lays it out.
+  const moved = Math.min(weekShift(cycleDayOf(SAMPLE_TODAY, length), param(ctx?.params, "week", 0)), future, MAX_PAST - past);
+  return sampleDays(past + moved, future - moved, length).map((day) => row(day, value, today));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NO_REWARD_ICON, dailyPreviewRows, sampleDays } from "./preview";
+import { NO_REWARD_ICON, dailyPreviewRows, sampleDays, weekShift } from "./preview";
 
 const bread = { icon: { extends: "BREAD", count: 8 } };
 const diamond = { icon: { material: "DIAMOND", count: 3 } };
@@ -90,5 +90,17 @@ describe("the milestones preview", () => {
   it("gives the next milestone in the sample status", () => {
     const status = dailyPreviewRows(withMilestones, "daily:status", {})!;
     expect(status[0]).toMatchObject({ next_milestone: 6, next_milestone_in: 1 });
+  });
+
+  it("lays the days out as the Rewards grid with week: 7", () => {
+    const rows = dailyPreviewRows(project, "daily:calendar", { params: { past: "7", future: "20", week: "7" } }, today)!;
+    expect(rows).toHaveLength(28);
+    // Today is day 5 of the cycle: the fifth column of its row.
+    expect(rows.findIndex((r) => r.is_today) % 7).toBe(4);
+    // Every day 7 of the cycle on the last column.
+    for (const [i, r] of rows.entries()) if (r.cycle_day === 7) expect(i % 7).toBe(6);
+    expect(weekShift(1, 7)).toBe(0);
+    expect(weekShift(14, 7)).toBe(6);
+    expect(weekShift(5, 0)).toBe(0);
   });
 });
