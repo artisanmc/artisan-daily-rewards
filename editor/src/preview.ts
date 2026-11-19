@@ -82,6 +82,21 @@ export function cycleDayOf(streak: number, length: number): number {
   return ((streak - 1) % length) + 1;
 }
 
+/** `Icons.withoutBlankTitle`: the item form's empty `title: ""` would name the item "". */
+export function shownIcon(icon: unknown): unknown {
+  const map = asObject(icon);
+  if (!map || !("title" in map) || !blankTitle(map.title)) return icon;
+  const { title: _blank, ...rest } = map;
+  return rest;
+}
+
+function blankTitle(title: unknown): boolean {
+  if (title == null) return true;
+  if (typeof title === "string") return title.trim() === "";
+  const byLang = asObject(title);
+  return byLang !== undefined && Object.values(byLang).every(blankTitle);
+}
+
 /** The reward of a day of the cycle: its own, else `default_day`; none for day 0. */
 export function rewardOf(value: RewardsValue, cycleDay: number): Reward | undefined {
   if (cycleDay < 1) return undefined;
@@ -145,6 +160,7 @@ function pad(n: number): string {
 export function row(day: SampleDay, value: RewardsValue, today: Date): Record<string, unknown> {
   const date = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) + day.offset * DAY_MS);
   const reward = rewardOf(value, day.cycleDay);
+  const icon = reward?.icon != null ? shownIcon(reward.icon) : NO_REWARD_ICON;
   return {
     id: `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`,
     date: `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}`,
@@ -158,9 +174,9 @@ export function row(day: SampleDay, value: RewardsValue, today: Date): Record<st
     is_upcoming: day.status === "upcoming",
     cycle_day: day.cycleDay,
     has_reward: reward !== undefined,
-    icon: reward?.icon ?? NO_REWARD_ICON,
+    icon,
     // The sample player's streak never broke: each streak that a milestone matches pays it.
-    ...milestoneFields(milestones(value), day.streak, day.streak > 0, reward?.icon ?? NO_REWARD_ICON),
+    ...milestoneFields(milestones(value), day.streak, day.streak > 0, icon),
   };
 }
 
@@ -171,7 +187,7 @@ function milestoneFields(list: Milestone[], streak: number, paying: boolean, day
     streak,
     is_milestone: paid.length > 0,
     milestone_count: paid.length,
-    milestone_icon: paid.find((m) => m.icon != null)?.icon ?? dayIcon,
+    milestone_icon: shownIcon(paid.find((m) => m.icon != null)?.icon) ?? dayIcon,
   };
 }
 
@@ -189,7 +205,7 @@ export function sampleMilestones(value: RewardsValue, count: number, today: Date
       is_today: offset === 0,
       repeats: milestone.every > 0,
       every: milestone.every,
-      icon: milestone.icon ?? NO_REWARD_ICON,
+      icon: milestone.icon != null ? shownIcon(milestone.icon) : NO_REWARD_ICON,
     };
   });
 }
@@ -197,7 +213,7 @@ export function sampleMilestones(value: RewardsValue, count: number, today: Date
 /** A server row with its reward taken from the draft, by its day of the cycle. */
 export function withDraftReward(server: Record<string, unknown>, value: RewardsValue): Record<string, unknown> {
   const reward = rewardOf(value, Number(server.cycle_day) || 0);
-  const icon = reward?.icon ?? NO_REWARD_ICON;
+  const icon = reward?.icon != null ? shownIcon(reward.icon) : NO_REWARD_ICON;
   // Whether the day pays milestones is the server's (the player's mark); which ones, the draft's.
   const fields = milestoneFields(milestones(value), Number(server.streak) || 0, server.is_milestone === true, icon);
   return { ...server, has_reward: reward !== undefined, icon, ...fields, is_milestone: server.is_milestone === true };

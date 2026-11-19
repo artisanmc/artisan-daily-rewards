@@ -52,6 +52,27 @@ describe("the calendar preview", () => {
     expect(rows[0]).toMatchObject({ ...server[0], icon: diamond.icon, is_milestone: false });
   });
 
+  it("drops the blank title the item form writes, so the item keeps its own name", () => {
+    const blank = {
+      dataSources: [
+        {
+          id: "rewards",
+          shape: "config",
+          value: {
+            cycle_length: 7,
+            default_day: { icon: { extends: "item:ci_1", title: "" } },
+            days: { "7": { icon: { material: "DIAMOND", title: { en: "", fr: " " } } } },
+            milestones: [{ at: 6, icon: { material: "APPLE", title: "" } }],
+          },
+        },
+      ],
+    };
+    const rows = dailyPreviewRows(blank, "daily:calendar", {}, today)!;
+    expect(rows.find((r) => r.is_today)?.icon).toEqual({ extends: "item:ci_1" });
+    expect(rows.find((r) => r.cycle_day === 7)?.icon).toEqual({ material: "DIAMOND" });
+    expect(rows.find((r) => r.streak === 6)?.milestone_icon).toEqual({ material: "APPLE" });
+  });
+
   it("uses the sample status unless the server's row is loaded", () => {
     const notLoaded = dailyPreviewRows(project, "daily:status", { serverRows: [{ loaded: false, streak: 0 }] })!;
     expect(notLoaded[0]).toMatchObject({ loaded: true, streak: 4, cycle_length: 7 });

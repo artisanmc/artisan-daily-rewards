@@ -99,7 +99,7 @@ public record Milestone(int at, int every, int from, @Nullable Object icon, @Nul
             Integer at = whole(map, "at", key);
             Integer every = whole(map, "every", key);
             Integer from = whole(map, "from", key);
-            Object icon = map.get("icon");
+            Object icon = Icons.withoutBlankTitle(map.get("icon"));
             Object actions = map.get("actions");
             if (at != null && every != null) throw new CalendarException(key + ": at and every together, keep one");
             if (at != null) {
