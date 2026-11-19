@@ -14,7 +14,8 @@ sidebar:
   **Settings** and **Rewards** screens; an older `data/calendar.yml` is split on start.
 - The calendar menu previews in the editor with a sample player (every state of a day) and the rewards
   being edited; previewed as a player, its days as they went with the draft's rewards.
-- The calendar menu pages through the next 104 days, 28 a page.
+- The calendar menu pages through the next 104 days, 28 a page, its rows laid out as the Rewards
+  grid (days 7, 14, 21, 28 on the last column; `daily:calendar` param `week`).
 - Streak milestones (`milestones` in `data/rewards.yml`): bonuses on top of the day's reward, `at` once per
   streak or `every` again and again, edited under the Rewards grid. A day that reaches one glows in the
   calendar; a new milestones menu (`menus/milestones.yml`) pages through the next ones. New data source

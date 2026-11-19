@@ -27,7 +27,9 @@ import java.util.Objects;
  *   <li>{@code daily:calendar}, one row per game day: the recent ones as they went (claimed,
  *       waiting to be claimed, missed), today, and
  *       the days to come with the reward each one will pay. Params {@code past} (7 by default, at
- *       most {@link DailyService#HISTORY_DAYS}) and {@code future} (20);</li>
+ *       most {@link DailyService#HISTORY_DAYS}), {@code future} (20) and {@code week} (0: none; 7
+ *       moves days from the end to the start so the first day shown sits on the first column of
+ *       a 7-wide grid, today on the column of its day of the cycle, as the Rewards grid);</li>
  *   <li>{@code daily:status}, one row: the viewer's streak, jokers, today's claim and the next
  *       milestone;</li>
  *   <li>{@code daily:milestones}, one row per coming milestone, the next ones the viewer reaches
@@ -120,7 +122,8 @@ public final class CalendarData {
     List<Map<String, Object>> calendar(@Nullable Player player, Map<String, Object> params) {
         if (player == null) return List.of();
         List<CalendarView.Day> days = service.calendar(player.getUniqueId(),
-                param(params, "past", DEFAULT_PAST), param(params, "future", DEFAULT_FUTURE));
+                param(params, "past", DEFAULT_PAST), param(params, "future", DEFAULT_FUTURE),
+                param(params, "week", 0));
         if (days == null) return List.of();
         CalendarSettings settings = service.settings();
         return days.stream().map(day -> row(day, settings)).toList();
