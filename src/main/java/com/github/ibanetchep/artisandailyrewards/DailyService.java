@@ -411,7 +411,7 @@ public final class DailyService {
 
     /**
      * Hands out a claimed reward: the actions of its day of the cycle ({@code days}, else
-     * {@code default_day}), then those of every milestone its streak reaches when the day pays
+     * {@code default_day}; both, {@code default_day} first, when {@code with_default_day}), then those of every milestone its streak reaches when the day pays
      * milestones (decided when it was counted, {@link StreakRules#checkIn}), run by Artisan with {@code {streak}}, {@code {cycle_day}} and
      * {@code {cycle_length}} of the day it was counted. Off the game threads. The delivery is taken
      * in the database first, so two servers never pay one reward twice; a player who left keeps it
@@ -431,9 +431,8 @@ public final class DailyService {
                 "streak", claimed.streak(),
                 "cycle_day", cycleDay,
                 "cycle_length", current.cycleLength());
-        CalendarSettings.DayReward reward = current.reward(cycleDay);
-        if (reward != null && reward.actions() != null) {
-            actions.run(player, reward.actions(), variables, DailyRewardsModule.FOLDER);
+        for (CalendarSettings.DayReward reward : current.rewards(cycleDay)) {
+            if (reward.actions() != null) actions.run(player, reward.actions(), variables, DailyRewardsModule.FOLDER);
         }
         if (!claimed.milestone()) return;
         for (Milestone milestone : current.milestonesAt(claimed.streak())) {

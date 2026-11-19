@@ -31,6 +31,9 @@ export const STYLES = `
 .daily-cell.is-selected, .daily-default.is-selected { outline: 2px solid var(--brand); outline-offset: 1px; }
 .daily-cell-day { position: absolute; top: 4px; left: 6px; font-size: 11px; font-weight: 600; color: var(--text-mut); }
 .daily-cell.is-own .daily-cell-day { color: var(--text); }
+.daily-cell-stack { position: absolute; top: 3px; right: 6px; font-size: 12px; font-weight: 700; line-height: 1;
+  color: var(--fam-reward); }
+.daily-legend-stack::before { display: none; }
 .daily-cell-title { max-width: 100%; font-size: 10px; text-align: center; }
 .daily-slot { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none;
   width: 40px; height: 40px; border-radius: var(--r-xs); background: var(--mc-slot-bg);

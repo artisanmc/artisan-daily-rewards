@@ -21,6 +21,7 @@ default_day:             # the reward of a day not listed under days
     title: { en: "<white>8 bread", fr: "<white>8 pains" }
   actions:
     - give_item: { material: BREAD, count: 8 }
+with_default_day: false  # a day under days replaces default_day (true: pays both)
 days:
   7:
     icon:
@@ -58,7 +59,9 @@ milestones:              # bonuses of the streak, on top of the day's reward
 |---|---|---|---|
 | `cycle_length` | integer ≥ 1 | `28` | Days of the cycle. After the last, the next day is day 1 again. |
 | `default_day` | reward | 8 bread | The reward of every day not under `days`. |
+| `with_default_day` | boolean | `false` | `false`: a day under `days` pays its own reward in place of `default_day`. `true`: it pays `default_day` too, first. |
 | `days.<n>` | reward | days 7, 14, 21, 28 | The reward of day `n` of the cycle, 1 to `cycle_length`. |
+| `days.<n>.with_default_day` | boolean | `with_default_day` | That day only: overrides the setting above. |
 | `<reward>.icon` | item | | What the calendar shows: `material`, `count`, `title` by language. |
 | `<reward>.actions` | action chain | | Run at the claim. `{streak}`, `{cycle_day}` and `{cycle_length}` hold the values of the day claimed. |
 | `milestones` | list | 30, then every 50 | Bonuses of the streak, paid on top of the day's reward. |

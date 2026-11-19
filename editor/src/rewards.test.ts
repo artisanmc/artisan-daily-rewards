@@ -11,8 +11,10 @@ import {
   iconTitle,
   milestones,
   noneRepeats,
+  stacksDefault,
   upcoming,
   withDay,
+  withDefaultDay,
 } from "./rewards";
 
 const bread = { icon: { extends: "BREAD", count: 8 }, actions: [{ give_item: { material: "BREAD" } }] };
@@ -22,8 +24,22 @@ describe("the rewards grid", () => {
   it("shows every day of the cycle, own days first, the default for the others", () => {
     const grid = cells({ cycle_length: 7, days: { "7": diamond }, default_day: bread });
     expect(grid).toHaveLength(7);
-    expect(grid[6]).toEqual({ day: 7, own: true, reward: diamond });
-    expect(grid[0]).toEqual({ day: 1, own: false, reward: bread });
+    expect(grid[6]).toEqual({ day: 7, own: true, reward: diamond, stacks: false });
+    expect(grid[0]).toEqual({ day: 1, own: false, reward: bread, stacks: false });
+  });
+
+  it("marks the own days that also pay the default one: the file's setting, else the day's", () => {
+    const gold = { ...diamond, with_default_day: true };
+    const iron = { ...diamond, with_default_day: false };
+    const days = { "2": diamond, "3": gold, "4": iron };
+    const replaces = cells({ cycle_length: 7, days, default_day: bread });
+    expect(replaces.map((c) => c.stacks)).toEqual([false, false, true, false, false, false, false]);
+    const stacks = cells({ cycle_length: 7, days, default_day: bread, with_default_day: true });
+    expect(stacks.map((c) => c.stacks)).toEqual([false, true, true, false, false, false, false]);
+    // Without default_day, nothing to stack.
+    expect(cells({ cycle_length: 7, days, with_default_day: true }).some((c) => c.stacks)).toBe(false);
+    expect(withDefaultDay({ with_default_day: "yes" })).toBe(false);
+    expect(stacksDefault({ with_default_day: true }, iron)).toBe(false);
   });
 
   it("falls back to the plugin's cycle when the length is missing or wrong", () => {

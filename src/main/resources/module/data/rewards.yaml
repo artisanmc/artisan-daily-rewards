@@ -9,6 +9,9 @@ default_day:
     title: { en: "<white>8 bread", fr: "<white>8 pains" }
   actions:
     - give_item: { material: BREAD, count: 8 }
+# A day listed under days pays its own reward in place of default_day (false), or on top of it
+# (true: default_day first). A day overrides it with its own with_default_day.
+with_default_day: false
 # Keyed by the day of the cycle, 1 to cycle_length.
 days:
   7:

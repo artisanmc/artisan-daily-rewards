@@ -31,8 +31,10 @@ import {
   noneRepeats,
   ownDays,
   readMilestone,
+  stacksDefault,
   upcoming,
   withDay,
+  withDefaultDay,
 } from "./rewards";
 
 /** A day of the cycle, the other days, or the milestone at that place of `milestones`. */
@@ -86,6 +88,7 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
         <div className="daily-legend">
           <span className="daily-legend-own">{t("legendOwn")}</span>
           <span className="daily-legend-default">{t("legendDefault")}</span>
+          {grid.some((cell) => cell.stacks) && <span className="daily-legend-stack">{t("legendStack")}</span>}
         </div>
       </div>
 
@@ -172,6 +175,25 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
                     readOnly={readOnly}
                     onChange={(path, next) => set(["default_day", ...path], next)}
                   />
+                  <div className="daily-fields">
+                    <div>
+                      <div className="field-label">{t("stackAllLabel")}</div>
+                      <div className="daily-faint">{t("stackAllHint")}</div>
+                      <div className="daily-milestone-kind">
+                        {[false, true].map((stack) => (
+                          <button
+                            key={String(stack)}
+                            type="button"
+                            className={`chip${withDefaultDay(rewards) === stack ? " is-active" : ""}`}
+                            disabled={readOnly}
+                            onClick={() => set(["with_default_day"], stack)}
+                          >
+                            {t(stack ? "stackAdd" : "stackReplace")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
@@ -198,6 +220,8 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
               projectId={projectId}
               own={ownDays(rewards).get(selected)}
               fallback={fallback}
+              stacksAll={withDefaultDay(rewards)}
+              stacks={stacksDefault(rewards, ownDays(rewards).get(selected) ?? {})}
               readOnly={readOnly}
               onCustomize={() =>
                 setDay(selected, detachTexts(fallback, defaultText) ?? { icon: { material: "CHEST" }, actions: [] })
@@ -235,6 +259,11 @@ function DayCell({
   return (
     <button type="button" className={classes.join(" ")} onClick={onSelect} title={t("day", { day: cell.day })}>
       <span className="daily-cell-day">{cell.day}</span>
+      {cell.stacks && (
+        <span className="daily-cell-stack" title={t("stackBadge")} aria-label={t("stackBadge")}>
+          +
+        </span>
+      )}
       <Slot reward={cell.reward} />
       {cell.own && title && (
         <span className="daily-cell-title">
@@ -286,6 +315,8 @@ function DayPanel({
   projectId,
   own,
   fallback,
+  stacksAll,
+  stacks,
   readOnly,
   onCustomize,
   onReset,
@@ -296,6 +327,10 @@ function DayPanel({
   projectId: string;
   own: Reward | undefined;
   fallback: Reward | undefined;
+  /** `with_default_day` of the file. */
+  stacksAll: boolean;
+  /** This day also pays `default_day` (its own setting, else the file's). */
+  stacks: boolean;
   readOnly: boolean;
   onCustomize: () => void;
   onReset: () => void;
@@ -325,8 +360,29 @@ function DayPanel({
     );
   }
   return (
-    <Panel title={t("day", { day })} hint={t("ownHint")}>
+    <Panel title={t("day", { day })} hint={t(fallback && stacks ? "ownStackHint" : "ownHint")}>
       <RewardFields projectId={projectId} reward={own} readOnly={readOnly} onChange={onChange} />
+      {fallback && (
+        <fieldset className="daily-fields" disabled={readOnly}>
+          <div>
+            <div className="field-label">{t("stackLabel")}</div>
+            <div className="daily-milestone-kind">
+              {([undefined, false, true] as const).map((choice) => (
+                <button
+                  key={String(choice)}
+                  type="button"
+                  className={`chip${own.with_default_day === choice ? " is-active" : ""}`}
+                  onClick={() => onChange(["with_default_day"], choice)}
+                >
+                  {choice === undefined
+                    ? t("stackFollow", { mode: t(stacksAll ? "stackAdd" : "stackReplace") })
+                    : t(choice ? "stackAdd" : "stackReplace")}
+                </button>
+              ))}
+            </div>
+          </div>
+        </fieldset>
+      )}
       <button type="button" className="btn btn-ghost btn-sm" disabled={readOnly} onClick={onReset}>
         {t("reset")}
       </button>
