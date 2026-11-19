@@ -97,6 +97,43 @@ function blankTitle(title: unknown): boolean {
   return byLang !== undefined && Object.values(byLang).every(blankTitle);
 }
 
+type I18n = Record<string, Record<string, string>>;
+
+/**
+ * `RewardTexts.inline` of the plugin: each icon title of the rewards in every language, as a
+ * `{lang: text}` map. The editor keeps the default language inline and the others at the text's
+ * address (`sources.rewards.default_day.icon.title`, `sources.rewards.milestones_2.icon.title`).
+ */
+export function withTranslatedTitles(value: RewardsValue, i18n: I18n | undefined, defaultLang: string): RewardsValue {
+  if (!i18n) return value;
+  const reward = (r: unknown, address: string): unknown => {
+    const obj = asObject(r);
+    const icon = asObject(obj?.icon);
+    if (!obj || !icon || asObject(icon.title)) return r;
+    const key = `${address}.icon.title`;
+    const byLang: Record<string, string> = {};
+    if (typeof icon.title === "string" && icon.title.trim() !== "") byLang[defaultLang] = icon.title;
+    for (const [lang, text] of Object.entries(i18n[key] ?? {})) {
+      if (!(lang in byLang) && text.trim() !== "") byLang[lang] = text;
+    }
+    const { title: _title, ...rest } = icon;
+    return { ...obj, icon: Object.keys(byLang).length > 0 ? { ...rest, title: byLang } : rest };
+  };
+  const out: Record<string, unknown> = { ...value };
+  const base = "sources.rewards";
+  if (value.default_day !== undefined) out.default_day = reward(value.default_day, `${base}.default_day`);
+  const days = asObject(value.days);
+  if (days) {
+    out.days = Object.fromEntries(
+      Object.entries(days).map(([day, r]) => [day, reward(r, `${base}.days.${day.trim().toLowerCase()}`)]),
+    );
+  }
+  if (Array.isArray(value.milestones)) {
+    out.milestones = value.milestones.map((m, i) => reward(m, `${base}.milestones${i === 0 ? "" : `_${i + 1}`}`));
+  }
+  return out as RewardsValue;
+}
+
 /** The reward of a day of the cycle: its own, else `default_day`; none for day 0. */
 export function rewardOf(value: RewardsValue, cycleDay: number): Reward | undefined {
   if (cycleDay < 1) return undefined;
@@ -256,7 +293,8 @@ export function dailyPreviewRows(
   if (!isDailyProject(project)) return null;
   // The shipped rewards sit under originals/, which the editor does not read as a source yet:
   // the days still show, with the paper of a day without a reward.
-  const value = rewardsOf(project) ?? {};
+  const p = project as { i18nKeys?: I18n; defaultLang?: string } | undefined;
+  const value = withTranslatedTitles(rewardsOf(project) ?? {}, p?.i18nKeys, p?.defaultLang ?? "en");
   const length = cycleLength(value);
   const server = ctx?.serverRows;
   if (ref === STATUS) {
