@@ -60,7 +60,7 @@ class CalendarSettingsTest {
         Map<String, Object> diamond = Map.of("icon", "DIAMOND");
         Map<String, Object> gold = Map.of("icon", "GOLD_INGOT", "with_default_day", true);
         Map<String, Object> iron = Map.of("icon", "IRON_INGOT", "with_default_day", false);
-        Map<String, Object> days = Map.of(2, diamond, 3, gold, 4, iron);
+        Map<Integer, Object> days = Map.of(2, diamond, 3, gold, 4, iron);
 
         CalendarSettings replaces = CalendarSettings.read(Map.of("cycle_length", 7, "default_day", bread, "days", days));
         assertFalse(replaces.withDefaultDay());
