@@ -204,15 +204,52 @@ class DailyRepositoryTest {
         assertTrue(repository.setAutoClaim(id, true, 1).autoClaim());
         assertFalse(repository.setAutoClaim(id, false, 2).autoClaim());
 
-        PlayerState corrected = repository.adminSet(id, DailyRepository.AdminField.STREAK, 42, "Iban", 3);
+        PlayerState corrected = repository.adminSet(id, DailyRepository.AdminField.STREAK, 42, "Iban", DAY, 3);
         assertEquals(42, corrected.streak());
+        assertEquals(42, corrected.longest());
+        assertEquals(DAY - 1, corrected.lastDay());
         LedgerEntry line = repository.recentLedger(id, 1).get(0);
         assertEquals(LedgerKind.ADMIN_SET, line.kind());
         assertEquals("streak 0 -> 42 by Iban", line.detail());
 
-        // A claim after a correction reads the corrected row.
+        // The set streak holds: the next day continues it.
         CheckInResult next = repository.checkIn(id, DAY, SETTINGS, "lobby", 4);
-        assertEquals(StreakRules.Outcome.FIRST, next.outcome());
+        assertEquals(StreakRules.Outcome.CONTINUED, next.outcome());
+        assertEquals(43, next.state().streak());
+        assertEquals(1, repository.adminSet(id, DailyRepository.AdminField.FREEZES, 1, "Iban", DAY, 5).freezes());
+        assertEquals(43, repository.load(id).streak());
+    }
+
+    @Test
+    void settingTheStreakRestoresABrokenOne() throws Exception {
+        UUID id = UUID.randomUUID();
+        for (int i = 0; i < 10; i++) repository.checkIn(id, DAY + i, SETTINGS, "a", i);
+        // Five days missed, no joker left to cover them: broken at the next count.
+        CheckInResult broken = repository.checkIn(id, DAY + 15, SETTINGS, "a", 20);
+        assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
+        assertEquals(10, broken.state().brokenStreak());
+
+        // Counted today already (streak 1): restored to 11, today stays its last day.
+        PlayerState restored = repository.adminSet(id, DailyRepository.AdminField.STREAK, 11, "Iban", DAY + 15, 21);
+        assertEquals(11, restored.streak());
+        assertEquals(DAY + 15, restored.lastDay());
+        assertEquals(0, restored.brokenStreak());
+        assertNull(restored.brokenFromDay());
+        assertEquals(11, restored.milestoneMark());
+        assertEquals(StreakRules.Outcome.CONTINUED, repository.checkIn(id, DAY + 16, SETTINGS, "a", 22).outcome());
+        assertEquals(12, repository.load(id).streak());
+    }
+
+    @Test
+    void settingTheStreakToZeroStartsOver() {
+        PlayerState s = new PlayerState(UUID.randomUUID(), 30, 30, DAY, 30, 1, 30, 0, 0, null, null, 4);
+        PlayerState zero = DailyRepository.restored(s, 0, DAY + 1);
+        assertEquals(0, zero.streak());
+        assertEquals(0, zero.milestoneMark());
+        assertEquals(30, zero.longest());
+        PlayerState lower = DailyRepository.restored(s, 5, DAY + 1);
+        assertEquals(30, lower.milestoneMark()); // no milestone paid twice
+        assertEquals(DAY, lower.lastDay());
     }
 
     @Test

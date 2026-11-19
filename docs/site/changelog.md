@@ -28,4 +28,6 @@ sidebar:
   languages in `lang/<lang>.yml` (`sources.rewards.…icon.title`), now read with the rewards. With no title
   in any language, the item keeps its own name (it showed no name). The calendar's claim button shows "Claim" or the time to the next
   reward (it stayed on "Loading…").
+- `/dailyadmin set <player> streak <n>` restores a streak that holds: it continues the next day, even after a
+  break, and raises the longest streak (it used to be broken again at the next day).
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

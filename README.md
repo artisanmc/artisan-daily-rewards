@@ -21,7 +21,7 @@ User docs: [`docs/site/`](docs/site/), published on
 |---|---|---|
 | `/dailyrewards` | `daily.use` (everyone) | Opens the calendar |
 | `/dailyrewards claim`, `/dailyrewards status`, `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
-| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct, shift this server's game day to test |
+| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct (`set … streak` restores a streak that holds, see below), shift this server's game day to test |
 
 `daily.restore` and `daily.restore.free` are declared for the paid restore, not implemented yet.
 
@@ -81,6 +81,11 @@ Whether a day pays milestones is decided when it counts: its streak is above the
 already paid in this streak (`milestone_mark`, back to 0 at a break) and a milestone matches it.
 The claim then runs the day's actions, then those of each milestone of that streak, and says so
 in chat (`claim.milestone`).
+
+`/dailyadmin set <player> streak <n>` restores a streak: the player counts as there yesterday
+(today if today already counts), so the next day continues it even after a break; `longest`
+rises to `n`, a kept-aside break is dropped, and `milestone_mark` rises to `n` (no milestone at or
+below it is paid again). `streak 0` starts over, the mark with it.
 
 A claim takes its delivery in the database before the actions run, so two servers never pay one
 reward twice. A player who leaves before the reward is handed out gets it at their next join.
