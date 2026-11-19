@@ -475,12 +475,26 @@ public final class DailyService {
      * {@link #MAX_FUTURE_DAYS}.
      */
     public @Nullable List<CalendarView.Day> calendar(UUID uuid, int past, int future) {
+        return calendar(uuid, past, future, 0);
+    }
+
+    /**
+     * As {@link #calendar(UUID, int, int)}, laid out on a grid {@code week} days wide: as many
+     * days move from the end to the start as put today on the column of its day of the cycle
+     * ({@link CalendarView#weekShift}), so the number of days stays the same.
+     */
+    public @Nullable List<CalendarView.Day> calendar(UUID uuid, int past, int future, int week) {
         PlayerState state = cache.get(uuid);
         if (state == null) return null;
         ClaimHistory claims = history.getOrDefault(uuid, ClaimHistory.EMPTY);
         CalendarSettings current = settings;
-        return CalendarView.around(state, claims, clock.today(), current.cycleLength(), current.milestones(),
-                Math.clamp(past, 0, HISTORY_DAYS), Math.clamp(future, 0, MAX_FUTURE_DAYS));
+        long today = clock.today();
+        int shift = CalendarView.weekShift(state, claims, today, current.cycleLength(), week);
+        int before = Math.clamp(past, 0, HISTORY_DAYS);
+        int after = Math.clamp(future, 0, MAX_FUTURE_DAYS);
+        int moved = Math.min(shift, Math.min(after, HISTORY_DAYS - before));
+        return CalendarView.around(state, claims, today, current.cycleLength(), current.milestones(),
+                before + moved, after - moved);
     }
 
     /** How many coming milestones the milestones menu can ask for. */

@@ -46,6 +46,27 @@ public final class CalendarView {
     }
 
     /**
+     * Days to add before today so that the first day shown sits on the first column of a grid
+     * {@code week} days wide, as the Rewards grid lays the cycle out: today goes on the column
+     * of its day of the cycle, and days 7, 14, 21… of a cycle on the last one. 0 for {@code week}
+     * below 2.
+     */
+    public static int weekShift(PlayerState state, ClaimHistory history, long today, int cycleLength, int week) {
+        if (week < 2) return 0;
+        return (todayCycleDay(state, history, today, cycleLength) - 1) % week;
+    }
+
+    /** Today's day of the cycle, counted or to count, as {@link #around} shows it. */
+    static int todayCycleDay(PlayerState state, ClaimHistory history, long today, int cycleLength) {
+        StreakRules.Displayed shown = StreakRules.display(state, today);
+        int todayStreak = shown.countedToday() ? shown.streak() : shown.streak() + 1;
+        Integer countedToday = history.cycleDayOn(today);
+        return shown.countedToday() && countedToday != null
+                ? countedToday
+                : StreakRules.cycleDay(todayStreak, cycleLength);
+    }
+
+    /**
      * {@code past} days before today, today, then {@code future} days after it. The past comes
      * from {@code history}: a day it does not hold is missed, unless it is before the first one.
      * Today and the future follow the streak as {@link StreakRules#display} shows it: a broken
@@ -80,10 +101,7 @@ public final class CalendarView {
         StreakRules.Displayed shown = StreakRules.display(state, today);
         // The streak today reaches, counted or to count.
         int todayStreak = shown.countedToday() ? shown.streak() : shown.streak() + 1;
-        Integer countedToday = history.cycleDayOn(today);
-        int todayCycleDay = shown.countedToday() && countedToday != null
-                ? countedToday
-                : StreakRules.cycleDay(todayStreak, cycleLength);
+        int todayCycleDay = todayCycleDay(state, history, today, cycleLength);
         boolean claimedToday = shown.countedToday() && !history.unclaimedOn(today);
         // The mark today's streak is checked against: the stored one, unless the streak is broken.
         int mark = shown.broken() ? 0 : state.milestoneMark();
