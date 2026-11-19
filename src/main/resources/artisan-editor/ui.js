@@ -265,7 +265,7 @@ function Oe(e, t, n, i = /* @__PURE__ */ new Date()) {
   const o = Math.max(0, Math.min(B, T(n?.params, "past", Re))), f = Math.max(0, T(n?.params, "future", je)), p = Math.min(He(A(k, l), T(n?.params, "week", 0)), f, B - o);
   return Le(o + p, f - p, l).map((c) => Me(c, a, i));
 }
-const ze = {
+const Pe = {
   cycleLength: "Cycle length",
   cycleHint: "Days before the rewards start again at day 1. The streak goes on.",
   days: "{{count}} days",
@@ -280,7 +280,7 @@ const ze = {
   ownHint: "Its own reward, in place of the other days' one.",
   ownStackHint: "Its own reward, paid on top of the other days' one.",
   stackLabel: "With the reward of the other days",
-  stackFollow: "As every day ({{mode}})",
+  stackFollow: "Default ({{mode}})",
   stackReplace: "Replaces it",
   stackAdd: "Adds to it",
   stackAllLabel: "A day with its own reward",
@@ -322,7 +322,7 @@ const ze = {
   milestoneActionsHint: "Run with the claim of the day that reaches it ({streak}, {cycle_day}, {cycle_length}).",
   milestoneRemove: "Remove this milestone",
   milestoneNext: "Next ones from day 1: {{list}}"
-}, Pe = {
+}, ze = {
   cycleLength: "Longueur du cycle",
   cycleHint: "Jours avant que les récompenses reprennent au jour 1. Le streak continue.",
   days: "{{count}} jours",
@@ -337,7 +337,7 @@ const ze = {
   ownHint: "Sa propre récompense, à la place de celle des autres jours.",
   ownStackHint: "Sa propre récompense, en plus de celle des autres jours.",
   stackLabel: "Avec la récompense des autres jours",
-  stackFollow: "Comme tous les jours ({{mode}})",
+  stackFollow: "Par défaut ({{mode}})",
   stackReplace: "La remplace",
   stackAdd: "S'y ajoute",
   stackAllLabel: "Un jour avec sa propre récompense",
@@ -379,7 +379,7 @@ const ze = {
   milestoneActionsHint: "Exécutées avec la réclamation du jour qui l'atteint ({streak}, {cycle_day}, {cycle_length}).",
   milestoneRemove: "Supprimer ce palier",
   milestoneNext: "Les prochains depuis le jour 1 : {{list}}"
-}, w = ae({ en: ze, fr: Pe });
+}, w = ae({ en: Pe, fr: ze });
 function $e({ projectId: e, value: t, set: n, readOnly: i }) {
   const a = w(), l = y(t) ?? {}, r = fe(l), o = ye(l), f = y(l.default_day), [p, c] = ce(null), m = K(e), v = (u) => m ? W(m, u, oe(m)[0] ?? "en") : "", h = (u, g) => n(["days"], he(l, u, g)), b = G(l), x = (u) => n(["milestones"], u.length > 0 ? u : void 0), C = (u) => {
     x([...b, u]), c({ milestone: b.length });
@@ -481,7 +481,7 @@ function $e({ projectId: e, value: t, set: n, readOnly: i }) {
         }
       ) : /* @__PURE__ */ s("p", { className: "daily-faint", children: a("pick") }) : p === "default" ? /* @__PURE__ */ s(D, { title: a("defaultTitle"), hint: a(f ? "defaultHint" : "defaultNone"), children: f ? /* @__PURE__ */ d(J, { children: [
         /* @__PURE__ */ s(
-          P,
+          z,
           {
             projectId: e,
             reward: f,
@@ -551,7 +551,7 @@ function Ye({
   selected: n,
   onSelect: i
 }) {
-  const a = w(), l = z(t, e.reward?.icon), r = ["daily-cell", e.own ? "is-own" : "is-default", n ? "is-selected" : ""];
+  const a = w(), l = P(t, e.reward?.icon), r = ["daily-cell", e.own ? "is-own" : "is-default", n ? "is-selected" : ""];
   return /* @__PURE__ */ d("button", { type: "button", className: r.join(" "), onClick: i, title: a("day", { day: e.day }), children: [
     /* @__PURE__ */ s("span", { className: "daily-cell-day", children: e.day }),
     e.stacks && /* @__PURE__ */ s("span", { className: "daily-cell-stack", title: a("stackBadge"), "aria-label": a("stackBadge"), children: "+" }),
@@ -566,7 +566,7 @@ function j({ reward: e }) {
     a > 1 && /* @__PURE__ */ s("span", { className: "daily-slot-count", children: a })
   ] });
 }
-function z(e, t) {
+function P(e, t) {
   const n = K(e), i = re();
   return we(t, i, (a) => n ? W(n, a, i) : "");
 }
@@ -592,7 +592,7 @@ function Be({
   onChange: p,
   onEditDefault: c
 }) {
-  const m = w(), v = z(t, (n ?? i)?.icon);
+  const m = w(), v = P(t, (n ?? i)?.icon);
   if (!n) {
     const h = xe(i);
     return /* @__PURE__ */ d(D, { title: m("day", { day: e }), hint: m("inheritHint"), children: [
@@ -608,7 +608,7 @@ function Be({
     ] });
   }
   return /* @__PURE__ */ d(D, { title: m("day", { day: e }), hint: m(i && l ? "ownStackHint" : "ownHint"), children: [
-    /* @__PURE__ */ s(P, { projectId: t, reward: n, readOnly: r, onChange: p }),
+    /* @__PURE__ */ s(z, { projectId: t, reward: n, readOnly: r, onChange: p }),
     i && /* @__PURE__ */ s("fieldset", { className: "daily-fields", disabled: r, children: /* @__PURE__ */ d("div", { children: [
       /* @__PURE__ */ s("div", { className: "field-label", children: m("stackLabel") }),
       /* @__PURE__ */ s("div", { className: "daily-milestone-kind", children: [void 0, !1, !0].map((h) => /* @__PURE__ */ s(
@@ -625,7 +625,7 @@ function Be({
     /* @__PURE__ */ s("button", { type: "button", className: "btn btn-ghost btn-sm", disabled: r, onClick: f, children: m("reset") })
   ] });
 }
-function P({
+function z({
   projectId: e,
   reward: t,
   readOnly: n,
@@ -711,7 +711,7 @@ function We({
   selected: n,
   onSelect: i
 }) {
-  const a = w(), l = z(t, e.icon), r = U(e);
+  const a = w(), l = P(t, e.icon), r = U(e);
   return /* @__PURE__ */ d("button", { type: "button", className: ["daily-default", "daily-milestone", n ? "is-selected" : "", r ? "" : "is-invalid"].join(" "), onClick: i, children: [
     /* @__PURE__ */ s(j, { reward: e }),
     /* @__PURE__ */ d("span", { className: "daily-default-text", children: [
@@ -796,7 +796,7 @@ function Je({
       ] })
     ] }),
     /* @__PURE__ */ s(
-      P,
+      z,
       {
         projectId: e,
         reward: t,
