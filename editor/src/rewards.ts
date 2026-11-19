@@ -13,6 +13,7 @@ export interface RewardsValue {
   cycle_length?: unknown;
   days?: unknown;
   default_day?: unknown;
+  with_default_day?: unknown;
   milestones?: unknown;
 }
 
@@ -23,6 +24,22 @@ export interface Cell {
   own: boolean;
   /** Its reward: its own, else `default_day`; undefined when neither. */
   reward: Reward | undefined;
+  /** An own day that also pays `default_day` (`stacksDefault`), with a `default_day` to pay. */
+  stacks: boolean;
+}
+
+/** The key, at the top of the file and under a day, that pays `default_day` with a day's own reward. */
+export const WITH_DEFAULT_DAY = "with_default_day";
+
+/** `with_default_day` at the top of the file: false when missing or not a boolean. */
+export function withDefaultDay(value: RewardsValue): boolean {
+  return value.with_default_day === true;
+}
+
+/** `CalendarSettings.stacksDefault`: the day's own setting, else the file's. */
+export function stacksDefault(value: RewardsValue, own: Reward): boolean {
+  const mine = own[WITH_DEFAULT_DAY];
+  return typeof mine === "boolean" ? mine : withDefaultDay(value);
 }
 
 export function asObject(value: unknown): Record<string, unknown> | undefined {
@@ -55,7 +72,8 @@ export function cells(value: RewardsValue): Cell[] {
   return Array.from({ length }, (_, i) => {
     const day = i + 1;
     const own = days.get(day);
-    return { day, own: own !== undefined, reward: own ?? fallback };
+    const stacks = own !== undefined && fallback !== undefined && stacksDefault(value, own);
+    return { day, own: own !== undefined, reward: own ?? fallback, stacks };
   });
 }
 

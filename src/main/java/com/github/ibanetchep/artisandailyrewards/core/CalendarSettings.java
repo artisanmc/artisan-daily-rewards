@@ -22,6 +22,8 @@ import java.util.Map;
  * @param days               the reward of each listed day of the cycle, 1 to {@code cycleLength}
  * @param defaultDay         the reward of a day {@code days} does not list, null for none
  * @param milestones         the bonuses of the streak, in the file's order
+ * @param withDefaultDay     a day with its own reward also pays {@code default_day}, unless the
+ *                           day says otherwise ({@link DayReward#withDefault})
  */
 public record CalendarSettings(
         LocalTime resetTime,
@@ -33,15 +35,24 @@ public record CalendarSettings(
         int freezeMaxStock,
         Map<Integer, DayReward> days,
         @Nullable DayReward defaultDay,
-        List<Milestone> milestones
+        List<Milestone> milestones,
+        boolean withDefaultDay
 ) {
 
     public static final CalendarSettings DEFAULTS =
-            new CalendarSettings(LocalTime.MIDNIGHT, 28, AutoClaim.OFF, 0, true, 7, 2, Map.of(), null, List.of());
+            new CalendarSettings(LocalTime.MIDNIGHT, 28, AutoClaim.OFF, 0, true, 7, 2, Map.of(), null, List.of(), false);
 
     public CalendarSettings {
         days = Map.copyOf(days);
         milestones = List.copyOf(milestones);
+    }
+
+    /** A day's own reward in place of {@code default_day}. */
+    public CalendarSettings(LocalTime resetTime, int cycleLength, AutoClaim autoClaim, int minPlaytimeMinutes,
+                            boolean joinReminder, int freezeEarnEvery, int freezeMaxStock,
+                            Map<Integer, DayReward> days, @Nullable DayReward defaultDay, List<Milestone> milestones) {
+        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder, freezeEarnEvery, freezeMaxStock,
+                days, defaultDay, milestones, false);
     }
 
     /** Without milestones. */
@@ -62,15 +73,40 @@ public record CalendarSettings(
      *
      * @param icon    the item value the menu shows ({@code item: "{d.icon}"}), null for none
      * @param actions the action chain a claim of that day runs, null for none
+     * @param withDefault for a day of {@code days}: also pay {@code default_day} (true), or not
+     *                    (false); null follows {@link #withDefaultDay}
      */
-    public record DayReward(@Nullable Object icon, @Nullable Object actions) {
+    public record DayReward(@Nullable Object icon, @Nullable Object actions, @Nullable Boolean withDefault) {
+
+        public DayReward(@Nullable Object icon, @Nullable Object actions) {
+            this(icon, actions, null);
+        }
     }
 
-    /** The reward of a day of the cycle: its own, else {@link #defaultDay}, else null. */
+    /** The reward a day of the cycle shows: its own, else {@link #defaultDay}, else null. */
     public @Nullable DayReward reward(int cycleDay) {
         DayReward own = days.get(cycleDay);
         return own != null ? own : defaultDay;
     }
+
+    /**
+     * What a claim of a day of the cycle pays, in order: {@link #defaultDay} then the day's own
+     * when the day stacks them ({@link #stacksDefault}), else its own, else {@link #defaultDay};
+     * empty for none.
+     */
+    public List<DayReward> rewards(int cycleDay) {
+        DayReward own = days.get(cycleDay);
+        if (own == null) return defaultDay != null ? List.of(defaultDay) : List.of();
+        return defaultDay != null && stacksDefault(own) ? List.of(defaultDay, own) : List.of(own);
+    }
+
+    /** True when the day's own reward is paid with {@code default_day}, not in its place. */
+    public boolean stacksDefault(DayReward own) {
+        return own.withDefault() != null ? own.withDefault() : withDefaultDay;
+    }
+
+    /** The key, at the top of the rewards and under a day, that pays {@code default_day} with a day's own reward. */
+    public static final String WITH_DEFAULT_DAY = "with_default_day";
 
     public enum AutoClaim {
         /** The player claims: {@code /dailyrewards claim} or the menu. */
@@ -113,9 +149,13 @@ public record CalendarSettings(
         Map<Integer, DayReward> days = days(root.get("days"), cycleLength);
         Object defaultSection = root.get("default_day");
         DayReward defaultDay = defaultSection != null ? reward("default_day", defaultSection) : null;
+        if (defaultDay != null && defaultDay.withDefault() != null) {
+            throw new CalendarException("default_day: " + WITH_DEFAULT_DAY + " only goes under days or at the top of the file");
+        }
         List<Milestone> milestones = Milestone.read(root.get("milestones"));
+        boolean withDefaultDay = bool(root, WITH_DEFAULT_DAY, d.withDefaultDay());
         return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytime, joinReminder,
-                earnEvery, maxStock, days, defaultDay, milestones);
+                earnEvery, maxStock, days, defaultDay, milestones, withDefaultDay);
     }
 
     /** {@code days}: a section keyed by day number, each within the cycle. */
@@ -140,12 +180,19 @@ public record CalendarSettings(
         return days;
     }
 
-    /** A section with an icon, actions or both; null when it has neither (the editor's empty form). */
+    /**
+     * A section with an icon, actions or both, and its {@code with_default_day}; null when it has
+     * neither icon nor actions (the editor's empty form).
+     */
     private static @Nullable DayReward reward(String key, Object value) throws CalendarException {
         if (!(value instanceof Map<?, ?> map)) throw new CalendarException(key + ": expected a section with icon and actions");
         Object icon = map.get("icon");
         Object actions = map.get("actions");
-        return icon == null && actions == null ? null : new DayReward(icon, actions);
+        Object with = map.get(WITH_DEFAULT_DAY);
+        if (with != null && !(with instanceof Boolean)) {
+            throw new CalendarException(key + "." + WITH_DEFAULT_DAY + ": \"" + with + "\" is not true or false");
+        }
+        return icon == null && actions == null ? null : new DayReward(icon, actions, (Boolean) with);
     }
 
     /** YAML 1.1 reads a bare {@code off} or {@code on} as a boolean: both spellings are accepted. */

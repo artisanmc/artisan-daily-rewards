@@ -55,6 +55,52 @@ class CalendarSettingsTest {
     }
 
     @Test
+    void aDayReplacesTheDefaultOneUnlessItStacksIt() throws Exception {
+        Map<String, Object> bread = Map.of("icon", "BREAD");
+        Map<String, Object> diamond = Map.of("icon", "DIAMOND");
+        Map<String, Object> gold = Map.of("icon", "GOLD_INGOT", "with_default_day", true);
+        Map<String, Object> iron = Map.of("icon", "IRON_INGOT", "with_default_day", false);
+        Map<String, Object> days = Map.of(2, diamond, 3, gold, 4, iron);
+
+        CalendarSettings replaces = CalendarSettings.read(Map.of("cycle_length", 7, "default_day", bread, "days", days));
+        assertFalse(replaces.withDefaultDay());
+        assertEquals(List.of("BREAD"), icons(replaces.rewards(1)));
+        assertEquals(List.of("DIAMOND"), icons(replaces.rewards(2)));
+        assertEquals(List.of("BREAD", "GOLD_INGOT"), icons(replaces.rewards(3)));
+        assertEquals(List.of("IRON_INGOT"), icons(replaces.rewards(4)));
+
+        CalendarSettings stacks = CalendarSettings.read(Map.of("cycle_length", 7, "default_day", bread, "days", days,
+                "with_default_day", true));
+        assertEquals(List.of("BREAD"), icons(stacks.rewards(1)));
+        assertEquals(List.of("BREAD", "DIAMOND"), icons(stacks.rewards(2)));
+        assertEquals(List.of("BREAD", "GOLD_INGOT"), icons(stacks.rewards(3)));
+        assertEquals(List.of("IRON_INGOT"), icons(stacks.rewards(4)));
+        // The menu shows the day's own icon either way.
+        assertEquals("DIAMOND", stacks.reward(2).icon());
+
+        // No default_day: nothing to stack.
+        CalendarSettings alone = CalendarSettings.read(Map.of("days", Map.of(1, gold), "with_default_day", true));
+        assertEquals(List.of("GOLD_INGOT"), icons(alone.rewards(1)));
+        assertTrue(alone.rewards(2).isEmpty());
+    }
+
+    @Test
+    void withDefaultDayIsABoolean() {
+        assertTrue(assertThrows(CalendarException.class, () -> CalendarSettings.read(Map.of(
+                "with_default_day", "yes"))).getMessage().startsWith("with_default_day"));
+        assertTrue(assertThrows(CalendarException.class, () -> CalendarSettings.read(Map.of(
+                "days", Map.of(1, Map.of("icon", "DIAMOND", "with_default_day", "yes"))))).getMessage()
+                .startsWith("days.1.with_default_day"));
+        assertTrue(assertThrows(CalendarException.class, () -> CalendarSettings.read(Map.of(
+                "default_day", Map.of("icon", "BREAD", "with_default_day", true)))).getMessage()
+                .startsWith("default_day"));
+    }
+
+    private static List<Object> icons(List<CalendarSettings.DayReward> rewards) {
+        return rewards.stream().map(CalendarSettings.DayReward::icon).toList();
+    }
+
+    @Test
     void aDayOutsideTheCycleIsRefused() {
         assertTrue(assertThrows(CalendarException.class, () -> CalendarSettings.read(Map.of(
                 "cycle_length", 7, "days", Map.of(8, Map.of())))).getMessage().startsWith("days"));

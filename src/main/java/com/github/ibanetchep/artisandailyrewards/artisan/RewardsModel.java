@@ -5,6 +5,7 @@ import net.artisanmc.modules.api.model.ModelDeclaration;
 import net.artisanmc.modules.api.model.ModelField;
 import net.artisanmc.modules.api.model.ModelFieldType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,12 +31,16 @@ public final class RewardsModel {
         CalendarSettings d = CalendarSettings.DEFAULTS;
         return new ModelDeclaration(ID, "id", List.of(
                 SettingsModel.integer("cycle_length", "Cycle length", "Days before the rewards start again at day 1.", d.cycleLength(), 1),
-                new ModelField("days", ModelFieldType.map(reward())).withLabel("Rewards by day")
+                new ModelField("days", ModelFieldType.map(reward(true))).withLabel("Rewards by day")
                         .withHelp("Keyed by the day of the cycle, 1 to the cycle length. The icon is what the "
                                 + "calendar menu shows, the actions what a claim of that day runs ({streak}, "
                                 + "{cycle_day}, {cycle_length})."),
-                new ModelField("default_day", reward()).withLabel("Reward of the other days")
+                new ModelField("default_day", reward(false)).withLabel("Reward of the other days")
                         .withHelp("For a day the list above does not hold. Empty: no reward that day."),
+                new ModelField(CalendarSettings.WITH_DEFAULT_DAY, ModelFieldType.bool()).withLabel("Days also pay the other days' reward")
+                        .withHelp("Off: a day's own reward replaces the reward of the other days. On: it is paid on "
+                                + "top of it. A day can say otherwise with its own setting.")
+                        .withDefault(d.withDefaultDay()),
                 new ModelField("milestones", ModelFieldType.list(milestone())).withLabel("Streak milestones")
                         .withHelp("Bonuses on top of the day's reward when the streak reaches them: at (once per "
                                 + "streak) or every (again and again, from \"from\"). End with an every milestone: "
@@ -57,11 +62,18 @@ public final class RewardsModel {
                         .withHelp("Run with the claim of the day that reaches it ({streak}, {cycle_day}, {cycle_length}).")));
     }
 
-    private static ModelFieldType reward() {
-        return ModelFieldType.object(List.of(
+    /** A reward; {@code ofADay}: one of {@code days}, which may say whether {@code default_day} comes with it. */
+    private static ModelFieldType reward(boolean ofADay) {
+        List<ModelField> fields = new ArrayList<>(List.of(
                 new ModelField("icon", ModelFieldType.item()).withLabel("Icon")
                         .withHelp("Shown in the calendar menu: name it after the reward."),
                 new ModelField("actions", ModelFieldType.actions()).withLabel("Actions")
                         .withHelp("Run when the day is claimed: give_item, give_money, a command…")));
+        if (ofADay) {
+            fields.add(new ModelField(CalendarSettings.WITH_DEFAULT_DAY, ModelFieldType.bool())
+                    .withLabel("Also pays the other days' reward")
+                    .withHelp("Empty: as set for every day. On: the reward of the other days is paid too, before this one."));
+        }
+        return ModelFieldType.object(fields);
     }
 }

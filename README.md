@@ -33,7 +33,8 @@ is written again, an edited one stays yours until Reset in the editor):
 - `data/settings.yml`: reset time, auto-claim, playtime before the day counts, join reminder,
   jokers. Edited in the editor's **Settings** screen.
 - `data/rewards.yml`: `cycle_length`, the rewards and the `milestones`. `days` is keyed by the day of the cycle
-  (1 to `cycle_length`), `default_day` covers the others. Each reward has an `icon` (the item the
+  (1 to `cycle_length`), `default_day` covers the others; `with_default_day` (global, or per day) pays
+  `default_day` on top of a day's own reward instead of replacing it. Each reward has an `icon` (the item the
   menu shows) and `actions` (run at the claim, with `{streak}`, `{cycle_day}` and
   `{cycle_length}`). Edited in the editor's **Rewards** screen: a grid of the cycle, the days with
   their own reward highlighted, the others showing `default_day` faded; a click on a day edits it,

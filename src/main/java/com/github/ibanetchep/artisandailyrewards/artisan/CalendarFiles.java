@@ -38,7 +38,7 @@ public final class CalendarFiles {
     static final String ORIGINALS = "originals";
 
     /** The keys of {@code data/rewards.yml}; every other key of the calendar is a setting. */
-    static final Set<String> REWARD_KEYS = Set.of("cycle_length", "days", "default_day", "milestones");
+    static final Set<String> REWARD_KEYS = Set.of("cycle_length", "days", "default_day", "with_default_day", "milestones");
 
     private CalendarFiles() {
     }
