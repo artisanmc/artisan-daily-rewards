@@ -55,6 +55,22 @@ class CalendarSettingsTest {
     }
 
     @Test
+    void anIconWithABlankTitleKeepsTheItemsOwnName() throws Exception {
+        Map<String, Object> iron = Map.of("icon", Map.of("material", "IRON_INGOT", "title", ""));
+        Map<String, Object> custom = Map.of("icon", Map.of("extends", "item:ci_1", "title", Map.of("en", " ", "fr", "")));
+        Map<String, Object> named = Map.of("icon", Map.of("material", "DIAMOND", "title", "<aqua>Diamonds"));
+        CalendarSettings settings = CalendarSettings.read(Map.of(
+                "cycle_length", 7,
+                "default_day", custom,
+                "days", Map.of(7, iron, 6, named),
+                "milestones", List.of(Map.of("at", 30, "icon", Map.of("material", "APPLE", "title", "")))));
+        assertEquals(Map.of("material", "IRON_INGOT"), settings.reward(7).icon());
+        assertEquals(Map.of("extends", "item:ci_1"), settings.reward(1).icon());
+        assertEquals(Map.of("material", "DIAMOND", "title", "<aqua>Diamonds"), settings.reward(6).icon());
+        assertEquals(Map.of("material", "APPLE"), settings.milestones().get(0).icon());
+    }
+
+    @Test
     void aDayReplacesTheDefaultOneUnlessItStacksIt() throws Exception {
         Map<String, Object> bread = Map.of("icon", "BREAD");
         Map<String, Object> diamond = Map.of("icon", "DIAMOND");

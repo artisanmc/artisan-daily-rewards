@@ -149,7 +149,7 @@ elements:
     positions: 49
     states:
       - if:
-          - placeholder_equals: { placeholder: "{status[0].can_claim}", value: "true" }
+          - expression: status[0].can_claim
         material: SUNFLOWER
         enchanted: true
         title: { en: "<green>Claim your rewards", fr: "<green>Réclamer tes récompenses" }
@@ -159,7 +159,7 @@ elements:
           left:
             - module_command: { command: "daily:claim" }
       - if:
-          - placeholder_equals: { placeholder: "{status[0].claimed_today}", value: "true" }
+          - expression: status[0].claimed_today
         material: CLOCK
         title: { en: "<gray>Next reward in <white>{status[0].until_reset}", fr: "<gray>Prochaine récompense dans <white>{status[0].until_reset}" }
     material: CLOCK

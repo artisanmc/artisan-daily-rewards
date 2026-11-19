@@ -186,7 +186,7 @@ public record CalendarSettings(
      */
     private static @Nullable DayReward reward(String key, Object value) throws CalendarException {
         if (!(value instanceof Map<?, ?> map)) throw new CalendarException(key + ": expected a section with icon and actions");
-        Object icon = map.get("icon");
+        Object icon = Icons.withoutBlankTitle(map.get("icon"));
         Object actions = map.get("actions");
         Object with = map.get(WITH_DEFAULT_DAY);
         if (with != null && !(with instanceof Boolean)) {
