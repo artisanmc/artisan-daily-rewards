@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StreakRulesTest {
 
-    private static final CalendarSettings SETTINGS = CalendarSettings.DEFAULTS; // cycle 28, joker every 7, max 2
+    private static final CalendarSettings SETTINGS = CalendarSettings.DEFAULTS; // cycle 28, freeze every 7, max 2
     private static final long MONDAY = 20_000;
 
     private final PlayerState fresh = PlayerState.fresh(UUID.randomUUID());
@@ -36,7 +36,7 @@ class StreakRulesTest {
     }
 
     @Test
-    void aNewPlayerHoldsTheStartingJokersFromTheirFirstDay() {
+    void aNewPlayerHoldsTheStartingFreezesFromTheirFirstDay() {
         CalendarSettings starting = SETTINGS.withFreezeStarting(2);
         StreakRules.CheckIn first = StreakRules.checkIn(fresh, MONDAY, starting);
         assertEquals(2, first.state().freezes());
@@ -47,11 +47,11 @@ class StreakRulesTest {
     }
 
     @Test
-    void theStartingJokersKeepMoreGivenBeforeTheFirstDayAndAreNotGivenAgain() {
+    void theStartingFreezesKeepMoreGivenBeforeTheFirstDayAndAreNotGivenAgain() {
         CalendarSettings starting = SETTINGS.withFreezeStarting(1);
         assertEquals(2, StreakRules.checkIn(fresh.withFreezes(2), MONDAY, starting).state().freezes());
 
-        // A broken streak is not a first day: no starting joker again.
+        // A broken streak is not a first day: no starting freeze again.
         PlayerState state = StreakRules.checkIn(fresh, MONDAY, starting).state().withFreezes(0);
         StreakRules.CheckIn broken = StreakRules.checkIn(state, MONDAY + 3, starting);
         assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
@@ -65,7 +65,7 @@ class StreakRulesTest {
         PlayerState state = fresh;
         for (long day = MONDAY; day < MONDAY + 6; day++) state = StreakRules.checkIn(state, day, weekly).state();
         assertEquals(6, state.streak());
-        // Day 7 of the cycle (the big one) is missed with a joker: the next day pays day 7.
+        // Day 7 of the cycle (the big one) is missed with a freeze: the next day pays day 7.
         StreakRules.CheckIn back = StreakRules.checkIn(state, MONDAY + 7, weekly);
         assertEquals(StreakRules.Outcome.COVERED, back.outcome());
         assertEquals(7, StreakRules.cycleDay(back.state().streak(), 7));
@@ -90,7 +90,7 @@ class StreakRulesTest {
     }
 
     @Test
-    void aMissedDayWithoutJokerBreaksTheStreakAndKeepsItForARestore() {
+    void aMissedDayWithoutFreezeBreaksTheStreakAndKeepsItForARestore() {
         PlayerState state = fresh;
         for (long day = MONDAY; day < MONDAY + 5; day++) state = countOn(state, day);
         assertEquals(5, state.streak());
@@ -104,7 +104,7 @@ class StreakRulesTest {
     }
 
     @Test
-    void jokersCoverMissedDaysOnlyWhenThereAreEnough() {
+    void freezesCoverMissedDaysOnlyWhenThereAreEnough() {
         PlayerState withTwo = countOn(fresh, MONDAY).withFreezes(2);
 
         StreakRules.CheckIn covered = StreakRules.checkIn(withTwo, MONDAY + 3, SETTINGS); // 2 days missed
@@ -115,12 +115,12 @@ class StreakRulesTest {
 
         StreakRules.CheckIn broken = StreakRules.checkIn(withTwo, MONDAY + 4, SETTINGS); // 3 days missed
         assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
-        assertEquals(2, broken.state().freezes(), "no joker is spent on a streak that breaks anyway");
+        assertEquals(2, broken.state().freezes(), "no freeze is spent on a streak that breaks anyway");
         assertEquals(0, broken.freezesUsed());
     }
 
     @Test
-    void aJokerIsEarnedEverySevenDaysUpToTheStock() {
+    void aFreezeIsEarnedEverySevenDaysUpToTheStock() {
         PlayerState state = fresh;
         for (long day = MONDAY; day < MONDAY + 6; day++) state = countOn(state, day);
         assertEquals(0, state.freezes());
@@ -148,7 +148,7 @@ class StreakRulesTest {
 
     @Test
     void theDisplayedStreakFollowsTheDocumentedWeek() {
-        // Cycle of 7 days, 1 joker: the example of the design document.
+        // Cycle of 7 days, 1 freeze: the example of the design document.
         CalendarSettings weekly = new CalendarSettings(SETTINGS.resetTime(), 7, SETTINGS.autoClaim(), 0, true, 7, 2, Map.of(), null);
         PlayerState state = new PlayerState(fresh.uuid(), 5, 5, MONDAY - 1, 5, 1, 0, 0, 0, null, null, 0);
 
@@ -172,7 +172,7 @@ class StreakRulesTest {
         assertEquals(1, StreakRules.cycleDay(state.streak(), 7));
         assertEquals(1, state.freezes());
 
-        assertTrue(StreakRules.display(state, MONDAY + 5).atRisk());              // Saturday: 1 day missed, 1 joker
+        assertTrue(StreakRules.display(state, MONDAY + 5).atRisk());              // Saturday: 1 day missed, 1 freeze
         StreakRules.Displayed sunday = StreakRules.display(state, MONDAY + 6);      // 2 days missed
         assertEquals(0, sunday.streak());
         assertTrue(sunday.broken());

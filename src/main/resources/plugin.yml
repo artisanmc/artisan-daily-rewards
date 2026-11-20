@@ -3,7 +3,7 @@ version: '${version}'
 main: com.github.ibanetchep.artisandailyrewards.DailyRewardsPlugin
 api-version: '1.21'
 folia-supported: true
-description: Daily rewards with streaks, a looping cycle, jokers and paid streak restores.
+description: Daily rewards with streaks, a looping cycle, freezes and paid streak restores.
 authors:
   - ibanetchep
 
@@ -22,5 +22,5 @@ permissions:
     description: Buy back a broken streak for free.
     default: false
   daily.admin:
-    description: Inspect and correct a player's streak, add jokers, shift the game day.
+    description: Inspect and correct a player's streak, add freezes, shift the game day.
     default: op

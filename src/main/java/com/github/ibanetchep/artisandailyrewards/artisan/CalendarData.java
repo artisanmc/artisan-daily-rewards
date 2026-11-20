@@ -30,7 +30,7 @@ import java.util.Objects;
  *       most {@link DailyService#HISTORY_DAYS}), {@code future} (20) and {@code week} (0: none; 7
  *       moves days from the end to the start so the first day shown sits on the first column of
  *       a 7-wide grid, today on the column of its day of the cycle, as the Rewards grid);</li>
- *   <li>{@code daily:status}, one row: the viewer's streak, jokers, today's claim and the next
+ *   <li>{@code daily:status}, one row: the viewer's streak, freezes, today's claim and the next
  *       milestone;</li>
  *   <li>{@code daily:milestones}, one row per coming milestone, the next ones the viewer reaches
  *       if they come every day. Param {@code count} (28 by default, at most
@@ -61,11 +61,13 @@ public final class CalendarData {
                 new DataSourceField("id", ModelFieldType.string(), "The game day's date, yyyy-MM-dd"),
                 new DataSourceField("date", ModelFieldType.string(), "dd/MM"),
                 new DataSourceField("offset", ModelFieldType.integer(), "Days from today: -1 yesterday, 0 today, 1 tomorrow"),
-                new DataSourceField("status", ModelFieldType.enumOf(List.of("before", "claimed", "missed", "available", "upcoming")),
+                new DataSourceField("status", ModelFieldType.enumOf(List.of("before", "claimed", "missed", "covered", "available", "upcoming")),
                         "before: earlier than the first day counted. available: a reward to claim, today or a day the viewer was there"),
                 new DataSourceField("is_today", ModelFieldType.bool(), null),
                 new DataSourceField("is_claimed", ModelFieldType.bool(), "Its reward claimed, today or before"),
-                new DataSourceField("is_missed", ModelFieldType.bool(), "Over and the viewer was not there (a joker may have kept the streak)"),
+                new DataSourceField("is_missed", ModelFieldType.bool(), "Over, the viewer was not there and no freeze covered it"),
+                new DataSourceField("is_covered", ModelFieldType.bool(),
+                        "Over, the viewer was not there and a freeze kept the streak (or will, once today counts): its reward moved to the next day"),
                 new DataSourceField("is_before", ModelFieldType.bool(), "Before the viewer's first day counted"),
                 new DataSourceField("is_available", ModelFieldType.bool(), "Its reward waits: today, or a day the viewer was there without claiming"),
                 new DataSourceField("is_upcoming", ModelFieldType.bool(), "A day to come"),
@@ -102,12 +104,12 @@ public final class CalendarData {
                 new DataSourceField("streak", ModelFieldType.integer(), "As shown: 0 once broken"),
                 new DataSourceField("longest", ModelFieldType.integer(), null),
                 new DataSourceField("total", ModelFieldType.integer(), "Days counted ever"),
-                new DataSourceField("freezes", ModelFieldType.integer(), "Jokers held"),
-                new DataSourceField("freeze_max", ModelFieldType.integer(), "Jokers held at most"),
+                new DataSourceField("freezes", ModelFieldType.integer(), "Freezes held"),
+                new DataSourceField("freeze_max", ModelFieldType.integer(), "Freezes held at most"),
                 new DataSourceField("claimed_today", ModelFieldType.bool(), "Today counted and its reward claimed"),
                 new DataSourceField("unclaimed", ModelFieldType.integer(), "Rewards of days counted that wait to be claimed"),
                 new DataSourceField("can_claim", ModelFieldType.bool(), "Loaded, and a reward waits or today is not claimed yet"),
-                new DataSourceField("at_risk", ModelFieldType.bool(), "Days missed that the jokers will cover when the viewer is next there"),
+                new DataSourceField("at_risk", ModelFieldType.bool(), "Days missed that the freezes will cover when the viewer is next there"),
                 new DataSourceField("broken", ModelFieldType.bool(), "The streak starts again when the viewer is next there"),
                 new DataSourceField("lost", ModelFieldType.integer(), "The streak a break loses, 0 when not broken"),
                 new DataSourceField("cycle_day", ModelFieldType.integer(), "Today's day of the cycle, counted or to count"),
@@ -143,6 +145,7 @@ public final class CalendarData {
         row.put("is_today", day.offset() == 0);
         row.put("is_claimed", day.status() == CalendarView.Status.CLAIMED);
         row.put("is_missed", day.status() == CalendarView.Status.MISSED);
+        row.put("is_covered", day.status() == CalendarView.Status.COVERED);
         row.put("is_before", day.status() == CalendarView.Status.BEFORE);
         row.put("is_available", day.status() == CalendarView.Status.AVAILABLE);
         row.put("is_upcoming", day.status() == CalendarView.Status.UPCOMING);

@@ -39,7 +39,7 @@ class CalendarSettingsTest {
     }
 
     @Test
-    void theStartingJokersStayWithinTheStock() throws Exception {
+    void theStartingFreezesStayWithinTheStock() throws Exception {
         assertEquals(0, CalendarSettings.DEFAULTS.freezeStarting());
         assertEquals(2, CalendarSettings.read(Map.of("freeze", Map.of("max_stock", 2, "starting", 5))).freezeStarting());
         assertThrows(CalendarException.class, () -> CalendarSettings.read(Map.of("freeze", Map.of("starting", -1))));

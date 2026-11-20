@@ -8,7 +8,7 @@
  * - the server's rows, when it has some (previewed as a player), keep their days as they went and
  *   take each day's reward from the draft;
  * - without them, a sample player shows every state of a day: before the first day counted,
- *   claimed, missed (a joker kept the streak), waiting to be claimed, today and the days to come.
+ *   claimed, missed (a freeze kept the streak), waiting to be claimed, today and the days to come.
  *
  * The milestones menu's `daily:milestones` has no row without a player either: the sample
  * player's next milestones come from the draft's `milestones`.
@@ -45,14 +45,14 @@ const MAX_PAST = 35;
 export const NO_REWARD_ICON = { material: "PAPER" };
 const DAY_MS = 86_400_000;
 
-export type Status = "before" | "claimed" | "missed" | "available" | "upcoming";
+export type Status = "before" | "claimed" | "missed" | "covered" | "available" | "upcoming";
 
 /** One day of the sample player, `offset` days from today. */
 export interface SampleDay {
   offset: number;
   status: Status;
   cycleDay: number;
-  /** The streak the day reaches, 0 for before / missed. */
+  /** The streak the day reaches, 0 for before / missed / covered. */
   streak: number;
 }
 
@@ -154,17 +154,19 @@ export function weekShift(todayCycleDay: number, week: number): number {
 }
 
 /**
- * The sample player's days: `past` days before today, today, `future` days after. Its streak
- * started 5 days ago; it missed the day before yesterday, a joker kept the streak; it was there
- * yesterday without claiming, and today waits too.
+ * The sample player's days: `past` days before today, today, `future` days after. An earlier
+ * streak broke on a missed day; the current one started 5 days ago; a freeze covered the day
+ * before yesterday; it was there yesterday without claiming, and today waits too.
  */
 export function sampleDays(past: number, future: number, length: number): SampleDay[] {
-  // Oldest first, ending yesterday: the streak these days reach (0 for before / missed).
+  // Oldest first, ending yesterday: the streak these days reach (0 for before / missed / covered).
   const story: { status: Status; streak: number }[] = [
+    { status: "claimed", streak: 1 },
+    { status: "missed", streak: 0 },
     { status: "claimed", streak: 1 },
     { status: "claimed", streak: 2 },
     { status: "claimed", streak: 3 },
-    { status: "missed", streak: 0 },
+    { status: "covered", streak: 0 },
     { status: "available", streak: 4 },
   ];
   const days: SampleDay[] = [];
@@ -206,6 +208,7 @@ export function row(day: SampleDay, value: RewardsValue, today: Date): Record<st
     is_today: day.offset === 0,
     is_claimed: day.status === "claimed",
     is_missed: day.status === "missed",
+    is_covered: day.status === "covered",
     is_before: day.status === "before",
     is_available: day.status === "available",
     is_upcoming: day.status === "upcoming",

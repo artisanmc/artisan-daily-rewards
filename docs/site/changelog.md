@@ -8,7 +8,7 @@ sidebar:
 ## 1.0.0 (unreleased)
 
 - Requires Artisan API 1.0.0 (Artisan 1.0.0).
-- Daily claim, streak, jokers, one reward per day of the cycle, auto-claim, join reminder and the
+- Daily claim, streak, freezes, one reward per day of the cycle, auto-claim, join reminder and the
   calendar menu.
 - Settings and rewards split into `data/settings.yml` and `data/rewards.yml`, edited in the editor's
   **Settings** and **Rewards** screens; an older `data/calendar.yml` is split on start.
@@ -34,7 +34,10 @@ sidebar:
   keeps its look until Reset.
 - `/dailyadmin set <player> streak <n>` restores a streak that holds: it continues the next day, even after a
   break, and raises the longest streak (it used to be broken again at the next day).
-- Jokers: `freeze.starting` in `data/settings.yml` (Settings screen) gives a new player jokers from their
-  first day; `/dailyadmin give <player> freezes <n>` adds jokers, over `max_stock` if need be. The calendar's
-  jokers item no longer says a covered day's reward is lost: it comes the day the player is back.
+- Freezes: `freeze.starting` in `data/settings.yml` (Settings screen) gives a new player freezes from their
+  first day; `/dailyadmin give <player> freezes <n>` adds freezes, over `max_stock` if need be. The calendar's
+  freezes item no longer says a covered day's reward is lost: it comes the day the player is back.
+- A day a freeze covered shows in the calendar as its own state, a light blue dye (`covered`, `is_covered` in
+  `daily:calendar`), apart from a missed day that broke the streak. The texts say "freeze" everywhere (the
+  French ones said "joker").
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

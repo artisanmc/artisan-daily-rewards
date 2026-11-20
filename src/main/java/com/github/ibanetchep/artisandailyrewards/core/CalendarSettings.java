@@ -24,7 +24,7 @@ import java.util.Map;
  * @param milestones         the bonuses of the streak, in the file's order
  * @param withDefaultDay     a day with its own reward also pays {@code default_day}, unless the
  *                           day says otherwise ({@link DayReward#withDefault})
- * @param freezeStarting     jokers a player holds on their first counted day, at most
+ * @param freezeStarting     freezes a player holds on their first counted day, at most
  *                           {@code freezeMaxStock} (a higher value is lowered to it)
  */
 public record CalendarSettings(
@@ -51,7 +51,7 @@ public record CalendarSettings(
         freezeStarting = Math.max(0, Math.min(freezeStarting, freezeMaxStock));
     }
 
-    /** No joker at the start. */
+    /** No freeze at the start. */
     public CalendarSettings(LocalTime resetTime, int cycleLength, AutoClaim autoClaim, int minPlaytimeMinutes,
                             boolean joinReminder, int freezeEarnEvery, int freezeMaxStock,
                             Map<Integer, DayReward> days, @Nullable DayReward defaultDay, List<Milestone> milestones,
@@ -60,7 +60,7 @@ public record CalendarSettings(
                 days, defaultDay, milestones, withDefaultDay, 0);
     }
 
-    /** These settings with {@code value} jokers at the start. */
+    /** These settings with {@code value} freezes at the start. */
     public CalendarSettings withFreezeStarting(int value) {
         return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder,
                 freezeEarnEvery, freezeMaxStock, days, defaultDay, milestones, withDefaultDay, value);

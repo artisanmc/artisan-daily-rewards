@@ -18,9 +18,14 @@ public final class CalendarView {
         BEFORE,
         /** Counted and its reward claimed, today or before. */
         CLAIMED,
-        /** Over, and the player was not there. A joker may have saved the streak: the covered
-         * day does not count, so the reward of that day of the cycle comes the day the player is back. */
+        /** Over, the player was not there, and no freeze covered it. */
         MISSED,
+        /**
+         * Over, the player was not there, and a freeze kept the streak: the day does not count, so
+         * the reward of that day of the cycle came, or comes, the day the player is back. Also the
+         * days the freezes will cover once today counts.
+         */
+        COVERED,
         /**
          * Its reward waits to be claimed: today, or a day before when the player was there without
          * claiming. A claim pays every such day.
@@ -71,7 +76,7 @@ public final class CalendarView {
      * {@code past} days before today, today, then {@code future} days after it. The past comes
      * from {@code history}: a day it does not hold is missed, unless it is before the first one.
      * Today and the future follow the streak as {@link StreakRules#display} shows it: a broken
-     * streak starts again at day 1, one the jokers still cover goes on.
+     * streak starts again at day 1, one the freezes still cover goes on.
      */
     public static List<Day> around(PlayerState state, ClaimHistory history, long today, int cycleLength,
                                    int past, int future) {
@@ -87,19 +92,21 @@ public final class CalendarView {
     public static List<Day> around(PlayerState state, ClaimHistory history, long today, int cycleLength,
                                    List<Milestone> milestones, int past, int future) {
         List<Day> days = new ArrayList<>(past + 1 + future);
+        StreakRules.Displayed shown = StreakRules.display(state, today);
         for (int offset = -past; offset < 0; offset++) {
             long day = today + offset;
             Integer counted = history.cycleDayOn(day);
             Status status;
             if (counted != null) status = history.unclaimedOn(day) ? Status.AVAILABLE : Status.CLAIMED;
             else if (history.firstDay() == null || day < history.firstDay()) status = Status.BEFORE;
-            else status = Status.MISSED;
+            else if (history.coveredOn(day) || (shown.atRisk() && state.lastDay() != null && day > state.lastDay())) {
+                status = Status.COVERED;
+            } else status = Status.MISSED;
             Integer milestoneStreak = history.milestoneOn(day);
             days.add(new Day(day, offset, status, counted != null ? counted : 0,
                     milestoneStreak != null ? milestoneStreak : 0, milestoneStreak != null));
         }
 
-        StreakRules.Displayed shown = StreakRules.display(state, today);
         // The streak today reaches, counted or to count.
         int todayStreak = shown.countedToday() ? shown.streak() : shown.streak() + 1;
         int todayCycleDay = todayCycleDay(state, history, today, cycleLength);

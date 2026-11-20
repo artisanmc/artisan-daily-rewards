@@ -8,7 +8,7 @@ schema: menu/v1
 # left opens the milestones menu,
 # only when data/rewards has milestones.
 # Each state of a day has its own item, to tell them apart at a glance: a reward to claim is a
-# glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day before the first one
+# glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day a freeze covered a light blue dye, a day before the first one
 # counted a light gray pane, and a day to come shows the reward it will pay. Change the material
 # of a state below to change its look.
 title:
@@ -88,6 +88,15 @@ elements:
         lore:
           - { en: "<gray>{d.date} · day {d.cycle_day}", fr: "<gray>{d.date} · jour {d.cycle_day}" }
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
+      # Missed, but a freeze kept the streak: the reward moved to the day the player came back.
+      - if:
+          - expression: d.is_covered
+        material: LIGHT_BLUE_DYE
+        title: { en: "<aqua>✚ Covered by a freeze", fr: "<aqua>✚ Couverte par un freeze" }
+        lore:
+          - { en: "<gray>{d.date}: you were not there", fr: "<gray>{d.date} : tu n'étais pas là" }
+          - { en: "<gray>Your streak went on: the reward", fr: "<gray>Ton streak a continué : la récompense" }
+          - { en: "<gray>moved to the day you came back.", fr: "<gray>est passée au jour de ton retour." }
       - if:
           - expression: d.is_missed
         material: RED_DYE
@@ -114,12 +123,12 @@ elements:
       - ""
       - { en: "<gray>On {d.date} <dark_gray>· day {d.cycle_day}", fr: "<gray>Le {d.date} <dark_gray>· jour {d.cycle_day}" }
       - { en: "<dark_gray>If you come every day until then", fr: "<dark_gray>Si tu viens chaque jour d'ici là" }
-  - id: jokers
+  - id: freezes
     positions: 45
     material: TOTEM_OF_UNDYING
-    title: { en: "<aqua>Jokers: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Jokers : <white>{status[0].freezes}/{status[0].freeze_max}" }
+    title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Freezes : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
-      - { en: "<gray>A joker covers a missed day:", fr: "<gray>Un joker couvre un jour manqué :" }
+      - { en: "<gray>A freeze covers a missed day:", fr: "<gray>Un freeze couvre un jour manqué :" }
       - { en: "<gray>your streak goes on, the reward you", fr: "<gray>ton streak continue, la récompense ratée" }
       - { en: "<gray>missed waits for your return.", fr: "<gray>t'attend à ton retour." }
   - id: milestones

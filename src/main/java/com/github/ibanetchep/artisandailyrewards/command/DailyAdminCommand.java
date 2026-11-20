@@ -71,7 +71,7 @@ public final class DailyAdminCommand {
                         .argument(CommandArgument.string("player"))
                         .argument(CommandArgument.choice("what", List.of("freezes")))
                         .argument(CommandArgument.integer("amount"))
-                        .description(Map.of("en", "Give jokers on top of those held", "fr", "Donne des jokers en plus de ceux détenus"))
+                        .description(Map.of("en", "Give freezes on top of those held", "fr", "Donne des freezes en plus de ceux détenus"))
                         .build())
                 .child(child("daily:admin_day", "day", this::day)
                         .argument(CommandArgument.string("shift").optional())
@@ -149,7 +149,7 @@ public final class DailyAdminCommand {
         });
     }
 
-    /** Adds jokers, over {@code max_stock} if need be: the admin asked for them. */
+    /** Adds freezes, over {@code max_stock} if need be: the admin asked for them. */
     private void give(PlayerCommandContext ctx) {
         CommandSender sender = ctx.getSender();
         String name = ctx.get("player", String.class);
@@ -162,7 +162,7 @@ public final class DailyAdminCommand {
         }
         service.giveFreezes(uuid, amount, sender.getName()).whenComplete((state, error) -> {
             if (error != null) {
-                logger.log(Level.SEVERE, "Could not give jokers to " + name, error);
+                logger.log(Level.SEVERE, "Could not give freezes to " + name, error);
                 messages.send(sender, "command.error");
                 return;
             }
