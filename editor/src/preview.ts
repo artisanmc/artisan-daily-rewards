@@ -270,6 +270,8 @@ export function sampleStatus(length: number, value: RewardsValue = {}): Record<s
     total: 31,
     freezes: 0,
     freeze_max: 3,
+    // Today's count reaches 5; a freeze every 7 days of streak (the default): 2 more days.
+    next_freeze_in: 2,
     claimed_today: false,
     unclaimed: 2,
     can_claim: true,

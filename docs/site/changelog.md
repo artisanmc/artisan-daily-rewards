@@ -37,6 +37,9 @@ sidebar:
 - Freezes: `freeze.starting` in `data/settings.yml` (Settings screen) gives a new player freezes from their
   first day; `/dailyadmin give <player> freezes <n>` adds freezes, over `max_stock` if need be. The calendar's
   freezes item no longer says a covered day's reward is lost: it comes the day the player is back.
+- The calendar's freezes item says plainly that a freeze keeps the streak without raising it, and that more
+  days missed than freezes start it over; it counts down to the next freeze earned (`daily:status` field
+  `next_freeze_in`, days of streak, -1 when the stock is full).
 - A day a freeze covered shows in the calendar as its own state, a light blue dye (`covered`, `is_covered` in
   `daily:calendar`), apart from a missed day that broke the streak. The texts say "freeze" in English and "gel" in
   French (the French ones said "joker").

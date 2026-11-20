@@ -72,6 +72,27 @@ class StreakRulesTest {
     }
 
     @Test
+    void theNextFreezeCountsTheDaysOfStreakLeft() {
+        // Every 7, max 2. Not counted yet today: today's count reaches the streak + 1.
+        assertEquals(6, StreakRules.nextFreezeIn(fresh, MONDAY, SETTINGS), "day 1 today, earned at 7");
+        PlayerState state = fresh;
+        for (long day = MONDAY; day < MONDAY + 6; day++) state = countOn(state, day);
+        assertEquals(0, StreakRules.nextFreezeIn(state, MONDAY + 6, SETTINGS), "today's count is the 7th");
+        state = countOn(state, MONDAY + 6);
+        assertEquals(1, state.freezes());
+        assertEquals(7, StreakRules.nextFreezeIn(state, MONDAY + 6, SETTINGS), "counted today: next at 14");
+        // Full stock, or never earned: none.
+        assertEquals(-1, StreakRules.nextFreezeIn(state.withFreezes(2), MONDAY + 6, SETTINGS));
+        CalendarSettings never = new CalendarSettings(SETTINGS.resetTime(), 28, SETTINGS.autoClaim(), 0, true, 0, 2, Map.of(), null);
+        assertEquals(-1, StreakRules.nextFreezeIn(state, MONDAY + 6, never));
+        // The freezes today's count will spend are taken off: full now, not after.
+        PlayerState full = state.withFreezes(2);
+        assertEquals(7 - 1, StreakRules.nextFreezeIn(full, MONDAY + 8, SETTINGS), "1 day covered, streak 8 today");
+        // A broken streak starts again at 1.
+        assertEquals(6, StreakRules.nextFreezeIn(state.withFreezes(0), MONDAY + 20, SETTINGS));
+    }
+
+    @Test
     void theNextDayContinuesTheStreak() {
         PlayerState state = countOn(fresh, MONDAY);
         StreakRules.CheckIn day = StreakRules.checkIn(state, MONDAY + 1, SETTINGS);

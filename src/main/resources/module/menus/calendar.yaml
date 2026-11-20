@@ -129,9 +129,17 @@ elements:
     material: TOTEM_OF_UNDYING
     title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Gels : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
-      - { en: "<gray>A freeze covers a missed day:", fr: "<gray>Un gel couvre un jour manqué :" }
-      - { en: "<gray>your streak goes on and the rewards", fr: "<gray>ton streak continue et les récompenses" }
-      - { en: "<gray>pause for a day: none is lost.", fr: "<gray>font une pause : aucune n'est perdue." }
+      - { en: "<gray>A freeze covers one missed day:", fr: "<gray>Un gel couvre un jour manqué :" }
+      - { en: "<gray>your streak is kept but does not grow.", fr: "<gray>ton streak est gardé mais n'augmente pas." }
+      - { en: "<gray>More days missed than freezes:", fr: "<gray>Plus de jours manqués que de gels :" }
+      - { en: "<gray>your streak starts over.", fr: "<gray>ton streak repart de zéro." }
+      - { en: "<gray>The rewards pause, none is lost.", fr: "<gray>Les récompenses font une pause, aucune n'est perdue." }
+      - ""
+      # The countdown to the next freeze earned: hidden when none will be (stock full, or never earned).
+      - { en: "{status[0].next_freeze_in > 1 ? \"<aqua>Next freeze in <white>\" + status[0].next_freeze_in + \"</white> days of streak\" : \"\"}", fr: "{status[0].next_freeze_in > 1 ? \"<aqua>Prochain gel dans <white>\" + status[0].next_freeze_in + \"</white> jours de streak\" : \"\"}" }
+      - { en: "{status[0].next_freeze_in == 1 ? \"<aqua>Next freeze tomorrow\" : \"\"}", fr: "{status[0].next_freeze_in == 1 ? \"<aqua>Prochain gel demain\" : \"\"}" }
+      - { en: "{status[0].next_freeze_in == 0 ? \"<aqua>Next freeze today\" : \"\"}", fr: "{status[0].next_freeze_in == 0 ? \"<aqua>Prochain gel aujourd'hui\" : \"\"}" }
+      - { en: "{status[0].freeze_max > 0 && status[0].freezes >= status[0].freeze_max ? \"<dark_gray>Stock full: none earned until one is used\" : \"\"}", fr: "{status[0].freeze_max > 0 && status[0].freezes >= status[0].freeze_max ? \"<dark_gray>Stock plein : aucun gagné avant d'en utiliser un\" : \"\"}" }
   - id: milestones
     positions: 47
     states:
