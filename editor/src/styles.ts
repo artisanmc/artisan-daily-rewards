@@ -5,11 +5,19 @@ export const STYLES = `
 .daily-cycle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .daily-cycle-input { width: 80px; }
 .daily-faint { color: var(--text-faint); font-size: 12px; line-height: 1.4; }
-.daily-legend { display: flex; gap: 12px; font-size: 12px; color: var(--text-mut); }
-.daily-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.daily-legend span::before { content: ""; width: 12px; height: 12px; border-radius: 3px; }
-.daily-legend-own::before { background: var(--fam-reward-soft); border: 2px solid var(--fam-reward); }
-.daily-legend-default::before { background: var(--surface-inset); border: 1px solid var(--border-soft); opacity: 0.6; }
+.daily-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 6px 10px;
+  border-radius: var(--r-md); border: 1px dashed var(--border-soft); font-size: 12px; color: var(--text-faint);
+  cursor: default; user-select: none; }
+.daily-legend-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-faint); }
+.daily-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.daily-legend-swatch { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 22px; border-radius: 4px; border: 1px solid var(--border-soft); background: var(--surface-inset); }
+.daily-legend-swatch::after { content: ""; width: 8px; height: 8px; margin-top: 4px; border-radius: 1px; background: var(--mc-slot-bg); }
+.daily-legend-swatch.is-default::after { opacity: 0.45; }
+.daily-legend-swatch.is-own { border: 2px solid var(--fam-reward); background: var(--fam-reward-soft); }
+.daily-legend-plus { position: absolute; top: -1px; right: 1px; font-size: 9px; font-weight: 700; line-height: 1;
+  color: var(--fam-reward); }
 .daily-outside { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--r-md);
   background: var(--warning-soft); border: 1px solid var(--warning); color: var(--text); font-size: 13px; }
 .daily-outside-days { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -33,7 +41,6 @@ export const STYLES = `
 .daily-cell.is-own .daily-cell-day { color: var(--text); }
 .daily-cell-stack { position: absolute; top: 3px; right: 6px; font-size: 12px; font-weight: 700; line-height: 1;
   color: var(--fam-reward); }
-.daily-legend-stack::before { display: none; }
 .daily-cell-title { max-width: 100%; font-size: 10px; text-align: center; }
 .daily-slot { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none;
   width: 40px; height: 40px; border-radius: var(--r-xs); background: var(--mc-slot-bg);
@@ -44,6 +51,10 @@ export const STYLES = `
   text-shadow: 1px 1px 0 var(--background); }
 .daily-panel { position: sticky; top: 0; padding: 14px; border-radius: var(--r-lg); border: 1px solid var(--border-soft);
   background: var(--surface); }
+.daily-panel.is-empty { display: flex; align-items: center; justify-content: center; min-height: 320px;
+  border-style: dashed; background: transparent; }
+.daily-panel-empty { display: flex; flex-direction: column; gap: 6px; max-width: 260px; text-align: center; }
+.daily-panel-empty-title { font-weight: 600; font-size: 13px; color: var(--text-mut); }
 .daily-panel-body { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
 .daily-panel-title { font-weight: 600; font-size: 15px; }
 .daily-fields { display: flex; flex-direction: column; gap: 14px; border: 0; padding: 0; margin: 0; min-width: 0; }
