@@ -94,10 +94,9 @@ elements:
         material: LIGHT_BLUE_DYE
         title: { en: "<aqua>✚ Freeze used", fr: "<aqua>✚ Gel utilisé" }
         lore:
-          - { en: "<gray>{d.date}: you were not there", fr: "<gray>{d.date} : tu n'étais pas là" }
-          - { en: "<gray>A freeze saved your streak.", fr: "<gray>Un gel a sauvé ton streak." }
-          - { en: "<gray>The rewards paused for a day:", fr: "<gray>Les récompenses ont fait une pause :" }
-          - { en: "<gray>none was lost.", fr: "<gray>aucune n'est perdue." }
+          - { en: "<gray>{d.date}: missed day", fr: "<gray>{d.date} : jour manqué" }
+          - { en: "<gray>A freeze covered it: the streak and", fr: "<gray>Un gel l'a couvert : le streak et" }
+          - { en: "<gray>the rewards were paused, nothing is lost.", fr: "<gray>les récompenses ont été mis en pause." }
       - if:
           - expression: d.is_missed
         material: RED_DYE
@@ -129,11 +128,11 @@ elements:
     material: TOTEM_OF_UNDYING
     title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Gels : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
-      - { en: "<gray>A freeze covers one missed day:", fr: "<gray>Un gel couvre un jour manqué :" }
-      - { en: "<gray>your streak is kept but does not grow.", fr: "<gray>ton streak est gardé mais n'augmente pas." }
-      - { en: "<gray>More days missed than freezes:", fr: "<gray>Plus de jours manqués que de gels :" }
-      - { en: "<gray>your streak starts over.", fr: "<gray>ton streak repart de zéro." }
-      - { en: "<gray>The rewards pause, none is lost.", fr: "<gray>Les récompenses font une pause, aucune n'est perdue." }
+      - { en: "<gray>A freeze covers one missed day.", fr: "<gray>Un gel permet de couvrir un jour manqué." }
+      - { en: "<gray>The streak and the rewards are then", fr: "<gray>Le streak et les récompenses sont alors" }
+      - { en: "<gray>paused: nothing is lost.", fr: "<gray>mis en pause : rien n'est perdu." }
+      - { en: "<gray>With more days missed than freezes,", fr: "<gray>Avec plus de jours manqués que de gels," }
+      - { en: "<gray>the streak starts over.", fr: "<gray>le streak repart de zéro." }
       - ""
       # The countdown to the next freeze earned: hidden when none will be (stock full, or never earned).
       - { en: "{status[0].next_freeze_in > 1 ? \"<aqua>Next freeze in <white>\" + status[0].next_freeze_in + \"</white> days of streak\" : \"\"}", fr: "{status[0].next_freeze_in > 1 ? \"<aqua>Prochain gel dans <white>\" + status[0].next_freeze_in + \"</white> jours de streak\" : \"\"}" }
