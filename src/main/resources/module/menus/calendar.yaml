@@ -126,7 +126,7 @@ elements:
     states:
       # No milestone in data/rewards: the border, no button.
       - if:
-          - placeholder_equals: { placeholder: "{status[0].has_milestones}", value: "false" }
+          - expression: "!status[0].has_milestones"
         material: GRAY_STAINED_GLASS_PANE
         title: " "
     material: BEACON
