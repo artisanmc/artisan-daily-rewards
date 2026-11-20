@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * was written).
  *
  * @param outcome     null when nothing was counted: see {@link #status}
- * @param freezesUsed jokers spent on missed days
+ * @param freezesUsed freezes spent on missed days
  * @param cycleDay    day of the cycle this day pays when its reward is claimed
  * @param milestone   this day also pays the milestones of its streak
  */

@@ -278,6 +278,7 @@ public final class DailyRepository {
             }
             Map<Long, Integer> days = new HashMap<>();
             Map<Long, Integer> milestones = new HashMap<>();
+            Map<Long, Integer> streaks = new HashMap<>();
             try (PreparedStatement p = c.prepareStatement("SELECT game_day, cycle_day, milestone, streak_after FROM " + claims
                     + " WHERE uuid = ? AND game_day >= ?")) {
                 p.setString(1, uuid.toString());
@@ -285,6 +286,7 @@ public final class DailyRepository {
                 try (ResultSet r = p.executeQuery()) {
                     while (r.next()) {
                         days.put(r.getLong(1), r.getInt(2));
+                        streaks.put(r.getLong(1), r.getInt(4));
                         if (r.getBoolean(3)) milestones.put(r.getLong(1), r.getInt(4));
                     }
                 }
@@ -295,7 +297,7 @@ public final class DailyRepository {
                 days.putIfAbsent(reward.day(), reward.cycleDay());
                 if (reward.milestone()) milestones.putIfAbsent(reward.day(), reward.streak());
             }
-            return ClaimHistory.of(first, days, waiting, milestones);
+            return ClaimHistory.of(first, days, waiting, milestones, streaks);
         }
     }
 
@@ -357,6 +359,26 @@ public final class DailyRepository {
                 return select(c, uuid);
             }
             throw new SQLException(players + " row of " + uuid + " kept changing, correction not written");
+        }
+    }
+
+    /**
+     * Gives {@code amount} freezes on top of those held, written to the ledger ({@code freeze_given}).
+     * Not capped by {@code freeze.max_stock}: an admin's gift goes over it, and the player earns no
+     * freeze until they are back under it.
+     */
+    public PlayerState giveFreezes(UUID uuid, int amount, String by, long now) throws SQLException {
+        try (Connection c = dataSource.getConnection()) {
+            ensureRow(c, uuid, now);
+            for (int attempt = 0; attempt < 3; attempt++) {
+                PlayerState before = select(c, uuid);
+                if (before == null) throw new SQLException(players + " row of " + uuid + " vanished");
+                int after = before.freezes() + amount;
+                if (writeState(c, before.withFreezes(after), before.version(), now) == 0) continue; // written meanwhile elsewhere
+                ledger(c, uuid, now, LedgerKind.FREEZE_GIVEN, amount, "freezes " + before.freezes() + " -> " + after + " by " + by);
+                return select(c, uuid);
+            }
+            throw new SQLException(players + " row of " + uuid + " kept changing, freezes not given");
         }
     }
 

@@ -106,7 +106,7 @@ everything that waits) and the next 104 days with the reward each pays if the pl
 The rows are weeks laid out as the Rewards grid (`week: "7"`): days 7, 14, 21 and 28 of the cycle
 fall on the last column.
 Each state of a day has its own look: a reward to claim (today or a day the player was there) is a
-glowing lime dye, a claimed day a gray dye, a missed day a red dye, and a day to come shows the reward
+glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day a freeze covered a light blue dye, and a day to come shows the reward
 it will pay. Change the `material` of a state of the `days` element to change it.
 A day that reaches a milestone glows, shows the milestone's icon (to come) and says
 `+ streak bonus`. The beacon at the bottom left (only when `milestones` holds at least one) gives the next milestone and opens `menus/milestones.yml`:
@@ -117,6 +117,6 @@ The menus read three data sources, which your own menus can read too:
 
 | Source | Rows | Fields |
 |---|---|---|
-| `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
+| `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `covered`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_covered`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
 | `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `has_milestones` (the calendar shows its milestones button only then), `next_milestone` (0 when none is left), `next_milestone_in` (days, -1 when none is left) |
 | `daily:milestones` | one per coming milestone, the next ones the viewer reaches coming every day; param `count` (28, at most 200) | `id`, `streak`, `offset`, `date`, `is_today`, `repeats`, `every`, `icon` |

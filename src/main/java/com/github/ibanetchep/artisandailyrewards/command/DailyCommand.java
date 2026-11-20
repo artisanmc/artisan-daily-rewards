@@ -95,7 +95,7 @@ public final class DailyCommand {
             messages.send(player, "status.line", Map.of(
                     "streak", shown.streak(),
                     "longest", state.longest(),
-                    "freezes", state.freezes()));
+                    "freezes", StreakRules.freezesShown(state, service.settings())));
             int waiting = service.unclaimed(player.getUniqueId());
             if (waiting > 1) {
                 messages.send(player, "status.waiting_many", Map.of("count", waiting));

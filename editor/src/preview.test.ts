@@ -31,7 +31,8 @@ describe("the calendar preview", () => {
 
   it("shows each state of a day once in the past", () => {
     const statuses = sampleDays(7, 0, 28).map((d) => d.status);
-    expect(statuses).toEqual(["before", "before", "claimed", "claimed", "claimed", "missed", "available", "available"]);
+    expect(statuses).toEqual(["claimed", "missed", "claimed", "claimed", "claimed", "covered", "available", "available"]);
+    expect(sampleDays(9, 0, 28)[0].status).toBe("before");
   });
 
   it("has no reward and the paper icon for a day before or missed", () => {

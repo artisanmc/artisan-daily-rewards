@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * The calendar's two files in the module's folder, each edited by its own screen of the editor:
  * <ul>
- *   <li>{@code data/settings.yml}: reset time, auto-claim, playtime, reminder, jokers (Settings);</li>
+ *   <li>{@code data/settings.yml}: reset time, auto-claim, playtime, reminder, freezes (Settings);</li>
  *   <li>{@code data/rewards.yml}: the cycle length, the reward of each day and the milestones (Rewards).</li>
  * </ul>
  * Each is the owner's copy when there is one, else the shipped one Artisan keeps under

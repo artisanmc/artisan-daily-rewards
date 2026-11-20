@@ -280,7 +280,7 @@ public final class DailyService {
         if (result.status() != CheckInResult.Status.CONFLICT) cache.put(uuid, result.state());
         if (result.counted()) {
             history.compute(uuid, (id, old) -> (old != null ? old : ClaimHistory.EMPTY).with(today, result.cycleDay(),
-                    result.milestone() ? result.state().streak() : 0));
+                    result.milestone() ? result.state().streak() : 0, result.state().streak()));
         }
         return result;
     }
@@ -298,7 +298,7 @@ public final class DailyService {
                 "count", waiting));
     }
 
-    /** What counting the day did to the streak: jokers used, a break, a joker earned. */
+    /** What counting the day did to the streak: freezes used, a break, a freeze earned. */
     private void announce(Player player, CheckInResult result, CalendarSettings current) {
         if (!result.counted()) return;
         PlayerState state = result.state();
@@ -583,6 +583,20 @@ public final class DailyService {
         scheduler.runAsync(() -> {
             try {
                 PlayerState state = repository.adminSet(uuid, field, value, by, clock.today(), System.currentTimeMillis());
+                cache.computeIfPresent(uuid, (id, old) -> state);
+                done.complete(state);
+            } catch (SQLException e) {
+                done.completeExceptionally(e);
+            }
+        });
+        return done;
+    }
+
+    public CompletableFuture<PlayerState> giveFreezes(UUID uuid, int amount, String by) {
+        CompletableFuture<PlayerState> done = new CompletableFuture<>();
+        scheduler.runAsync(() -> {
+            try {
+                PlayerState state = repository.giveFreezes(uuid, amount, by, System.currentTimeMillis());
                 cache.computeIfPresent(uuid, (id, old) -> state);
                 done.complete(state);
             } catch (SQLException e) {

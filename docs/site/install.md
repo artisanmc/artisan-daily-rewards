@@ -21,7 +21,7 @@ Artisan keeps these files in `plugins/Artisan/modules/daily/`:
 
 | Path | What |
 |---|---|
-| `data/settings.yml` | [Settings](../configuration/settings/): reset time, auto-claim, playtime, reminder, jokers |
+| `data/settings.yml` | [Settings](../configuration/settings/): reset time, auto-claim, playtime, reminder, freezes |
 | `data/rewards.yml` | [Rewards](../configuration/rewards/): the cycle and the reward of each day |
 | `menus/calendar.yml` | What `/dailyrewards` opens |
 | `lang/<code>.yml` | Your overrides of the messages |

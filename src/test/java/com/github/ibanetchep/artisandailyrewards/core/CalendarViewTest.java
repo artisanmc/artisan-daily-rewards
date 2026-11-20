@@ -57,7 +57,7 @@ class CalendarViewTest {
 
     @Test
     void aBrokenStreakStartsAgainAtDayOne() {
-        // Last claim three days ago, no joker: the streak of 10 is lost.
+        // Last claim three days ago, no freeze: the streak of 10 is lost.
         ClaimHistory history = ClaimHistory.of(TODAY - 20, Map.of(TODAY - 3, 10));
         List<CalendarView.Day> days = CalendarView.around(state(10, TODAY - 3, 0), history, TODAY, 28, 3, 1);
         assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.MISSED, CalendarView.Status.MISSED,
@@ -66,12 +66,33 @@ class CalendarViewTest {
     }
 
     @Test
-    void jokersThatCoverTheGapKeepTheStreakGoing() {
+    void freezesThatCoverTheGapKeepTheStreakGoing() {
         ClaimHistory history = ClaimHistory.of(TODAY - 20, Map.of(TODAY - 2, 4));
         List<CalendarView.Day> days = CalendarView.around(state(4, TODAY - 2, 1), history, TODAY, 28, 2, 1);
-        assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.MISSED, CalendarView.Status.AVAILABLE,
+        // Today not counted yet: the freeze will cover yesterday.
+        assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.COVERED, CalendarView.Status.AVAILABLE,
                 CalendarView.Status.UPCOMING), statuses(days));
         assertEquals(List.of(4, 0, 5, 6), cycleDays(days));
+    }
+
+    @Test
+    void aDayAFreezeCoveredStaysCoveredAndItsRewardIsTheReturnDays() {
+        // Day 20 claimed two days ago, yesterday covered by a freeze, today counted: day 21 (the big one) today.
+        ClaimHistory history = ClaimHistory.of(TODAY - 30, Map.of(TODAY - 2, 20, TODAY, 21), List.of(TODAY), Map.of(),
+                Map.of(TODAY - 2, 20, TODAY, 21));
+        List<CalendarView.Day> days = CalendarView.around(state(21, TODAY, 0), history, TODAY, 28, 2, 1);
+        assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.COVERED, CalendarView.Status.AVAILABLE,
+                CalendarView.Status.UPCOMING), statuses(days));
+        assertEquals(List.of(20, 0, 21, 22), cycleDays(days));
+    }
+
+    @Test
+    void aDayMissedBeforeABreakIsNotCovered() {
+        ClaimHistory history = ClaimHistory.of(TODAY - 30, Map.of(TODAY - 3, 9, TODAY - 1, 1), List.of(), Map.of(),
+                Map.of(TODAY - 3, 9, TODAY - 1, 1));
+        List<CalendarView.Day> days = CalendarView.around(state(1, TODAY - 1, 0), history, TODAY, 28, 3, 0);
+        assertEquals(List.of(CalendarView.Status.CLAIMED, CalendarView.Status.MISSED, CalendarView.Status.CLAIMED,
+                CalendarView.Status.AVAILABLE), statuses(days));
     }
 
     @Test
@@ -118,7 +139,7 @@ class CalendarViewTest {
     @Test
     void aBrokenStreakMarksItsMilestonesAgain() {
         List<Milestone> milestones = List.of(Milestone.at(2, null, null));
-        // Mark 10, last counted 5 days ago with no joker: broken, today is streak 1.
+        // Mark 10, last counted 5 days ago with no freeze: broken, today is streak 1.
         PlayerState state = new PlayerState(ID, 10, 10, TODAY - 5, 10, 0, 10, 0, 0, null, null, 1);
         List<CalendarView.Day> days = CalendarView.around(state, ClaimHistory.EMPTY, TODAY, 28, milestones, 0, 2);
         assertEquals(List.of(false, true, false), days.stream().map(CalendarView.Day::milestone).toList());

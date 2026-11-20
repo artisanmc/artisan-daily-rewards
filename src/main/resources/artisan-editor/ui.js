@@ -182,9 +182,11 @@ function Fe(e, t) {
 function Ie(e, t, n) {
   const i = [
     { status: "claimed", streak: 1 },
+    { status: "missed", streak: 0 },
+    { status: "claimed", streak: 1 },
     { status: "claimed", streak: 2 },
     { status: "claimed", streak: 3 },
-    { status: "missed", streak: 0 },
+    { status: "covered", streak: 0 },
     { status: "available", streak: 4 }
   ], a = [];
   for (let o = -e; o < 0; o++) {
@@ -217,6 +219,7 @@ function Oe(e, t, n) {
     is_today: e.offset === 0,
     is_claimed: e.status === "claimed",
     is_missed: e.status === "missed",
+    is_covered: e.status === "covered",
     is_before: e.status === "before",
     is_available: e.status === "available",
     is_upcoming: e.status === "upcoming",

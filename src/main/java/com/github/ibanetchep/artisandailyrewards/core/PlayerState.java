@@ -15,7 +15,7 @@ import java.util.UUID;
  * @param milestoneMark  highest milestone paid in the current streak
  * @param brokenStreak   streak lost at the last break, 0 once restored or expired
  * @param brokenMark     milestone mark lost at the last break
- * @param brokenFromDay  first missed day the jokers did not cover: start of the restore window
+ * @param brokenFromDay  first missed day the freezes did not cover: start of the restore window
  * @param autoClaim      the player's own choice when the calendar says {@code auto_claim: player},
  *                       null when they never chose
  * @param version        optimistic concurrency counter, raised by every write

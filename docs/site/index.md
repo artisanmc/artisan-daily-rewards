@@ -1,15 +1,15 @@
 ---
 title: Artisan Daily Rewards
-description: Daily rewards with a streak, a reward cycle and jokers, edited in Artisan.
+description: Daily rewards with a streak, a reward cycle and freezes, edited in Artisan.
 sidebar:
   order: 0
 ---
 
 Artisan Daily Rewards pays players for coming back: each day they play counts for their streak and
-unlocks the reward of that day of the cycle, which they claim then or later. Jokers keep a streak alive
+unlocks the reward of that day of the cycle, which they claim then or later. Freezes keep a streak alive
 over a missed day.
 
-What works today: the daily claim, the streak, the jokers, one reward per day of the cycle, the streak
+What works today: the daily claim, the streak, the freezes, one reward per day of the cycle, the streak
 milestones (bonuses at 30 days, every 50…), auto-claim, the calendar menu and the milestones menu. The paid
 restore of a broken streak, tiers, `daily:*` actions and placeholders are not there yet.
 
@@ -27,7 +27,7 @@ action engine that pays the rewards, the menu and the editor.
 ## Where to go next
 
 - [Install it](install/).
-- [Settings](configuration/settings/) (reset time, auto-claim, jokers) and
+- [Settings](configuration/settings/) (reset time, auto-claim, freezes) and
   [rewards](configuration/rewards/) (the cycle).
 - [Commands and permissions](commands/).
 - Worked cases: [a weekly cycle](recipes/weekly-cycle/), [play before claiming](recipes/min-playtime/),

@@ -2,13 +2,13 @@
 
 Daily rewards for Paper servers, built on Artisan: each day a player comes counts for their
 streak and earns a reward they claim, then or later; they keep a streak, earn bigger rewards as the streak grows, loop through a reward cycle, and can save a
-broken streak with jokers or a paid restore.
+broken streak with freezes or a paid restore.
 
 Requires Paper 1.21+ (Folia supported) and **Artisan with API 1.1.0 or later**. Artisan provides
 the database (H2, MySQL or MariaDB, set in `plugins/Artisan/environment.yml`), the action engine
 that pays the rewards, the menus and the editor.
 
-**Status:** the daily claim, the streak, the jokers, one reward per day of the cycle, the streak
+**Status:** the daily claim, the streak, the freezes, one reward per day of the cycle, the streak
 milestones and the calendar and milestones menus work. The base reward, the tiers, the paid restore,
 the `daily:*` actions and the placeholders come next.
 
@@ -21,7 +21,7 @@ User docs: [`docs/site/`](docs/site/), published on
 |---|---|---|
 | `/dailyrewards` | `daily.use` (everyone) | Opens the calendar |
 | `/dailyrewards claim`, `/dailyrewards status`, `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
-| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct (`set … streak` restores a streak that holds, see below), shift this server's game day to test |
+| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `give <player> freezes <n>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct (`set … streak` restores a streak that holds, see below), give freezes (over `max_stock` if need be), shift this server's game day to test |
 
 `daily.restore` and `daily.restore.free` are declared for the paid restore, not implemented yet.
 
@@ -31,7 +31,7 @@ Artisan keeps these files in `plugins/ArtisanDailyRewards/artisan_module/` (a sy
 is written again, an edited one stays yours until Reset in the editor):
 
 - `data/settings.yml`: reset time, auto-claim, playtime before the day counts, join reminder,
-  jokers. Edited in the editor's **Settings** screen.
+  freezes (`freeze.earn_every`, `max_stock`, `starting`: held from a new player's first day). Edited in the editor's **Settings** screen.
 - `data/rewards.yml`: `cycle_length`, the rewards and the `milestones`. `days` is keyed by the day of the cycle
   (1 to `cycle_length`), `default_day` covers the others; `with_default_day` (global, or per day) pays
   `default_day` on top of a day's own reward instead of replacing it. Each reward has an `icon` (the item the
@@ -46,7 +46,7 @@ is written again, an edited one stays yours until Reset in the editor):
 - `menus/calendar.yml`: what `/dailyrewards` opens. The last 7 days as they went (claimed, waiting to be
   claimed, missed), today (a click claims everything that waits), and the next 104 days with the
   reward each one pays if the player comes every day, 28 days a page (arrows at the bottom). A reward
-  to claim is a glowing lime dye, a claimed day a gray dye, a missed day a red dye (the `material` of
+  to claim is a glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day a freeze covered a light blue dye (the `material` of
   each state of the `days` element). A day to come that reaches a milestone glows; the beacon (shown only when `milestones` holds one) opens `menus/milestones.yml`, the next 112 milestones,
   28 a page.
 
@@ -59,7 +59,7 @@ The menus read three data sources:
 
 | Source | Rows | Fields |
 |---|---|---|
-| `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
+| `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `covered`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_covered`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
 | `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `has_milestones`, `next_milestone`, `next_milestone_in` |
 | `daily:milestones` | one per coming milestone; param `count` (28, at most 200) | `id`, `streak`, `offset`, `date`, `is_today`, `repeats`, `every`, `icon` |
 
@@ -72,7 +72,9 @@ A day counts for the streak when the player is there: they join (or are online a
 and play `min_playtime_minutes`. Claiming is separate. The reward of a counted day waits, with
 the day of the cycle and the streak of that day, until the player claims: `/dailyrewards claim` (or the
 menu, or auto-claim) pays every reward that waits, however old. A day the player was not there is
-missed: the jokers may keep the streak, its reward is lost.
+missed: the freezes may keep the streak. A covered day does not count, so the reward the player would
+have reached that day (its day of the cycle, its milestones) comes the day they are back: it is
+delayed, never lost. Without enough freezes the streak breaks and no freeze is spent.
 
 The first time a player counts in a game day, the `unlocked` message (in `lang/`, a click opens
 `/dailyrewards`) tells them the reward is unlocked; `join_reminder: false` turns it off, auto-claim

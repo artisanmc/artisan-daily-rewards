@@ -139,7 +139,7 @@ class DailyRepositoryTest {
     }
 
     @Test
-    void aBreakAndTheJokersAreWrittenToTheLedger() throws Exception {
+    void aBreakAndTheFreezesAreWrittenToTheLedger() throws Exception {
         UUID id = UUID.randomUUID();
         for (long day = DAY; day < DAY + 7; day++) repository.checkIn(id, day, SETTINGS, "lobby", day);
         assertEquals(1, repository.load(id).freezes(), "earned at 7");
@@ -148,7 +148,14 @@ class DailyRepositoryTest {
         assertEquals(StreakRules.Outcome.COVERED, covered.outcome());
         assertEquals(1, covered.freezesUsed());
 
+        ClaimHistory afterFreeze = repository.history(id, DAY);
+        assertTrue(afterFreeze.coveredOn(DAY + 7), "the day the freeze covered");
+        assertFalse(afterFreeze.coveredOn(DAY + 6), "a counted day");
+
         CheckInResult broken = repository.checkIn(id, DAY + 11, SETTINGS, "lobby", DAY + 11);
+        ClaimHistory afterBreak = repository.history(id, DAY);
+        assertFalse(afterBreak.coveredOn(DAY + 9), "missed before a break");
+        assertTrue(afterBreak.coveredOn(DAY + 7));
         assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
         assertEquals(8, broken.state().brokenStreak());
 
@@ -221,10 +228,28 @@ class DailyRepositoryTest {
     }
 
     @Test
+    void givingFreezesAddsThemOverTheStockAndLogsIt() throws Exception {
+        UUID id = UUID.randomUUID();
+        repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
+        assertEquals(2, repository.giveFreezes(id, 2, "Iban", 2).freezes());
+        assertEquals(5, repository.giveFreezes(id, 3, "Iban", 3).freezes(), "over max_stock 2");
+        LedgerEntry line = repository.recentLedger(id, 1).get(0);
+        assertEquals(LedgerKind.FREEZE_GIVEN, line.kind());
+        assertEquals(3, line.amount());
+        assertEquals("freezes 2 -> 5 by Iban", line.detail());
+
+        // Over the stock, none is earned; they are spent as usual.
+        CheckInResult covered = repository.checkIn(id, DAY + 3, SETTINGS, "lobby", 4);
+        assertEquals(StreakRules.Outcome.COVERED, covered.outcome());
+        assertEquals(3, covered.state().freezes());
+        assertEquals(2, covered.state().streak());
+    }
+
+    @Test
     void settingTheStreakRestoresABrokenOne() throws Exception {
         UUID id = UUID.randomUUID();
         for (int i = 0; i < 10; i++) repository.checkIn(id, DAY + i, SETTINGS, "a", i);
-        // Five days missed, no joker left to cover them: broken at the next count.
+        // Five days missed, no freeze left to cover them: broken at the next count.
         CheckInResult broken = repository.checkIn(id, DAY + 15, SETTINGS, "a", 20);
         assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
         assertEquals(10, broken.state().brokenStreak());
