@@ -38,6 +38,6 @@ sidebar:
   first day; `/dailyadmin give <player> freezes <n>` adds freezes, over `max_stock` if need be. The calendar's
   freezes item no longer says a covered day's reward is lost: it comes the day the player is back.
 - A day a freeze covered shows in the calendar as its own state, a light blue dye (`covered`, `is_covered` in
-  `daily:calendar`), apart from a missed day that broke the streak. The texts say "freeze" everywhere (the
-  French ones said "joker").
+  `daily:calendar`), apart from a missed day that broke the streak. The texts say "freeze" in English and "gel" in
+  French (the French ones said "joker").
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

@@ -92,10 +92,10 @@ elements:
       - if:
           - expression: d.is_covered
         material: LIGHT_BLUE_DYE
-        title: { en: "<aqua>✚ Freeze used", fr: "<aqua>✚ Freeze utilisé" }
+        title: { en: "<aqua>✚ Freeze used", fr: "<aqua>✚ Gel utilisé" }
         lore:
           - { en: "<gray>{d.date}: you were not there", fr: "<gray>{d.date} : tu n'étais pas là" }
-          - { en: "<gray>A freeze saved your streak.", fr: "<gray>Un freeze a sauvé ton streak." }
+          - { en: "<gray>A freeze saved your streak.", fr: "<gray>Un gel a sauvé ton streak." }
           - { en: "<gray>The rewards paused for a day:", fr: "<gray>Les récompenses ont fait une pause :" }
           - { en: "<gray>none was lost.", fr: "<gray>aucune n'est perdue." }
       - if:
@@ -127,9 +127,9 @@ elements:
   - id: freezes
     positions: 45
     material: TOTEM_OF_UNDYING
-    title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Freezes : <white>{status[0].freezes}/{status[0].freeze_max}" }
+    title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Gels : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
-      - { en: "<gray>A freeze covers a missed day:", fr: "<gray>Un freeze couvre un jour manqué :" }
+      - { en: "<gray>A freeze covers a missed day:", fr: "<gray>Un gel couvre un jour manqué :" }
       - { en: "<gray>your streak goes on and the rewards", fr: "<gray>ton streak continue et les récompenses" }
       - { en: "<gray>pause for a day: none is lost.", fr: "<gray>font une pause : aucune n'est perdue." }
   - id: milestones
