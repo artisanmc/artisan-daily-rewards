@@ -85,10 +85,24 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
           />
           <span className="daily-faint">{t("cycleHint")}</span>
         </label>
-        <div className="daily-legend">
-          <span className="daily-legend-own">{t("legendOwn")}</span>
-          <span className="daily-legend-default">{t("legendDefault")}</span>
-          {grid.some((cell) => cell.stacks) && <span className="daily-legend-stack">{t("legendStack")}</span>}
+        <div className="daily-legend" role="note" aria-label={t("legendTitle")}>
+          <span className="daily-legend-title">{t("legendTitle")}</span>
+          <span className="daily-legend-item">
+            <span className="daily-legend-swatch is-own" aria-hidden="true" />
+            {t("legendOwn")}
+          </span>
+          <span className="daily-legend-item">
+            <span className="daily-legend-swatch is-default" aria-hidden="true" />
+            {t("legendDefault")}
+          </span>
+          {grid.some((cell) => cell.stacks) && (
+            <span className="daily-legend-item">
+              <span className="daily-legend-swatch is-own" aria-hidden="true">
+                <span className="daily-legend-plus">+</span>
+              </span>
+              {t("legendStack")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -147,9 +161,12 @@ export function RewardsGrid({ projectId, value, set, readOnly }: ConfigScreenPro
           />
         </div>
 
-        <aside className="daily-panel">
+        <aside className={`daily-panel${selected === null ? " is-empty" : ""}`}>
           {selected === null ? (
-            <p className="daily-faint">{t("pick")}</p>
+            <div className="daily-panel-empty">
+              <span className="daily-panel-empty-title">{t("pickTitle")}</span>
+              <span className="daily-faint">{t("pick")}</span>
+            </div>
           ) : typeof selected === "object" ? (
             entries[selected.milestone] ? (
               <MilestonePanel
