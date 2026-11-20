@@ -88,15 +88,16 @@ elements:
         lore:
           - { en: "<gray>{d.date} · day {d.cycle_day}", fr: "<gray>{d.date} · jour {d.cycle_day}" }
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
-      # Missed, but a freeze kept the streak: the reward moved to the day the player came back.
+      # Missed, but a freeze kept the streak: the rewards paused that day (the next one came the day after).
       - if:
           - expression: d.is_covered
         material: LIGHT_BLUE_DYE
-        title: { en: "<aqua>✚ Covered by a freeze", fr: "<aqua>✚ Couverte par un freeze" }
+        title: { en: "<aqua>✚ Freeze used", fr: "<aqua>✚ Freeze utilisé" }
         lore:
           - { en: "<gray>{d.date}: you were not there", fr: "<gray>{d.date} : tu n'étais pas là" }
-          - { en: "<gray>Your streak went on: the reward", fr: "<gray>Ton streak a continué : la récompense" }
-          - { en: "<gray>moved to the day you came back.", fr: "<gray>est passée au jour de ton retour." }
+          - { en: "<gray>A freeze saved your streak.", fr: "<gray>Un freeze a sauvé ton streak." }
+          - { en: "<gray>The rewards paused for a day:", fr: "<gray>Les récompenses ont fait une pause :" }
+          - { en: "<gray>none was lost.", fr: "<gray>aucune n'est perdue." }
       - if:
           - expression: d.is_missed
         material: RED_DYE
@@ -129,8 +130,8 @@ elements:
     title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Freezes : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
       - { en: "<gray>A freeze covers a missed day:", fr: "<gray>Un freeze couvre un jour manqué :" }
-      - { en: "<gray>your streak goes on, the reward you", fr: "<gray>ton streak continue, la récompense ratée" }
-      - { en: "<gray>missed waits for your return.", fr: "<gray>t'attend à ton retour." }
+      - { en: "<gray>your streak goes on and the rewards", fr: "<gray>ton streak continue et les récompenses" }
+      - { en: "<gray>pause for a day: none is lost.", fr: "<gray>font une pause : aucune n'est perdue." }
   - id: milestones
     positions: 47
     states:
