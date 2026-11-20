@@ -8,7 +8,7 @@ schema: menu/v1
 # left opens the milestones menu,
 # only when data/rewards has milestones.
 # Each state of a day has its own item, to tell them apart at a glance: a reward to claim is a
-# glowing lime dye, a claimed day a gray dye, a missed day a red pane, a day before the first one
+# glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day before the first one
 # counted a light gray pane, and a day to come shows the reward it will pay. Change the material
 # of a state below to change its look.
 title:
@@ -90,7 +90,7 @@ elements:
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
       - if:
           - expression: d.is_missed
-        material: RED_STAINED_GLASS_PANE
+        material: RED_DYE
         title: { en: "<red>✘ Missed", fr: "<red>✘ Manquée" }
         lore:
           - { en: "<gray>{d.date}: you were not there", fr: "<gray>{d.date} : tu n'étais pas là" }

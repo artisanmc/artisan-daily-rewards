@@ -106,7 +106,7 @@ everything that waits) and the next 104 days with the reward each pays if the pl
 The rows are weeks laid out as the Rewards grid (`week: "7"`): days 7, 14, 21 and 28 of the cycle
 fall on the last column.
 Each state of a day has its own look: a reward to claim (today or a day the player was there) is a
-glowing lime dye, a claimed day a gray dye, a missed day a red pane, and a day to come shows the reward
+glowing lime dye, a claimed day a gray dye, a missed day a red dye, and a day to come shows the reward
 it will pay. Change the `material` of a state of the `days` element to change it.
 A day that reaches a milestone glows, shows the milestone's icon (to come) and says
 `+ streak bonus`. The beacon at the bottom left (only when `milestones` holds at least one) gives the next milestone and opens `menus/milestones.yml`:

@@ -46,7 +46,7 @@ is written again, an edited one stays yours until Reset in the editor):
 - `menus/calendar.yml`: what `/dailyrewards` opens. The last 7 days as they went (claimed, waiting to be
   claimed, missed), today (a click claims everything that waits), and the next 104 days with the
   reward each one pays if the player comes every day, 28 days a page (arrows at the bottom). A reward
-  to claim is a glowing lime dye, a claimed day a gray dye, a missed day a red pane (the `material` of
+  to claim is a glowing lime dye, a claimed day a gray dye, a missed day a red dye (the `material` of
   each state of the `days` element). A day to come that reaches a milestone glows; the beacon (shown only when `milestones` holds one) opens `menus/milestones.yml`, the next 112 milestones,
   28 a page.
 
