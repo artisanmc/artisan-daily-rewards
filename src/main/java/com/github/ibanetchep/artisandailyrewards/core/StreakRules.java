@@ -133,6 +133,24 @@ public final class StreakRules {
         return state.lastDay() == null ? Math.max(state.freezes(), settings.freezeStarting()) : state.freezes();
     }
 
+    /**
+     * Days of streak until the next freeze is earned, if the player comes every day: 0 when
+     * today's count earns it (today not counted yet), -1 when none will be (stock full, or
+     * {@code freeze.earn_every} 0). The freezes today's count will spend on missed days are
+     * taken off first.
+     */
+    public static int nextFreezeIn(PlayerState state, long today, CalendarSettings settings) {
+        int every = settings.freezeEarnEvery();
+        if (every <= 0) return -1;
+        Displayed shown = display(state, today);
+        int held = freezesShown(state, settings);
+        if (shown.atRisk() && state.lastDay() != null) held -= (int) (today - state.lastDay() - 1);
+        if (held >= settings.freezeMaxStock()) return -1;
+        if (shown.countedToday()) return every - shown.streak() % every;
+        int todayStreak = shown.streak() + 1;
+        return todayStreak % every == 0 ? 0 : every - todayStreak % every;
+    }
+
     /** Day of the cycle for a streak, 1 to {@code cycleLength}: day 29 of a 28-day cycle is day 1. */
     public static int cycleDay(int streak, int cycleLength) {
         if (streak < 1) return 1;

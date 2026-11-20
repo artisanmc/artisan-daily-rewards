@@ -106,6 +106,8 @@ public final class CalendarData {
                 new DataSourceField("total", ModelFieldType.integer(), "Days counted ever"),
                 new DataSourceField("freezes", ModelFieldType.integer(), "Freezes held"),
                 new DataSourceField("freeze_max", ModelFieldType.integer(), "Freezes held at most"),
+                new DataSourceField("next_freeze_in", ModelFieldType.integer(),
+                        "Days of streak until the next freeze is earned if the viewer comes every day: 0 today, -1 when none will be (stock full, or earn_every 0)"),
                 new DataSourceField("claimed_today", ModelFieldType.bool(), "Today counted and its reward claimed"),
                 new DataSourceField("unclaimed", ModelFieldType.integer(), "Rewards of days counted that wait to be claimed"),
                 new DataSourceField("can_claim", ModelFieldType.bool(), "Loaded, and a reward waits or today is not claimed yet"),
@@ -201,6 +203,7 @@ public final class CalendarData {
             row.put("cycle_day", 1);
             row.put("next_milestone", 0);
             row.put("next_milestone_in", -1);
+            row.put("next_freeze_in", -1);
             return List.of(row);
         }
         StreakRules.Displayed shown = service.displayed(state);
@@ -209,6 +212,7 @@ public final class CalendarData {
         row.put("longest", state.longest());
         row.put("total", state.totalDays());
         row.put("freezes", StreakRules.freezesShown(state, settings));
+        row.put("next_freeze_in", StreakRules.nextFreezeIn(state, service.clock().today(), settings));
         int unclaimed = service.unclaimed(player.getUniqueId());
         row.put("claimed_today", shown.countedToday() && !service.unclaimedOn(player.getUniqueId(), service.clock().today()));
         row.put("unclaimed", unclaimed);
