@@ -7,6 +7,10 @@ schema: menu/v1
 # milestone of the streak (milestones of data/rewards) glows and says so; the button at the bottom
 # left opens the milestones menu,
 # only when data/rewards has milestones.
+# Each state of a day has its own item, to tell them apart at a glance: a reward to claim is a
+# glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day before the first one
+# counted a light gray pane, and a day to come shows the reward it will pay. Change the material
+# of a state below to change its look.
 title:
   - kind: plain
     value: { en: "<dark_gray>Daily rewards", fr: "<dark_gray>Récompenses quotidiennes" }
@@ -39,14 +43,14 @@ elements:
     positions: "10-16,19-25,28-34,37-43"
     iterates: { source: days, alias: d }
     states:
-      # Today, waiting: the reward glows, a click claims it (with any day before still waiting).
+      # Today, waiting: a glowing lime dye, a click claims it (with any day before still waiting).
       - if:
           - expression: d.is_available
           - expression: d.is_today
-        item: "{d.icon}"
+        material: LIME_DYE
         enchanted: true
+        title: { en: "<green>Reward to claim", fr: "<green>Récompense à réclamer" }
         lore:
-          - ""
           - { en: "<yellow>Today <gray>· day {d.cycle_day}", fr: "<yellow>Aujourd'hui <gray>· jour {d.cycle_day}" }
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
           - { en: "<green>Click to claim", fr: "<green>Cliquer pour réclamer" }
@@ -56,10 +60,10 @@ elements:
       # A day before when the player was there without claiming: its reward still waits.
       - if:
           - expression: d.is_available
-        item: "{d.icon}"
+        material: LIME_DYE
         enchanted: true
+        title: { en: "<green>Reward to claim", fr: "<green>Récompense à réclamer" }
         lore:
-          - ""
           - { en: "<yellow>{d.date} <gray>· day {d.cycle_day}", fr: "<yellow>{d.date} <gray>· jour {d.cycle_day}" }
           - { en: "<gray>You were there: not claimed yet", fr: "<gray>Tu étais là : pas encore réclamée" }
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
@@ -67,24 +71,26 @@ elements:
         click:
           left:
             - module_command: { command: "daily:claim" }
+      # Today, claimed: a gray dye.
       - if:
           - expression: d.is_today
-        item: "{d.icon}"
+        material: GRAY_DYE
+        title: { en: "<gray>✔ Claimed", fr: "<gray>✔ Réclamée" }
         lore:
-          - ""
           - { en: "<yellow>Today <gray>· day {d.cycle_day}", fr: "<yellow>Aujourd'hui <gray>· jour {d.cycle_day}" }
-          - { en: "<green>✔ Claimed <gray>· next in {status[0].until_reset}", fr: "<green>✔ Réclamée <gray>· prochaine dans {status[0].until_reset}" }
+          - { en: "<gray>Next reward in <white>{status[0].until_reset}", fr: "<gray>Prochaine récompense dans <white>{status[0].until_reset}" }
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
+      # A day before, claimed: a gray dye.
       - if:
           - expression: d.is_claimed
-        item: "{d.icon}"
+        material: GRAY_DYE
+        title: { en: "<gray>✔ Claimed", fr: "<gray>✔ Réclamée" }
         lore:
-          - ""
-          - { en: "<green>✔ Claimed on {d.date} <gray>· day {d.cycle_day}", fr: "<green>✔ Réclamée le {d.date} <gray>· jour {d.cycle_day}" }
+          - { en: "<gray>{d.date} · day {d.cycle_day}", fr: "<gray>{d.date} · jour {d.cycle_day}" }
           - { en: "{d.is_milestone ? \"<light_purple>+ streak bonus: \" + d.streak + \" days\" : \"\"}", fr: "{d.is_milestone ? \"<light_purple>+ bonus de streak : \" + d.streak + \" jours\" : \"\"}" }
       - if:
           - expression: d.is_missed
-        material: RED_STAINED_GLASS_PANE
+        material: RED_DYE
         title: { en: "<red>✘ Missed", fr: "<red>✘ Manquée" }
         lore:
           - { en: "<gray>{d.date}: you were not there", fr: "<gray>{d.date} : tu n'étais pas là" }

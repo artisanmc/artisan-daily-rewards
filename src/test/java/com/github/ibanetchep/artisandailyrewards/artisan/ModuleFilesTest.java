@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -127,6 +128,28 @@ class ModuleFilesTest {
             if (!fields.get(m.group(1)).contains(m.group(2))) unknown.add(m.group());
         }
         assertEquals(List.of(), unknown);
+    }
+
+    @Test
+    void aDayToClaimLooksNeitherClaimedNorToCome() throws IOException {
+        Map<?, ?> menu = (Map<?, ?>) yaml("menus/calendar.yaml");
+        Map<?, ?> days = ((List<?>) menu.get("elements")).stream().map(e -> (Map<?, ?>) e)
+                .filter(e -> "days".equals(e.get("id"))).findFirst().orElseThrow();
+        Map<String, Object> lookOf = new java.util.LinkedHashMap<>();
+        for (Object o : (List<?>) days.get("states")) {
+            Map<?, ?> state = (Map<?, ?>) o;
+            String when = ((List<?>) state.get("if")).stream()
+                    .map(c -> String.valueOf(((Map<?, ?>) c).get("expression"))).reduce((a, b) -> a + " && " + b).orElseThrow();
+            lookOf.putIfAbsent(when, state.containsKey("item") ? state.get("item") : state.get("material"));
+        }
+        Object toClaim = lookOf.get("d.is_available");
+        assertEquals(toClaim, lookOf.get("d.is_available && d.is_today"));
+        assertEquals(lookOf.get("d.is_claimed"), lookOf.get("d.is_today"), "today claimed looks like a day claimed");
+        Object toCome = days.get("item");
+        for (Object other : List.of(lookOf.get("d.is_claimed"), toCome, lookOf.get("d.is_milestone"))) {
+            assertNotEquals(toClaim, other);
+        }
+        assertNotEquals(lookOf.get("d.is_claimed"), toCome);
     }
 
     private static Set<String> names(List<net.artisanmc.modules.api.datasource.DataSourceField> schema) {

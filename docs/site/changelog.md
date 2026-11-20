@@ -28,6 +28,9 @@ sidebar:
   languages in `lang/<lang>.yml` (`sources.rewards.…icon.title`), now read with the rewards. With no title
   in any language, the item keeps its own name (it showed no name). The calendar's claim button shows "Claim" or the time to the next
   reward (it stayed on "Loading…").
+- The calendar tells a day's state at a glance: a reward to claim is a glowing lime dye, a claimed day a
+  gray dye, a missed day a red dye (they showed the reward's icon, as the days to come, and a red pane). A calendar menu edited in the editor
+  keeps its look until Reset.
 - `/dailyadmin set <player> streak <n>` restores a streak that holds: it continues the next day, even after a
   break, and raises the longest streak (it used to be broken again at the next day).
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.
