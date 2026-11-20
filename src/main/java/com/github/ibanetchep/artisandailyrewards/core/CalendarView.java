@@ -18,7 +18,8 @@ public final class CalendarView {
         BEFORE,
         /** Counted and its reward claimed, today or before. */
         CLAIMED,
-        /** Over, and the player was not there. A joker may have saved the streak; the reward is lost either way. */
+        /** Over, and the player was not there. A joker may have saved the streak: the covered
+         * day does not count, so the reward of that day of the cycle comes the day the player is back. */
         MISSED,
         /**
          * Its reward waits to be claimed: today, or a day before when the player was there without

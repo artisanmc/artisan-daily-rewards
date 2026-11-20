@@ -34,4 +34,7 @@ sidebar:
   keeps its look until Reset.
 - `/dailyadmin set <player> streak <n>` restores a streak that holds: it continues the next day, even after a
   break, and raises the longest streak (it used to be broken again at the next day).
+- Jokers: `freeze.starting` in `data/settings.yml` (Settings screen) gives a new player jokers from their
+  first day; `/dailyadmin give <player> freezes <n>` adds jokers, over `max_stock` if need be. The calendar's
+  jokers item no longer says a covered day's reward is lost: it comes the day the player is back.
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

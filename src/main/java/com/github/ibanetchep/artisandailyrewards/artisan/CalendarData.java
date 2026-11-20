@@ -205,7 +205,7 @@ public final class CalendarData {
         row.put("streak", shown.streak());
         row.put("longest", state.longest());
         row.put("total", state.totalDays());
-        row.put("freezes", state.freezes());
+        row.put("freezes", StreakRules.freezesShown(state, settings));
         int unclaimed = service.unclaimed(player.getUniqueId());
         row.put("claimed_today", shown.countedToday() && !service.unclaimedOn(player.getUniqueId(), service.clock().today()));
         row.put("unclaimed", unclaimed);

@@ -40,7 +40,10 @@ public final class SettingsModel {
                         .withHelp("Tell a player their reward is unlocked when the day counts, and remind of the rewards that wait.").withDefault(d.joinReminder()),
                 new ModelField("freeze", ModelFieldType.object(List.of(
                         integer("earn_every", "Earned every", "Days of streak per joker; 0: never.", d.freezeEarnEvery(), 0),
-                        integer("max_stock", "Held at most", null, d.freezeMaxStock(), 0))))
+                        integer("max_stock", "Held at most", null, d.freezeMaxStock(), 0),
+                        integer("starting", "Held at the start",
+                                "Jokers a new player holds from their first day; at most \"Held at most\".",
+                                d.freezeStarting(), 0))))
                         .withLabel("Jokers")
                         .withHelp("A joker covers a missed day: the streak goes on.")))
                 .withName("Daily rewards settings");

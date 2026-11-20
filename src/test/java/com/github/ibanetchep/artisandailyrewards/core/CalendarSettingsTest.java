@@ -27,7 +27,7 @@ class CalendarSettingsTest {
                 "auto_claim", "player",
                 "min_playtime_minutes", 5,
                 "join_reminder", false,
-                "freeze", Map.of("earn_every", 10, "max_stock", 3)));
+                "freeze", Map.of("earn_every", 10, "max_stock", 3, "starting", 1)));
         assertEquals(LocalTime.of(6, 0), settings.resetTime());
         assertEquals(7, settings.cycleLength());
         assertEquals(CalendarSettings.AutoClaim.PLAYER, settings.autoClaim());
@@ -35,6 +35,14 @@ class CalendarSettingsTest {
         assertFalse(settings.joinReminder());
         assertEquals(10, settings.freezeEarnEvery());
         assertEquals(3, settings.freezeMaxStock());
+        assertEquals(1, settings.freezeStarting());
+    }
+
+    @Test
+    void theStartingJokersStayWithinTheStock() throws Exception {
+        assertEquals(0, CalendarSettings.DEFAULTS.freezeStarting());
+        assertEquals(2, CalendarSettings.read(Map.of("freeze", Map.of("max_stock", 2, "starting", 5))).freezeStarting());
+        assertThrows(CalendarException.class, () -> CalendarSettings.read(Map.of("freeze", Map.of("starting", -1))));
     }
 
     @Test

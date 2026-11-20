@@ -6,3 +6,4 @@ join_reminder: true
 freeze:
   earn_every: 7
   max_stock: 2
+  starting: 0

@@ -592,6 +592,20 @@ public final class DailyService {
         return done;
     }
 
+    public CompletableFuture<PlayerState> giveFreezes(UUID uuid, int amount, String by) {
+        CompletableFuture<PlayerState> done = new CompletableFuture<>();
+        scheduler.runAsync(() -> {
+            try {
+                PlayerState state = repository.giveFreezes(uuid, amount, by, System.currentTimeMillis());
+                cache.computeIfPresent(uuid, (id, old) -> state);
+                done.complete(state);
+            } catch (SQLException e) {
+                done.completeExceptionally(e);
+            }
+        });
+        return done;
+    }
+
     /** {@code /dailyadmin day}: moves this server's game day; the online players are greeted again. */
     public void shiftDay(long days) {
         if (days == 0) clock.resetShift();

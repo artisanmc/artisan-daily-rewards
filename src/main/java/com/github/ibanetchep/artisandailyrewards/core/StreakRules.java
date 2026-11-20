@@ -49,6 +49,7 @@ public final class StreakRules {
      *   <li>otherwise the streak breaks: it is kept aside for a restore, from the first missed
      *       day, and starts again at 1. No joker is used.</li>
      * </ul>
+     * The first day ever, the player holds at least {@code freeze.starting} jokers.
      * Then the longest streak, the days counted, one joker every {@code freeze_earn_every} days of
      * streak, up to {@code freeze_max_stock}, and the milestones: a streak above the milestone
      * mark that some milestone matches pays them and raises the mark to it. The mark goes back to 0
@@ -70,6 +71,8 @@ public final class StreakRules {
         if (last == null) {
             streak = 1;
             outcome = Outcome.FIRST;
+            // The starting jokers; a player given more by an admin before their first day keeps them.
+            freezes = Math.max(freezes, settings.freezeStarting());
         } else {
             long missed = today - last - 1;
             if (missed == 0) {
@@ -120,6 +123,14 @@ public final class StreakRules {
         if (missed == 0) return new Displayed(state.streak(), false, false, false);
         if (state.freezes() >= missed) return new Displayed(state.streak(), false, true, false);
         return new Displayed(0, false, false, true);
+    }
+
+    /**
+     * The jokers a player holds, as shown: before their first counted day, the
+     * {@code freeze.starting} ones they will get then.
+     */
+    public static int freezesShown(PlayerState state, CalendarSettings settings) {
+        return state.lastDay() == null ? Math.max(state.freezes(), settings.freezeStarting()) : state.freezes();
     }
 
     /** Day of the cycle for a streak, 1 to {@code cycleLength}: day 29 of a 28-day cycle is day 1. */

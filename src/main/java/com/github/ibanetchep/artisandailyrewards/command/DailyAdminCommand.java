@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 /**
  * {@code /dailyadmin} ({@code daily.admin}): {@code info <player>}, {@code set <player>
- * streak|longest|freezes <n>} and {@code day [+n|-n|reset]}. The console may use it.
+ * streak|longest|freezes <n>}, {@code give <player> freezes <n>} and {@code day [+n|-n|reset]}. The console may use it.
  */
 public final class DailyAdminCommand {
 
@@ -66,6 +66,12 @@ public final class DailyAdminCommand {
                         .argument(CommandArgument.choice("field", List.of("streak", "longest", "freezes")))
                         .argument(CommandArgument.integer("value"))
                         .description(Map.of("en", "Correct a counter", "fr", "Corrige un compteur"))
+                        .build())
+                .child(child("daily:admin_give", "give", this::give)
+                        .argument(CommandArgument.string("player"))
+                        .argument(CommandArgument.choice("what", List.of("freezes")))
+                        .argument(CommandArgument.integer("amount"))
+                        .description(Map.of("en", "Give jokers on top of those held", "fr", "Donne des jokers en plus de ceux détenus"))
                         .build())
                 .child(child("daily:admin_day", "day", this::day)
                         .argument(CommandArgument.string("shift").optional())
@@ -140,6 +146,32 @@ public final class DailyAdminCommand {
                 return;
             }
             messages.send(sender, "admin.set", Map.of("player", name, "field", field, "value", value));
+        });
+    }
+
+    /** Adds jokers, over {@code max_stock} if need be: the admin asked for them. */
+    private void give(PlayerCommandContext ctx) {
+        CommandSender sender = ctx.getSender();
+        String name = ctx.get("player", String.class);
+        Integer amount = ctx.get("amount", Integer.class);
+        UUID uuid = resolve(sender, name);
+        if (uuid == null || amount == null) return;
+        if (amount <= 0) {
+            messages.send(sender, "admin.give_not_positive");
+            return;
+        }
+        service.giveFreezes(uuid, amount, sender.getName()).whenComplete((state, error) -> {
+            if (error != null) {
+                logger.log(Level.SEVERE, "Could not give jokers to " + name, error);
+                messages.send(sender, "command.error");
+                return;
+            }
+            int max = service.settings().freezeMaxStock();
+            messages.send(sender, "admin.give", Map.of("player", name, "amount", amount,
+                    "freezes", state.freezes(), "max", max));
+            if (state.freezes() > max) messages.send(sender, "admin.give_over_max", Map.of("max", max));
+            Player online = Bukkit.getPlayer(uuid);
+            if (online != null) messages.send(online, "claim.freeze_given", Map.of("amount", amount, "freezes", state.freezes()));
         });
     }
 

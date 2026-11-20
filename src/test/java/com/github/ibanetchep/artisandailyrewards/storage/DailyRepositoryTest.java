@@ -221,6 +221,24 @@ class DailyRepositoryTest {
     }
 
     @Test
+    void givingJokersAddsThemOverTheStockAndLogsIt() throws Exception {
+        UUID id = UUID.randomUUID();
+        repository.checkIn(id, DAY, SETTINGS, "lobby", 1);
+        assertEquals(2, repository.giveFreezes(id, 2, "Iban", 2).freezes());
+        assertEquals(5, repository.giveFreezes(id, 3, "Iban", 3).freezes(), "over max_stock 2");
+        LedgerEntry line = repository.recentLedger(id, 1).get(0);
+        assertEquals(LedgerKind.FREEZE_GIVEN, line.kind());
+        assertEquals(3, line.amount());
+        assertEquals("freezes 2 -> 5 by Iban", line.detail());
+
+        // Over the stock, none is earned; they are spent as usual.
+        CheckInResult covered = repository.checkIn(id, DAY + 3, SETTINGS, "lobby", 4);
+        assertEquals(StreakRules.Outcome.COVERED, covered.outcome());
+        assertEquals(3, covered.state().freezes());
+        assertEquals(2, covered.state().streak());
+    }
+
+    @Test
     void settingTheStreakRestoresABrokenOne() throws Exception {
         UUID id = UUID.randomUUID();
         for (int i = 0; i < 10; i++) repository.checkIn(id, DAY + i, SETTINGS, "a", i);

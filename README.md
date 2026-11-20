@@ -21,7 +21,7 @@ User docs: [`docs/site/`](docs/site/), published on
 |---|---|---|
 | `/dailyrewards` | `daily.use` (everyone) | Opens the calendar |
 | `/dailyrewards claim`, `/dailyrewards status`, `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claims what waits, the streak in chat, auto-claim when `auto_claim: player` |
-| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct (`set … streak` restores a streak that holds, see below), shift this server's game day to test |
+| `/dailyadmin info <player>`, `set <player> <streak\|longest\|freezes> <value>`, `give <player> freezes <n>`, `day [+n\|-n\|reset]` | `daily.admin` (op) | Inspect, correct (`set … streak` restores a streak that holds, see below), give jokers (over `max_stock` if need be), shift this server's game day to test |
 
 `daily.restore` and `daily.restore.free` are declared for the paid restore, not implemented yet.
 
@@ -31,7 +31,7 @@ Artisan keeps these files in `plugins/ArtisanDailyRewards/artisan_module/` (a sy
 is written again, an edited one stays yours until Reset in the editor):
 
 - `data/settings.yml`: reset time, auto-claim, playtime before the day counts, join reminder,
-  jokers. Edited in the editor's **Settings** screen.
+  jokers (`freeze.earn_every`, `max_stock`, `starting`: held from a new player's first day). Edited in the editor's **Settings** screen.
 - `data/rewards.yml`: `cycle_length`, the rewards and the `milestones`. `days` is keyed by the day of the cycle
   (1 to `cycle_length`), `default_day` covers the others; `with_default_day` (global, or per day) pays
   `default_day` on top of a day's own reward instead of replacing it. Each reward has an `icon` (the item the
@@ -72,7 +72,9 @@ A day counts for the streak when the player is there: they join (or are online a
 and play `min_playtime_minutes`. Claiming is separate. The reward of a counted day waits, with
 the day of the cycle and the streak of that day, until the player claims: `/dailyrewards claim` (or the
 menu, or auto-claim) pays every reward that waits, however old. A day the player was not there is
-missed: the jokers may keep the streak, its reward is lost.
+missed: the jokers may keep the streak. A covered day does not count, so the reward the player would
+have reached that day (its day of the cycle, its milestones) comes the day they are back: it is
+delayed, never lost. Without enough jokers the streak breaks and no joker is spent.
 
 The first time a player counts in a game day, the `unlocked` message (in `lang/`, a click opens
 `/dailyrewards`) tells them the reward is unlocked; `join_reminder: false` turns it off, auto-claim

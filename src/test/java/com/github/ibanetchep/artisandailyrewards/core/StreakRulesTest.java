@@ -36,6 +36,42 @@ class StreakRulesTest {
     }
 
     @Test
+    void aNewPlayerHoldsTheStartingJokersFromTheirFirstDay() {
+        CalendarSettings starting = SETTINGS.withFreezeStarting(2);
+        StreakRules.CheckIn first = StreakRules.checkIn(fresh, MONDAY, starting);
+        assertEquals(2, first.state().freezes());
+        assertFalse(first.freezeEarned());
+        // Before that day, the menus already show them.
+        assertEquals(2, StreakRules.freezesShown(fresh, starting));
+        assertEquals(0, StreakRules.freezesShown(fresh, SETTINGS));
+    }
+
+    @Test
+    void theStartingJokersKeepMoreGivenBeforeTheFirstDayAndAreNotGivenAgain() {
+        CalendarSettings starting = SETTINGS.withFreezeStarting(1);
+        assertEquals(2, StreakRules.checkIn(fresh.withFreezes(2), MONDAY, starting).state().freezes());
+
+        // A broken streak is not a first day: no starting joker again.
+        PlayerState state = StreakRules.checkIn(fresh, MONDAY, starting).state().withFreezes(0);
+        StreakRules.CheckIn broken = StreakRules.checkIn(state, MONDAY + 3, starting);
+        assertEquals(StreakRules.Outcome.BROKEN, broken.outcome());
+        assertEquals(0, broken.state().freezes());
+    }
+
+    @Test
+    void aCoveredDayDelaysItsRewardToTheReturnDay() {
+        CalendarSettings weekly = new CalendarSettings(SETTINGS.resetTime(), 7, SETTINGS.autoClaim(), 0, true, 7, 2, Map.of(), null)
+                .withFreezeStarting(1);
+        PlayerState state = fresh;
+        for (long day = MONDAY; day < MONDAY + 6; day++) state = StreakRules.checkIn(state, day, weekly).state();
+        assertEquals(6, state.streak());
+        // Day 7 of the cycle (the big one) is missed with a joker: the next day pays day 7.
+        StreakRules.CheckIn back = StreakRules.checkIn(state, MONDAY + 7, weekly);
+        assertEquals(StreakRules.Outcome.COVERED, back.outcome());
+        assertEquals(7, StreakRules.cycleDay(back.state().streak(), 7));
+    }
+
+    @Test
     void theNextDayContinuesTheStreak() {
         PlayerState state = countOn(fresh, MONDAY);
         StreakRules.CheckIn day = StreakRules.checkIn(state, MONDAY + 1, SETTINGS);

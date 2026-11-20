@@ -120,7 +120,8 @@ elements:
     title: { en: "<aqua>Jokers: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Jokers : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
       - { en: "<gray>A joker covers a missed day:", fr: "<gray>Un joker couvre un jour manqué :" }
-      - { en: "<gray>your streak goes on, the day's reward is lost.", fr: "<gray>ton streak continue, la récompense du jour est perdue." }
+      - { en: "<gray>your streak goes on, the reward you", fr: "<gray>ton streak continue, la récompense ratée" }
+      - { en: "<gray>missed waits for your return.", fr: "<gray>t'attend à ton retour." }
   - id: milestones
     positions: 47
     states:

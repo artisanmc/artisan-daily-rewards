@@ -16,6 +16,7 @@ join_reminder: true      # tell the player their reward is unlocked
 freeze:
   earn_every: 7          # days of streak per joker; 0: never
   max_stock: 2           # jokers held at most
+  starting: 0            # jokers a new player holds from their first day
 ```
 
 | Key | Type | Default | Effect |
@@ -26,6 +27,7 @@ freeze:
 | `join_reminder` | boolean | `true` | Tell a player their reward is unlocked when the day counts, and remind them of rewards that wait. |
 | `freeze.earn_every` | integer ≥ 0 | `7` | Days of streak per joker. `0`: never. |
 | `freeze.max_stock` | integer ≥ 0 | `2` | Jokers a player holds at most. |
+| `freeze.starting` | integer ≥ 0 | `0` | Jokers a new player holds from their first counted day. Above `max_stock`, `max_stock`. Players already counted get none. |
 
 ## How a day counts
 
@@ -33,8 +35,10 @@ A day counts for the streak when the player is there: they join (or are online a
 `min_playtime_minutes`. Its reward then waits, with the day of the cycle and the streak of that day, until
 they claim: `/dailyrewards claim`, the menu or auto-claim pays every reward that waits, however old.
 
-A day the player was not there is missed: a joker covers it and the streak goes on; without one, the
-streak breaks and that day's reward is lost.
+A day the player was not there is missed. One joker covers one missed day and the streak goes on; the
+covered day does not count, so the reward the player would have reached that day (its day of the cycle,
+its milestones) comes the day they are back: a big reward is delayed, never lost. Jokers are spent only
+when they cover every missed day: 3 days missed with 2 jokers break the streak and keep the 2 jokers.
 
 A claim is recorded in the database before the actions run, so two servers on one database never pay one
 reward twice. A player who leaves before the reward is handed out gets it at their next join.

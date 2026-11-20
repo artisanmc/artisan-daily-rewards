@@ -360,6 +360,26 @@ public final class DailyRepository {
         }
     }
 
+    /**
+     * Gives {@code amount} jokers on top of those held, written to the ledger ({@code freeze_given}).
+     * Not capped by {@code freeze.max_stock}: an admin's gift goes over it, and the player earns no
+     * joker until they are back under it.
+     */
+    public PlayerState giveFreezes(UUID uuid, int amount, String by, long now) throws SQLException {
+        try (Connection c = dataSource.getConnection()) {
+            ensureRow(c, uuid, now);
+            for (int attempt = 0; attempt < 3; attempt++) {
+                PlayerState before = select(c, uuid);
+                if (before == null) throw new SQLException(players + " row of " + uuid + " vanished");
+                int after = before.freezes() + amount;
+                if (writeState(c, before.withFreezes(after), before.version(), now) == 0) continue; // written meanwhile elsewhere
+                ledger(c, uuid, now, LedgerKind.FREEZE_GIVEN, amount, "freezes " + before.freezes() + " -> " + after + " by " + by);
+                return select(c, uuid);
+            }
+            throw new SQLException(players + " row of " + uuid + " kept changing, jokers not given");
+        }
+    }
+
     /** {@link #adminSet} of the streak: see there. */
     static PlayerState restored(PlayerState s, int streak, long today) {
         if (streak == 0) {
