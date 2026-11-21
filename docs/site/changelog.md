@@ -43,4 +43,10 @@ sidebar:
 - A day a freeze covered shows in the calendar as its own state, a light blue dye (`covered`, `is_covered` in
   `daily:calendar`), apart from a missed day that broke the streak. The texts say "freeze" in English and "gel" in
   French (the French ones said "joker").
+- A `textured` variant of the calendar and milestones menus for Java players who loaded the server's resource
+  pack (`variants.yml`, `variants/textured/menus/`): a vanilla-style window drawn by the pack, a tile per state
+  of a day, a green "Claim" button over three slots (greyed when nothing waits), tall arrows on both sides of
+  the days, "Day N" (the streak) at the top left and the freezes count at the top right. Players without the
+  pack, and Bedrock players, keep the menus as they were. Needs an Artisan that draws images on row-bound
+  elements.
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

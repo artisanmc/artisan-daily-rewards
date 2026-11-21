@@ -118,16 +118,52 @@ class ModuleFilesTest {
         Map<String, Set<String>> fields = Map.of(
                 "d", names(data.calendar().getSchema()),
                 "status[0]", names(data.status().getSchema()));
-        String text;
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream(ModuleFiles.ROOT + "/menus/calendar.yaml")) {
-            text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        }
         List<String> unknown = new ArrayList<>();
-        Matcher m = Pattern.compile("\\b(d|status\\[0])\\.([a-z_]+)").matcher(text);
-        while (m.find()) {
-            if (!fields.get(m.group(1)).contains(m.group(2))) unknown.add(m.group());
+        for (String path : List.of("menus/calendar.yaml", "variants/textured/menus/calendar.yaml")) {
+            Matcher m = Pattern.compile("\\b(d|status\\[0])\\.([a-z_]+)").matcher(text(path));
+            while (m.find()) {
+                if (!fields.get(m.group(1)).contains(m.group(2))) unknown.add(path + ": " + m.group());
+            }
         }
         assertEquals(List.of(), unknown);
+    }
+
+    private static String text(String path) throws IOException {
+        try (InputStream in = ModuleFilesTest.class.getClassLoader().getResourceAsStream(ModuleFiles.ROOT + "/" + path)) {
+            assertNotNull(in, path);
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    @Test
+    void theTexturedMenusTakeTheSameInputsAndShippedImages() throws IOException {
+        Map<?, ?> rules = (Map<?, ?>) yaml("variants.yml");
+        assertEquals("variants/v1", rules.get("schema"));
+        assertEquals(List.of("textured"), rules.get("variants"));
+        assertTrue(text("variants.yml").contains("show_variant: textured"));
+
+        Set<String> images = new TreeSet<>();
+        for (String path : ModuleFiles.PATHS) {
+            Matcher a = Pattern.compile("^assets/(textures|glyphs)/(\\w+)\\.png$").matcher(path);
+            if (a.find()) {
+                images.add(a.group(2));
+                assertTrue(ModuleFiles.PATHS.contains("assets/" + a.group(1) + "/" + a.group(2) + ".yml"), path);
+            }
+        }
+        for (String menu : List.of("calendar", "milestones")) {
+            Map<?, ?> module = (Map<?, ?>) yaml("menus/" + menu + ".yaml");
+            Map<?, ?> textured = (Map<?, ?>) yaml("variants/textured/menus/" + menu + ".yaml");
+            assertEquals(module.get("inputs"), textured.get("inputs"), menu + ": a variant takes the menu's inputs");
+            assertEquals(module.get("size"), textured.get("size"), menu);
+            assertEquals(false, textured.get("vanilla_texture"), menu);
+            Matcher m = Pattern.compile("asset: (\\w+)").matcher(text("variants/textured/menus/" + menu + ".yaml"));
+            int used = 0;
+            while (m.find()) {
+                assertTrue(images.contains(m.group(1)), menu + " uses " + m.group(1) + ", not shipped");
+                used++;
+            }
+            assertTrue(used > 0, menu);
+        }
     }
 
     @Test
