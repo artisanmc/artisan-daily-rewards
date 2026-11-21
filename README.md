@@ -49,6 +49,13 @@ is written again, an edited one stays yours until Reset in the editor):
   to claim is a glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day a freeze covered a light blue dye (the `material` of
   each state of the `days` element). A day to come that reaches a milestone glows; the beacon (shown only when `milestones` holds one) opens `menus/milestones.yml`, the next 112 milestones,
   28 a page.
+- `variants.yml` and `variants/textured/menus/`: the `textured` variant of both menus, for Java players who
+  loaded the server's resource pack (Bedrock players and those without the pack keep the menus above). Same
+  inputs, data and clicks, drawn with the images of `assets/glyphs/daily_background*` (the window, with
+  `vanilla_texture: false`) and `assets/textures/daily_*` (a 16×16 tile per state of a day, the buttons);
+  the texts ("Day N", the freezes count, the claim button's label) are title layers. A day to come keeps its
+  reward's item. Needs Artisan with images on row-bound elements (artisanmc/artisan#364). The images come
+  from `tools/textured/generate.py`.
 
 Before version 2 of these files, everything was in `data/calendar.yml`. At startup an edited
 `data/calendar.yml` is split into the two files (the old one is copied to

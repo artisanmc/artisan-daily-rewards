@@ -1,0 +1,101 @@
+schema: menu/v1
+# The streak milestones (opened from the calendar) for Java players who loaded the resource pack
+# (variants.yml): the module's menus/milestones.yml drawn with images. Same inputs and clicks.
+# The window is the image daily_background_plain (vanilla_texture: false); the milestones keep
+# their own items in the 28 slots.
+title:
+  - kind: background
+    asset_id: daily_background_plain
+  - kind: text
+    value: { en: "Streak milestones", fr: "Paliers de streak" }
+    x: 8
+    y: 6
+  - kind: text
+    value: { en: "Day {status[0].streak}", fr: "Jour {status[0].streak}" }
+    x: 8
+    y: 20
+    size: 12
+size: 54
+vanilla_texture: false
+inputs:
+  - name: status
+    type: list
+    source: { ref: "daily:status" }
+  - name: milestones
+    type: list
+    source:
+      ref: "daily:milestones"
+      params: { count: "112" }
+elements:
+  # "Day <streak>" at the top left is a title text: this invisible area explains it on hover.
+  - id: streak
+    positions: "0-2"
+    image: { asset: daily_blank, fit: native }
+    title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
+    lore:
+      - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
+      - ""
+      - { en: "<gray>A milestone is paid with the day that reaches it,", fr: "<gray>Un palier est payé avec le jour qui l'atteint," }
+      - { en: "<gray>on top of the day's reward.", fr: "<gray>en plus de la récompense du jour." }
+      - { en: "<gray>A broken streak starts them again.", fr: "<gray>Un streak cassé les fait recommencer." }
+  - id: milestones
+    positions: "10-16,19-25,28-34,37-43"
+    iterates: { source: milestones, alias: m }
+    states:
+      - if:
+          - expression: m.is_today
+        item: "{m.icon}"
+        enchanted: true
+        lore:
+          - ""
+          - { en: "<light_purple>{m.streak} days of streak <yellow>· today", fr: "<light_purple>{m.streak} jours de streak <yellow>· aujourd'hui" }
+          - { en: "{m.repeats ? \"<dark_gray>Again every \" + m.every + \" days\" : \"<dark_gray>Once per streak\"}", fr: "{m.repeats ? \"<dark_gray>Puis tous les \" + m.every + \" jours\" : \"<dark_gray>Une fois par streak\"}" }
+    item: "{m.icon}"
+    lore:
+      - ""
+      - { en: "<light_purple>{m.streak} days of streak", fr: "<light_purple>{m.streak} jours de streak" }
+      - { en: "<gray>In {m.offset} days <dark_gray>· on {m.date}", fr: "<gray>Dans {m.offset} jours <dark_gray>· le {m.date}" }
+      - { en: "{m.repeats ? \"<dark_gray>Again every \" + m.every + \" days\" : \"<dark_gray>Once per streak\"}", fr: "{m.repeats ? \"<dark_gray>Puis tous les \" + m.every + \" jours\" : \"<dark_gray>Une fois par streak\"}" }
+      - { en: "<dark_gray>If you come every day until then", fr: "<dark_gray>Si tu viens chaque jour d'ici là" }
+  - id: back
+    positions: 45
+    image: { asset: daily_back, fit: native }
+    title: { en: "<yellow>Back to the calendar", fr: "<yellow>Retour au calendrier" }
+    click: { left: [ { open_menu: "daily:calendar" } ] }
+  - id: previous
+    positions: "18,27"
+    states:
+      - if:
+          - pagination_at_first: milestones
+        image: { asset: daily_prev_off, fit: native }
+        title: " "
+    image: { asset: daily_prev, fit: native }
+    title: { en: "<yellow>Previous milestones", fr: "<yellow>Paliers précédents" }
+    click: { left: [ { pagination_prev: milestones } ] }
+  - id: next
+    positions: "26,35"
+    states:
+      - if:
+          - pagination_at_last: milestones
+        image: { asset: daily_next_off, fit: native }
+        title: " "
+    image: { asset: daily_next, fit: native }
+    title: { en: "<yellow>Next milestones", fr: "<yellow>Paliers suivants" }
+    click: { left: [ { pagination_next: milestones } ] }
+  # Only when the server has no milestone to come.
+  - id: empty
+    positions: 49
+    states:
+      - if:
+          - expression: status[0].next_milestone > 0
+        image: { asset: daily_blank, fit: native }
+        title: " "
+    material: BARRIER
+    title: { en: "<gray>No milestone left", fr: "<gray>Plus aucun palier" }
+    lore:
+      - { en: "<dark_gray>The server has no milestone to come.", fr: "<dark_gray>Le serveur n'a plus de palier à venir." }
+  - id: close
+    positions: 53
+    image: { asset: daily_close, fit: native }
+    title: { en: "<red>Close", fr: "<red>Fermer" }
+    click: { left: [ close_menu ] }
