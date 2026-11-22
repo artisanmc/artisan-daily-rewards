@@ -3,7 +3,8 @@ schema: menu/v1
 # calendar (menus/calendar.yml) drawn with images instead of items. Same inputs, same data, same
 # clicks; only the look changes. The window is the image daily_background (vanilla_texture: false):
 # the panel, the 28 day slots, the freezes box and the player's inventory. The texts are title
-# layers: the menu's name, "Day <streak>", the freezes count and the claim button's label.
+# layers: the menu's name, "Day <streak>", the freezes count and the claim button's label (a
+# centred textarea's x is its centre).
 # A day shows a 16x16 tile per state (assets/textures/daily_day_*), a day to come the reward's item.
 # Each state also names a material: what a day shows while its image is not in the pack yet.
 # The images are drawn by tools/textured/generate.py in the module's repository.
@@ -21,14 +22,14 @@ title:
     size: 12
   - kind: textarea
     value: "<aqua>{status[0].freezes}/{status[0].freeze_max}"
-    x: 147
+    x: 157
     y: 22
     width: 21
     line_height: 10
     alignment: center
   - kind: textarea
     value: { en: "{status[0].can_claim ? \"<white>\" : \"<gray>\"}Claim", fr: "{status[0].can_claim ? \"<white>\" : \"<gray>\"}Réclamer" }
-    x: 61
+    x: 88
     y: 113
     width: 54
     line_height: 10
