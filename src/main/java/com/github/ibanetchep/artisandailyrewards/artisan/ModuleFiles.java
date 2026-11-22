@@ -23,7 +23,7 @@ public final class ModuleFiles {
     static final String ROOT = "module";
     static final String TEMPLATE = "daily_files";
     /** Raise it whenever a file of {@link #PATHS} changes: untouched copies follow, edited ones merge. */
-    static final int VERSION = 13;
+    static final int VERSION = 14;
 
     /** Version 2 split {@code data/calendar} into these two files ({@link CalendarFiles#migrate}). */
     static final List<String> PATHS = List.of(
@@ -39,12 +39,8 @@ public final class ModuleFiles {
             "variants/textured/menus/milestones.yaml",
             "assets/glyphs/daily_background.png",
             "assets/glyphs/daily_background.yml",
-            "assets/glyphs/daily_background_plain.png",
-            "assets/glyphs/daily_background_plain.yml",
             "assets/textures/daily_back.png",
             "assets/textures/daily_back.yml",
-            "assets/textures/daily_blank.png",
-            "assets/textures/daily_blank.yml",
             "assets/textures/daily_claim.png",
             "assets/textures/daily_claim.yml",
             "assets/textures/daily_claim_off.png",
@@ -63,6 +59,8 @@ public final class ModuleFiles {
             "assets/textures/daily_day_missed.yml",
             "assets/textures/daily_day_today_claimed.png",
             "assets/textures/daily_day_today_claimed.yml",
+            "assets/textures/daily_freezes.png",
+            "assets/textures/daily_freezes.yml",
             "assets/textures/daily_milestones.png",
             "assets/textures/daily_milestones.yml",
             "assets/textures/daily_next.png",

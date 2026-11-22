@@ -4,7 +4,7 @@
 
 Writes src/main/resources/module/assets/{textures,glyphs}/daily_*.png and their .yml descriptors.
 Pillow only.
-Vanilla palette (generic_54); no text in the images: the texts are title text layers, translated.
+Vanilla palette (generic_54); no text in the images: the texts are title texts and button labels, translated.
 """
 from pathlib import Path
 
@@ -67,7 +67,7 @@ def sprite(rows, colors):
 SNOW = ["...WW...", ".W.BB.W.", "..WBBW..", "WBBWWBBW", "WBBWWBBW", "..WBBW..", ".W.BB.W.", "...WW..."]
 
 
-def background(freeze_field):
+def background():
     """The whole window (vanilla_texture: false): panel, the 28 day slots, the player's inventory."""
     img = Image.new("RGBA", (W, H), CLEAR)
     rect(img, 3, 0, W - 4, H - 1, OUTLINE); rect(img, 0, 3, W - 1, H - 4, OUTLINE)
@@ -75,12 +75,6 @@ def background(freeze_field):
     rect(img, 2, 1, W - 3, H - 2, VBG); rect(img, 1, 2, W - 2, H - 3, VBG)
     rect(img, 3, 1, W - 5, 2, VHI); rect(img, 1, 3, 2, H - 5, VHI); px(img, 3, 3, VHI)
     rect(img, 4, H - 3, W - 3, H - 2, VSH); rect(img, W - 3, 4, W - 2, H - 4, VSH); px(img, W - 4, H - 4, VSH)
-    if freeze_field:  # slots 7-8: a vanilla text box with a snowflake; the count is a title text layer
-        fx0, fy0 = slot_xy(7)[0], 18
-        fx1, fy1 = slot_xy(8)[0] + 17, 33
-        rect(img, fx0, fy0, fx1, fy1, (160, 160, 160, 255))
-        rect(img, fx0 + 1, fy0 + 1, fx1 - 1, fy1 - 1, OUTLINE)
-        img.alpha_composite(sprite(SNOW, {"W": (220, 244, 255, 255), "B": (110, 190, 235, 255)}), (fx0 + 4, fy0 + 4))
     gx0, gy0 = slot_xy(10)
     for r in range(4):
         for c in range(7):
@@ -198,6 +192,16 @@ def trophy():
     return t
 
 
+def freezes():
+    """The freezes box over slots 7-8 (36x16, centred in their 36x18): a vanilla text box with a
+    snowflake. The count is the button's label."""
+    t = Image.new("RGBA", (36, 16), CLEAR)
+    rect(t, 0, 0, 35, 15, (160, 160, 160, 255))
+    rect(t, 1, 1, 34, 14, OUTLINE)
+    t.alpha_composite(sprite(SNOW, {"W": (220, 244, 255, 255), "B": (110, 190, 235, 255)}), (4, 4))
+    return t
+
+
 def back():  # back to the calendar: a small gold arrow pointing left
     return arrow(True, True, 16, 16)
 
@@ -221,8 +225,7 @@ def claim(active):
 # left (ascent 13 puts the top row at chest-y 0). Codepoints are only hints: the pack moves a glyph
 # whose codepoint another project already uses.
 GLYPHS = {
-    "daily_background": (background(True), 0xE7A0),
-    "daily_background_plain": (background(False), 0xE7A1),
+    "daily_background": (background(), 0xE7A0),
 }
 
 # Image buttons (assets/textures).
@@ -242,8 +245,7 @@ IMAGES = {
     "daily_milestones": trophy(),
     "daily_back": back(),
     "daily_close": close(),
-    # 1x1 transparent: a hover area with no picture (the streak, the freezes).
-    "daily_blank": Image.new("RGBA", (1, 1), CLEAR),
+    "daily_freezes": freezes(),
 }
 
 

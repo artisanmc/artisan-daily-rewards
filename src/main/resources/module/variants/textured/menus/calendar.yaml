@@ -2,9 +2,8 @@ schema: menu/v1
 # The calendar (/daily) for Java players who loaded the resource pack (variants.yml): the module's
 # calendar (menus/calendar.yml) drawn with images instead of items. Same inputs, same data, same
 # clicks; only the look changes. The window is the image daily_background (vanilla_texture: false):
-# the panel, the 28 day slots, the freezes box and the player's inventory. The texts are title
-# layers: the menu's name, "Day <streak>", the freezes count and the claim button's label (a
-# centred textarea's x is its centre).
+# the panel, the 28 day slots and the player's inventory. The menu's name and "Day <streak>" are
+# title texts; the freezes count and "Claim" are the labels of their buttons (centred on them).
 # A day shows a 16x16 tile per state (assets/textures/daily_day_*), a day to come the reward's item.
 # Each state also names a material: what a day shows while its image is not in the pack yet.
 # The images are drawn by tools/textured/generate.py in the module's repository.
@@ -20,20 +19,6 @@ title:
     x: 8
     y: 20
     size: 12
-  - kind: textarea
-    value: "<aqua>{status[0].freezes}/{status[0].freeze_max}"
-    x: 157
-    y: 22
-    width: 21
-    line_height: 10
-    alignment: center
-  - kind: textarea
-    value: { en: "{status[0].can_claim ? \"<white>\" : \"<gray>\"}Claim", fr: "{status[0].can_claim ? \"<white>\" : \"<gray>\"}Réclamer" }
-    x: 88
-    y: 113
-    width: 54
-    line_height: 10
-    alignment: center
 size: 54
 vanilla_texture: false
 inputs:
@@ -46,10 +31,10 @@ inputs:
       ref: "daily:calendar"
       params: { past: "7", future: "104", week: "7" }
 elements:
-  # "Day <streak>" at the top left is a title text: this invisible area shows the streak on hover.
+  # "Day <streak>" at the top left is a title text: this element (no image, no item) is an
+  # invisible area that shows the streak on hover.
   - id: streak
     positions: "0-2"
-    image: { asset: daily_blank, fit: native }
     title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
     lore:
       - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
@@ -148,10 +133,11 @@ elements:
       - ""
       - { en: "<gray>On {d.date} <dark_gray>· day {d.cycle_day}", fr: "<gray>Le {d.date} <dark_gray>· jour {d.cycle_day}" }
       - { en: "<dark_gray>If you come every day until then", fr: "<dark_gray>Si tu viens chaque jour d'ici là" }
-  # The box at the top right: the snowflake is in the background, the count a title text.
+  # The box at the top right: the snowflake box is the image, the count its label (right of the flake).
   - id: freezes
     positions: "7-8"
-    image: { asset: daily_blank, fit: native }
+    image: { asset: daily_freezes, fit: native }
+    label: { text: "<aqua>{status[0].freezes}/{status[0].freeze_max}", offset_x: 6 }
     title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Gels : <white>{status[0].freezes}/{status[0].freeze_max}" }
     lore:
       - { en: "<gray>A freeze covers one missed day.", fr: "<gray>Un gel permet de couvrir un jour manqué." }
@@ -168,11 +154,9 @@ elements:
   - id: milestones
     positions: 45
     states:
-      # No milestone in data/rewards: no button.
+      # No milestone in data/rewards: no button (nothing to show, nothing on hover).
       - if:
           - expression: "!status[0].has_milestones"
-        image: { asset: daily_blank, fit: native }
-        title: " "
     image: { asset: daily_milestones, fit: native }
     title: { en: "<light_purple>Streak milestones", fr: "<light_purple>Paliers de streak" }
     lore:
@@ -203,13 +187,14 @@ elements:
     image: { asset: daily_next, fit: native }
     title: { en: "<yellow>Next days", fr: "<yellow>Jours suivants" }
     click: { left: [ { pagination_next: days } ] }
-  # Green while a reward waits, greyed otherwise; its label is a title text.
+  # Green while a reward waits, greyed otherwise, with its label.
   - id: claim
     positions: "48-50"
     states:
       - if:
           - expression: status[0].can_claim
         image: { asset: daily_claim, fit: native }
+        label: { text: { en: "<white>Claim", fr: "<white>Réclamer" }, offset_y: 1 }
         title: { en: "<green>Claim your rewards", fr: "<green>Réclamer tes récompenses" }
         lore:
           - { en: "{status[0].unclaimed > 1 ? \"<gray>\" + status[0].unclaimed + \" rewards waiting\" : \"\"}", fr: "{status[0].unclaimed > 1 ? \"<gray>\" + status[0].unclaimed + \" récompenses en attente\" : \"\"}" }
@@ -219,8 +204,10 @@ elements:
       - if:
           - expression: status[0].claimed_today
         image: { asset: daily_claim_off, fit: native }
+        label: { text: { en: "<gray>Claim", fr: "<gray>Réclamer" }, offset_y: 1 }
         title: { en: "<gray>Next reward in <white>{status[0].until_reset}", fr: "<gray>Prochaine récompense dans <white>{status[0].until_reset}" }
     image: { asset: daily_claim_off, fit: native }
+    label: { text: { en: "<gray>Claim", fr: "<gray>Réclamer" }, offset_y: 1 }
     title: { en: "<gray>Loading…", fr: "<gray>Chargement…" }
   - id: close
     positions: 53

@@ -31,9 +31,10 @@ public final class DailyRewardsPlugin extends JavaPlugin {
      * templates, {@code MessageBundle.send}, {@code DatabaseApi.tablePrefix},
      * {@code ProjectRootRegistry.pluginFolder} (1.1.0: the module's files in this plugin's own folder,
      * {@code plugins/ArtisanDailyRewards/artisan_module/}), Config screens with a module view,
-     * {@code PlayerCommandRegistry}, {@code TemplateRegistry}, {@code TranslationsApi}.
+     * {@code PlayerCommandRegistry}, {@code TemplateRegistry}, {@code TranslationsApi}. 1.11.0: the
+     * textured menus' button labels and invisible hover areas (menu format, no Java member).
      */
-    public static final String MIN_API_VERSION = "1.1.0";
+    public static final String MIN_API_VERSION = "1.11.0";
 
     private @Nullable ArtisanAPI api;
     private @Nullable DailyService service;
