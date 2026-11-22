@@ -1,11 +1,11 @@
 schema: menu/v1
 # The streak milestones (opened from the calendar) for Java players who loaded the resource pack
 # (variants.yml): the module's menus/milestones.yml drawn with images. Same inputs and clicks.
-# The window is the image daily_background_plain (vanilla_texture: false); the milestones keep
+# The window is the image daily_background (vanilla_texture: false); the milestones keep
 # their own items in the 28 slots.
 title:
   - kind: background
-    asset_id: daily_background_plain
+    asset_id: daily_background
   - kind: text
     value: { en: "Streak milestones", fr: "Paliers de streak" }
     x: 8
@@ -27,10 +27,10 @@ inputs:
       ref: "daily:milestones"
       params: { count: "112" }
 elements:
-  # "Day <streak>" at the top left is a title text: this invisible area explains it on hover.
+  # "Day <streak>" at the top left is a title text: this element (no image, no item) is an
+  # invisible area that explains it on hover.
   - id: streak
     positions: "0-2"
-    image: { asset: daily_blank, fit: native }
     title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
     lore:
       - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
@@ -86,10 +86,9 @@ elements:
   - id: empty
     positions: 49
     states:
+      # A milestone to come: nothing here (no image nor item, no tooltip).
       - if:
           - expression: status[0].next_milestone > 0
-        image: { asset: daily_blank, fit: native }
-        title: " "
     material: BARRIER
     title: { en: "<gray>No milestone left", fr: "<gray>Plus aucun palier" }
     lore:
