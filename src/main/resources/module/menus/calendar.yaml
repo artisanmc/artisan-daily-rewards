@@ -36,9 +36,8 @@ elements:
     lore:
       - { en: "<gray>Current: <white>{status[0].streak}", fr: "<gray>Actuel : <white>{status[0].streak}" }
       - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
-      - { en: "<gray>Days: <white>{status[0].total}", fr: "<gray>Jours : <white>{status[0].total}" }
-      - ""
-      - { en: "{status[0].at_risk ? \"<yellow>Missed days: your freezes cover them\" : \"\"}{status[0].broken ? \"<red>Streak lost: it starts again at 1 today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Jours manqués : tes gels les couvrent\" : \"\"}{status[0].broken ? \"<red>Streak perdu : il repart à 1 aujourd'hui\" : \"\"}" }
+      - { en: "<gray>Days played: <white>{status[0].total}", fr: "<gray>Jours joués : <white>{status[0].total}" }
+      - { en: "{status[0].broken ? \"<red>Streak lost: it starts again at 1 today\" : \"\"}", fr: "{status[0].broken ? \"<red>Streak perdu : il repart à 1 aujourd'hui\" : \"\"}" }
   - id: days
     positions: "10-16,19-25,28-34,37-43"
     iterates: { source: days, alias: d }
