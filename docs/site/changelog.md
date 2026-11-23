@@ -62,4 +62,6 @@ sidebar:
   (`daily:status` gains `playtime_locked` and `playtime_left`; an open calendar follows each minute and turns
   to "Claim" when the day counts). Once claimed, it says "Reward claimed", "Come back tomorrow" and the time
   until the next one.
+- The textured calendar's two title texts carry their `line_height`: without it, the editor drew them outside
+  the menu.
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

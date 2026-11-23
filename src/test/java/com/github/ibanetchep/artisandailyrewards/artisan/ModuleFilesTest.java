@@ -167,6 +167,23 @@ class ModuleFilesTest {
     }
 
     @Test
+    void everyTitleTextareaCarriesTheFieldsTheSchemaRequires() throws IOException {
+        // menu/v1: a textarea layer requires x, y, width, line_height and alignment (the editor needs them all).
+        for (String path : List.of("menus/calendar.yaml", "menus/milestones.yaml",
+                "variants/textured/menus/calendar.yaml", "variants/textured/menus/milestones.yaml")) {
+            Map<?, ?> menu = (Map<?, ?>) yaml(path);
+            Object title = menu.get("title");
+            if (!(title instanceof List<?> layers)) continue;
+            for (Object layer : layers) {
+                Map<?, ?> l = (Map<?, ?>) layer;
+                if (!"textarea".equals(l.get("kind"))) continue;
+                for (String field : List.of("x", "y", "width", "line_height", "alignment"))
+                    assertTrue(l.containsKey(field), path + ": a textarea without " + field + " (" + l.get("value") + ")");
+            }
+        }
+    }
+
+    @Test
     void aCentredTitleTextIsPlacedByItsCentre() throws IOException {
         // Artisan centres a textarea's lines on its x: the window's middle is 88 (176 px wide).
         for (String menu : List.of("calendar", "milestones")) {
