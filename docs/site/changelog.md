@@ -58,7 +58,8 @@ sidebar:
   unlocks it: it names only the days before that wait, and the `unlocked` message tells when today counts.
 - `join_reminder` is now `notify_on_unlock` ("Notify on unlock" in the editor). A `data/settings.yml` that
   still says `join_reminder` is renamed at startup and keeps its value; the old key is still read.
-- While today waits for `min_playtime_minutes`, the calendar's claim button counts down the minutes left
+- While today waits for `min_playtime_minutes`, the calendar's claim button (greyed, still "Claim") counts
+  down the minutes left in its tooltip
   (`daily:status` gains `playtime_locked` and `playtime_left`; an open calendar follows each minute and turns
   to "Claim" when the day counts). Once claimed, it says "Reward claimed", "Come back tomorrow" and the time
   until the next one.
