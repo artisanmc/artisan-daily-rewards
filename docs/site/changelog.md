@@ -54,4 +54,6 @@ sidebar:
   The trophy's next milestone and its click to the milestones only show when `milestones` holds one.
 - The streak's warnings say what happened: "Missed days: your freezes cover them" and "Streak lost: it
   starts again at 1 today" (menus and `/daily`).
+- With `min_playtime_minutes`, the join reminder no longer announces today's reward before the playtime
+  unlocks it: it names only the days before that wait, and the `unlocked` message tells when today counts.
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.
