@@ -208,7 +208,8 @@ public final class DailyService {
                 return;
             }
             scheduler.runForLater(player, ticks(wait), () -> greet(player, false));
-            if (remind && !autoClaims(state) && settings.joinReminder()) remind(player, unclaimed(uuid) + 1);
+            int waiting = waitingWhileLocked(unclaimed(uuid));
+            if (remind && waiting > 0 && !autoClaims(state) && settings.joinReminder()) remind(player, waiting);
             return;
         }
         offer(player, remind);
@@ -221,6 +222,15 @@ public final class DailyService {
         if (state == null || waiting == 0) return;
         if (autoClaims(state)) claim(player, true);
         else if (remind && settings.joinReminder()) remind(player, waiting);
+    }
+
+    /**
+     * The rewards a join reminder names while today waits for its playtime: those of the days before
+     * that wait, not today's, which is not unlocked yet (the {@code unlocked} message tells it when the
+     * day counts).
+     */
+    static int waitingWhileLocked(int unclaimed) {
+        return unclaimed;
     }
 
     private void remind(Player player, int waiting) {
