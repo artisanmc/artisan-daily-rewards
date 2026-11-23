@@ -16,4 +16,13 @@ public final class Durations {
         if (minutes > 0) return minutes + "m";
         return Math.max(1, seconds) + "s";
     }
+
+    /**
+     * A countdown that changes once a minute: {@code 5 min}, {@code 4 min}… then {@code < 1 min}.
+     * Whole minutes left, rounded down, so it turns when a minute ends.
+     */
+    public static String countdown(Duration duration) {
+        long minutes = Math.max(0, duration.getSeconds()) / 60;
+        return minutes > 0 ? minutes + " min" : "< 1 min";
+    }
 }

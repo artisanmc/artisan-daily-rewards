@@ -23,7 +23,7 @@ public final class ModuleFiles {
     static final String ROOT = "module";
     static final String TEMPLATE = "daily_files";
     /** Raise it whenever a file of {@link #PATHS} changes: untouched copies follow, edited ones merge. */
-    static final int VERSION = 17;
+    static final int VERSION = 18;
 
     /** Version 2 split {@code data/calendar} into these two files ({@link CalendarFiles#migrate}). */
     static final List<String> PATHS = List.of(

@@ -71,6 +71,8 @@ public final class DailyService {
     private final Map<UUID, Long> sessionStart = new ConcurrentHashMap<>();
     private final Set<UUID> claiming = ConcurrentHashMap.newKeySet();
     private final Set<UUID> checkingIn = ConcurrentHashMap.newKeySet();
+    /** Players whose open calendar is opened again at each minute of the playtime left ({@link #countdown}). */
+    private final Set<UUID> countingDown = ConcurrentHashMap.newKeySet();
     /** Raised on every reschedule: a reset task from an older schedule does nothing. */
     private final AtomicInteger resetGeneration = new AtomicInteger();
 
@@ -190,6 +192,7 @@ public final class DailyService {
         sessionStart.remove(player.getUniqueId());
         claiming.remove(player.getUniqueId());
         checkingIn.remove(player.getUniqueId());
+        countingDown.remove(player.getUniqueId());
     }
 
     /**
@@ -208,6 +211,7 @@ public final class DailyService {
                 return;
             }
             scheduler.runForLater(player, ticks(wait), () -> greet(player, false));
+            if (countingDown.add(uuid)) countdown(player);
             int waiting = remindedWhileLocked(unclaimed(uuid), autoClaims(state), settings.notifyOnUnlock());
             if (remind && waiting > 0) remind(player, waiting);
             return;
@@ -329,6 +333,40 @@ public final class DailyService {
             case ON -> true;
             case PLAYER -> Boolean.TRUE.equals(state.autoClaim());
         };
+    }
+
+    /**
+     * The playtime left before today counts for the player: zero once it is counted, or with no
+     * {@code min_playtime_minutes}. The calendar's claim button shows it ({@code daily:status}).
+     */
+    public Duration playtimeLock(UUID uuid) {
+        PlayerState state = cache.get(uuid);
+        if (state == null || !claimsAllowed || state.countedOn(clock.today())) return Duration.ZERO;
+        return playtimeLeft(uuid);
+    }
+
+    /**
+     * While today waits for its playtime: a calendar the player has open is opened again each time
+     * the minutes left change, so its countdown follows (it shows whole minutes, never seconds: each
+     * refresh opens the window again). The count itself opens it once more ({@link #checkIn}).
+     */
+    private void countdown(Player player) {
+        UUID uuid = player.getUniqueId();
+        Duration left = playtimeLock(uuid);
+        if (!player.isOnline() || left.isZero()) {
+            countingDown.remove(uuid);
+            return;
+        }
+        scheduler.runForLater(player, ticks(untilMinuteTurns(left)), () -> {
+            if (!playtimeLock(uuid).isZero()) refreshMenu(player);
+            countdown(player);
+        });
+    }
+
+    /** How long until {@code left} shows one minute less ({@link Durations#countdown}). */
+    static Duration untilMinuteTurns(Duration left) {
+        long ms = left.toMillis() % 60_000;
+        return Duration.ofMillis(ms == 0 ? 60_000 : ms);
     }
 
     private Duration playtimeLeft(UUID uuid) {

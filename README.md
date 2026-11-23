@@ -67,7 +67,7 @@ The menus read three data sources:
 | Source | Rows | Fields |
 |---|---|---|
 | `daily:calendar` | one per game day; params `past` (7, at most 35), `future` (20) and `week` (0; `7` starts the list on a grid column, today on the column of its cycle day, days from `future` moved to `past`) | `id`, `date`, `offset`, `status` (`before`, `claimed`, `missed`, `covered`, `available`, `upcoming`), `is_today`, `is_claimed`, `is_missed`, `is_covered`, `is_before`, `is_available`, `is_upcoming`, `cycle_day`, `has_reward`, `icon`, `streak`, `is_milestone`, `milestone_count`, `milestone_icon` |
-| `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `next_freeze_in`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `has_milestones`, `next_milestone`, `next_milestone_in` |
+| `daily:status` | one | `loaded`, `streak`, `longest`, `total`, `freezes`, `freeze_max`, `next_freeze_in`, `claimed_today`, `unclaimed`, `can_claim`, `at_risk`, `broken`, `lost`, `cycle_day`, `cycle_length`, `until_reset`, `playtime_locked`, `playtime_left`, `has_milestones`, `next_milestone`, `next_milestone_in` |
 | `daily:milestones` | one per coming milestone; param `count` (28, at most 200) | `id`, `streak`, `offset`, `date`, `is_today`, `repeats`, `every`, `icon` |
 
 `available` is any day whose reward waits: today, or a day before when the player was there

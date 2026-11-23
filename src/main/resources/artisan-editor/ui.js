@@ -280,6 +280,8 @@ function ze(e, t = {}) {
     cycle_day: T(5, e),
     cycle_length: e,
     until_reset: "3h 12m",
+    playtime_locked: !1,
+    playtime_left: "",
     has_milestones: A(t).length > 0,
     next_milestone: n ? n.streak : 0,
     next_milestone_in: n ? n.streak - _ : -1
