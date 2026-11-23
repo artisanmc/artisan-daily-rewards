@@ -25,8 +25,8 @@ status:
   claimed: "<gray>La récompense du jour est réclamée. Prochaine dans <white><time></white>."
   waiting: "<green>Ta récompense quotidienne t'attend :</green> <click:run_command:/<command> claim><green>[Réclamer]</green></click>"
   waiting_many: "<green><white><count></white> récompenses quotidiennes t'attendent :</green> <click:run_command:/<command> claim><green>[Réclamer]</green></click>"
-  at_risk: "<yellow>Joue aujourd'hui ou ton streak s'arrête."
-  broken: "<red>Ton streak de <white><lost></white> repart de zéro aujourd'hui."
+  at_risk: "<yellow>Jours manqués : tes gels les couvrent."
+  broken: "<red>Streak perdu : il repart à 1 aujourd'hui."
 autoclaim:
   enabled: "<green>Ta récompense du jour sera réclamée automatiquement à la connexion."
   disabled: "<gray>Réclamation automatique désactivée : utilise <white>/<command> claim</white>."

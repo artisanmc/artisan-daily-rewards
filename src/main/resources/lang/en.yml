@@ -26,8 +26,8 @@ status:
   claimed: "<gray>Today's reward is claimed. Next one in <white><time></white>."
   waiting: "<green>Your daily reward is waiting:</green> <click:run_command:/<command> claim><green>[Claim]</green></click>"
   waiting_many: "<green><white><count></white> daily rewards are waiting:</green> <click:run_command:/<command> claim><green>[Claim]</green></click>"
-  at_risk: "<yellow>Play today or your streak ends."
-  broken: "<red>Your streak of <white><lost></white> starts again today."
+  at_risk: "<yellow>Missed days: your freezes cover them."
+  broken: "<red>Streak lost: it starts again at 1 today."
 autoclaim:
   enabled: "<green>Your daily reward will be claimed automatically when you join."
   disabled: "<gray>Automatic claim turned off: use <white>/<command> claim</white>."

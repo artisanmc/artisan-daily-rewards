@@ -46,7 +46,12 @@ sidebar:
 - A `textured` variant of the calendar and milestones menus for Java players who loaded the server's resource
   pack (`variants.yml`, `variants/textured/menus/`): a vanilla-style window drawn by the pack, a tile per state
   of a day, a green "Claim" button over three slots (greyed when nothing waits), tall arrows on both sides of
-  the days, "Day N" (the streak) at the top left and the freezes count at the top right. Players without the
-  pack, and Bedrock players, keep the menus as they were. Needs an Artisan that draws images on row-bound
-  elements.
+  the days, "Day N" (the streak) centred at the top, the freezes count at the bottom left and a trophy next to
+  the close button. Players without the pack, and Bedrock players, keep the menus as they were. Needs an
+  Artisan that draws images on row-bound elements.
+- The streak's tooltip (the trophy and "Day N" in the textured calendar, the nether star in the other one)
+  reads "Streak", then the current streak, the longest and the days played, without the day of the cycle.
+  The trophy's next milestone and its click to the milestones only show when `milestones` holds one.
+- The streak's warnings say what happened: "Missed days: your freezes cover them" and "Streak lost: it
+  starts again at 1 today" (menus and `/daily`).
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.
