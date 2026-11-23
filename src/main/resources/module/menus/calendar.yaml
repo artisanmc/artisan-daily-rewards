@@ -179,6 +179,13 @@ elements:
   - id: claim
     positions: 49
     states:
+      # Today waits for its playtime and nothing from the days before waits: the minutes left.
+      - if:
+          - expression: status[0].playtime_locked && status[0].unclaimed == 0
+        material: CLOCK
+        title: { en: "<gray>Unlocked in <white>{status[0].playtime_left}", fr: "<gray>Débloquée dans <white>{status[0].playtime_left}" }
+        lore:
+          - { en: "<dark_gray>Keep playing: the reward unlocks then", fr: "<dark_gray>Continue à jouer : elle se débloque alors" }
       - if:
           - expression: status[0].can_claim
         material: SUNFLOWER
@@ -192,7 +199,10 @@ elements:
       - if:
           - expression: status[0].claimed_today
         material: CLOCK
-        title: { en: "<gray>Next reward in <white>{status[0].until_reset}", fr: "<gray>Prochaine récompense dans <white>{status[0].until_reset}" }
+        title: { en: "<gray>✔ Reward claimed", fr: "<gray>✔ Récompense réclamée" }
+        lore:
+          - { en: "<gray>Come back tomorrow", fr: "<gray>Reviens demain" }
+          - { en: "<gray>Next reward in <white>{status[0].until_reset}", fr: "<gray>Prochaine récompense dans <white>{status[0].until_reset}" }
     material: CLOCK
     title: { en: "<gray>Loading…", fr: "<gray>Chargement…" }
   - id: close

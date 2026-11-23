@@ -13,6 +13,7 @@ import net.artisanmc.modules.api.model.ModelFieldType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -117,6 +118,10 @@ public final class CalendarData {
                 new DataSourceField("cycle_day", ModelFieldType.integer(), "Today's day of the cycle, counted or to count"),
                 new DataSourceField("cycle_length", ModelFieldType.integer(), null),
                 new DataSourceField("until_reset", ModelFieldType.string(), "Time left in the game day: 3h 12m"),
+                new DataSourceField("playtime_locked", ModelFieldType.bool(),
+                        "Today not counted yet: the viewer has not played min_playtime_minutes in this session"),
+                new DataSourceField("playtime_left", ModelFieldType.string(),
+                        "The playtime left while playtime_locked, in whole minutes: 4 min, then < 1 min; empty otherwise"),
                 new DataSourceField("has_milestones", ModelFieldType.bool(),
                         "The server has milestones in data/rewards (the calendar shows its milestones button only then)"),
                 new DataSourceField("next_milestone", ModelFieldType.integer(),
@@ -200,6 +205,8 @@ public final class CalendarData {
         if (state == null) {
             row.putAll(Map.of("streak", 0, "longest", 0, "total", 0, "freezes", 0, "claimed_today", false,
                     "unclaimed", 0, "can_claim", false, "at_risk", false, "broken", false, "lost", 0));
+            row.put("playtime_locked", false);
+            row.put("playtime_left", "");
             row.put("cycle_day", 1);
             row.put("next_milestone", 0);
             row.put("next_milestone_in", -1);
@@ -221,6 +228,9 @@ public final class CalendarData {
         row.put("broken", shown.broken());
         row.put("lost", shown.broken() ? state.streak() : 0);
         row.put("cycle_day", StreakRules.cycleDay(todayStreak, settings.cycleLength()));
+        Duration lock = service.playtimeLock(player.getUniqueId());
+        row.put("playtime_locked", !lock.isZero());
+        row.put("playtime_left", lock.isZero() ? "" : Durations.countdown(lock));
         List<DailyService.UpcomingMilestone> next = service.upcomingMilestones(player.getUniqueId(), 1);
         boolean any = next != null && !next.isEmpty();
         row.put("next_milestone", any ? next.get(0).streak() : 0);
