@@ -210,18 +210,32 @@ def close():
     return t
 
 
+TROPHY = [
+    ".KKKKKKKKKKKKKK.",
+    ".KHHHHHHHHHHHHK.",
+    ".KGGGGGGGGGGDDK.",
+    "KKKWHGGGGGGDSKKK",
+    "KGKWHGGGGGGDSKGK",
+    "KGKWHGGGGGGDSKGK",
+    ".KGKHGGGGGDSKGK.",
+    "..KKHGGGGGDSKK..",
+    "....KHGGGDSK....",
+    ".....KHGDSK.....",
+    "......KGDK......",
+    ".....KHGDDK.....",
+    "...KKKKKKKKKK...",
+    "...KppppppppK...",
+    "...KPPPPPPqqK...",
+    "...KKKKKKKKKK...",
+]
+
+
 def trophy():
-    t = Image.new("RGBA", (16, 16), CLEAR)
-    d = ImageDraw.Draw(t)
-    d.rectangle([4, 2, 11, 8], fill=GOLD)
-    d.rectangle([4, 2, 11, 2], fill=GOLD_H)
-    d.rectangle([2, 3, 3, 6], outline=GOLD_D)
-    d.rectangle([12, 3, 13, 6], outline=GOLD_D)
-    d.rectangle([5, 8, 10, 9], fill=GOLD_D)
-    d.rectangle([7, 9, 8, 11], fill=GOLD_D)
-    d.rectangle([4, 12, 11, 13], fill=(170, 90, 220, 255))
-    d.rectangle([5, 3, 5, 6], fill=GOLD_H)
-    return t
+    """Milestones: a gold cup lit from the left (white glint, dark right side), handles, stem and a
+    purple base, outlined."""
+    return sprite(TROPHY, {"K": OUTLINE, "H": GOLD_H, "W": (255, 252, 222, 255), "G": GOLD, "D": GOLD_D,
+                           "S": (150, 96, 20, 255), "p": (205, 150, 245, 255), "P": (170, 90, 220, 255),
+                           "q": (118, 54, 168, 255)})
 
 
 def freezes():
