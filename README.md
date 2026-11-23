@@ -84,7 +84,7 @@ have reached that day (its day of the cycle, its milestones) comes the day they 
 delayed, never lost. Without enough freezes the streak breaks and no freeze is spent.
 
 The first time a player counts in a game day, the `unlocked` message (in `lang/`, a click opens
-`/dailyrewards`) tells them the reward is unlocked; `join_reminder: false` turns it off, auto-claim
+`/dailyrewards`) tells them the reward is unlocked; `notify_on_unlock: false` turns it off, auto-claim
 claims instead.
 
 Whether a day pays milestones is decided when it counts: its streak is above the highest streak

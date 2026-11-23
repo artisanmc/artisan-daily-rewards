@@ -56,4 +56,6 @@ sidebar:
   starts again at 1 today" (menus and `/daily`).
 - With `min_playtime_minutes`, the join reminder no longer announces today's reward before the playtime
   unlocks it: it names only the days before that wait, and the `unlocked` message tells when today counts.
+- `join_reminder` is now `notify_on_unlock` ("Notify on unlock" in the editor). A `data/settings.yml` that
+  still says `join_reminder` is renamed at startup and keeps its value; the old key is still read.
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.

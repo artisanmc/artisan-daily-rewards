@@ -11,7 +11,7 @@ A day counts after 15 minutes in the session, and its reward is claimed for the 
 # plugins/Artisan/modules/daily/data/settings.yml
 min_playtime_minutes: 15
 auto_claim: "on"
-join_reminder: true
+notify_on_unlock: true
 ```
 
 Before the 15 minutes, `/dailyrewards claim` answers how long is left. With `auto_claim: "on"`, the reward is

@@ -36,8 +36,9 @@ public final class SettingsModel {
                 integer("min_playtime_minutes", "Playtime before the day counts",
                         "Minutes of the current session before the day counts for the streak and its reward can be claimed.",
                         d.minPlaytimeMinutes(), 0),
-                new ModelField("join_reminder", ModelFieldType.bool()).withLabel("Remind at join")
-                        .withHelp("Tell a player their reward is unlocked when the day counts, and remind of the rewards that wait.").withDefault(d.joinReminder()),
+                new ModelField("notify_on_unlock", ModelFieldType.bool()).withLabel("Notify on unlock")
+                        .withHelp("Tell a player when today's reward is unlocked, and remind them at join of the rewards "
+                                + "of the days before that wait.").withDefault(d.notifyOnUnlock()),
                 new ModelField("freeze", ModelFieldType.object(List.of(
                         integer("earn_every", "Earned every", "Days of streak per freeze; 0: never.", d.freezeEarnEvery(), 0),
                         integer("max_stock", "Held at most", null, d.freezeMaxStock(), 0),

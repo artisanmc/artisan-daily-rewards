@@ -28,6 +28,15 @@ class CalendarFilesTest {
     }
 
     @Test
+    void anOldJoinReminderIsRenamedWithItsValueAndComments(@TempDir Path tmp) throws Exception {
+        write(tmp, "data/settings.yml", "# mine\nreset_time: \"06:00\"\njoin_reminder: false # quiet\n");
+        assertTrue(CalendarFiles.renameNotifyOnUnlock(tmp.toFile()));
+        assertEquals("# mine\nreset_time: \"06:00\"\nnotify_on_unlock: false # quiet\n",
+                Files.readString(tmp.resolve("data/settings.yml")));
+        assertFalse(CalendarFiles.renameNotifyOnUnlock(tmp.toFile()), "once only");
+    }
+
+    @Test
     void theOwnersFileWinsOverTheShippedOneYmlBeforeYaml(@TempDir Path tmp) throws Exception {
         File folder = tmp.toFile();
         assertNull(CalendarFiles.find(folder, CalendarFiles.SETTINGS));
