@@ -32,13 +32,13 @@ elements:
   - id: streak
     positions: 4
     material: NETHER_STAR
-    title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
+    title: { en: "<gold>Streak", fr: "<gold>Streak" }
     lore:
+      - { en: "<gray>Current: <white>{status[0].streak}", fr: "<gray>Actuel : <white>{status[0].streak}" }
       - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
       - { en: "<gray>Days: <white>{status[0].total}", fr: "<gray>Jours : <white>{status[0].total}" }
-      - { en: "<gray>Day <white>{status[0].cycle_day}</white> of <white>{status[0].cycle_length}</white>", fr: "<gray>Jour <white>{status[0].cycle_day}</white> sur <white>{status[0].cycle_length}</white>" }
       - ""
-      - { en: "{status[0].at_risk ? \"<yellow>Play today or your streak ends\" : \"\"}{status[0].broken ? \"<red>Your streak starts again today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Joue aujourd'hui ou ton streak s'arrête\" : \"\"}{status[0].broken ? \"<red>Ton streak repart de zéro aujourd'hui\" : \"\"}" }
+      - { en: "{status[0].at_risk ? \"<yellow>Missed days: your freezes cover them\" : \"\"}{status[0].broken ? \"<red>Streak lost: it starts again at 1 today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Jours manqués : tes gels les couvrent\" : \"\"}{status[0].broken ? \"<red>Streak perdu : il repart à 1 aujourd'hui\" : \"\"}" }
   - id: days
     positions: "10-16,19-25,28-34,37-43"
     iterates: { source: days, alias: d }

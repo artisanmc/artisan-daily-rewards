@@ -109,7 +109,7 @@ Each state of a day has its own look: a reward to claim (today or a day the play
 glowing lime dye, a claimed day a gray dye, a missed day a red dye, a day a freeze covered a light blue dye, and a day to come shows the reward
 it will pay. Change the `material` of a state of the `days` element to change it.
 A day that reaches a milestone glows, shows the milestone's icon (to come) and says
-`+ streak bonus`. The beacon at the bottom left (only when `milestones` holds at least one) gives the next milestone and opens `menus/milestones.yml`:
+`+ streak bonus`. The beacon at the bottom left (the trophy next to the close button in the textured calendar), only when `milestones` holds at least one, gives the next milestone and opens `menus/milestones.yml`:
 the next 112 milestones the player reaches if they come every day, 28 a page, with the day each one falls
 on and whether it repeats.
 

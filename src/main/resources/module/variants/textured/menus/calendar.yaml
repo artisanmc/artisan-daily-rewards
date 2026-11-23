@@ -3,21 +3,26 @@ schema: menu/v1
 # calendar (menus/calendar.yml) drawn with images instead of items. Same inputs, same data, same
 # clicks; only the look changes. The window is the image daily_background (vanilla_texture: false):
 # the panel, the 28 day slots and the player's inventory. The menu's name and "Day <streak>" are
-# title texts; the freezes count and "Claim" are the labels of their buttons (centred on them).
+# title texts, centred; the freezes count and "Claim" are the labels of their buttons (centred on
+# them).
 # A day shows a 16x16 tile per state (assets/textures/daily_day_*), a day to come the reward's item.
 # Each state also names a material: what a day shows while its image is not in the pack yet.
 # The images are drawn by tools/textured/generate.py in the module's repository.
 title:
   - kind: background
     asset_id: daily_background
-  - kind: text
+  - kind: textarea
     value: { en: "Daily rewards", fr: "Récompenses quotidiennes" }
-    x: 8
+    x: 0
     y: 6
-  - kind: text
+    width: 176
+    alignment: center
+  - kind: textarea
     value: { en: "Day {status[0].streak}", fr: "Jour {status[0].streak}" }
-    x: 8
+    x: 0
     y: 20
+    width: 176
+    alignment: center
     size: 12
 size: 54
 vanilla_texture: false
@@ -31,17 +36,17 @@ inputs:
       ref: "daily:calendar"
       params: { past: "7", future: "104", week: "7" }
 elements:
-  # "Day <streak>" at the top left is a title text: this element (no image, no item) is an
-  # invisible area that shows the streak on hover.
+  # "Day <streak>" at the top is a title text: this element (no image, no item) is an invisible
+  # area under it that shows the streak on hover, as the trophy does.
   - id: streak
-    positions: "0-2"
-    title: { en: "<gold>Streak: <white>{status[0].streak}", fr: "<gold>Streak : <white>{status[0].streak}" }
+    positions: "2-6"
+    title: { en: "<gold>Streak", fr: "<gold>Streak" }
     lore:
+      - { en: "<gray>Current: <white>{status[0].streak}", fr: "<gray>Actuel : <white>{status[0].streak}" }
       - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
       - { en: "<gray>Days: <white>{status[0].total}", fr: "<gray>Jours : <white>{status[0].total}" }
-      - { en: "<gray>Day <white>{status[0].cycle_day}</white> of <white>{status[0].cycle_length}</white>", fr: "<gray>Jour <white>{status[0].cycle_day}</white> sur <white>{status[0].cycle_length}</white>" }
       - ""
-      - { en: "{status[0].at_risk ? \"<yellow>Play today or your streak ends\" : \"\"}{status[0].broken ? \"<red>Your streak starts again today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Joue aujourd'hui ou ton streak s'arrête\" : \"\"}{status[0].broken ? \"<red>Ton streak repart de zéro aujourd'hui\" : \"\"}" }
+      - { en: "{status[0].at_risk ? \"<yellow>Missed days: your freezes cover them\" : \"\"}{status[0].broken ? \"<red>Streak lost: it starts again at 1 today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Jours manqués : tes gels les couvrent\" : \"\"}{status[0].broken ? \"<red>Streak perdu : il repart à 1 aujourd'hui\" : \"\"}" }
   - id: days
     positions: "10-16,19-25,28-34,37-43"
     iterates: { source: days, alias: d }
@@ -133,9 +138,9 @@ elements:
       - ""
       - { en: "<gray>On {d.date} <dark_gray>· day {d.cycle_day}", fr: "<gray>Le {d.date} <dark_gray>· jour {d.cycle_day}" }
       - { en: "<dark_gray>If you come every day until then", fr: "<dark_gray>Si tu viens chaque jour d'ici là" }
-  # The box at the top right: the snowflake box is the image, the count its label (right of the flake).
+  # The box at the bottom left: the snowflake box is the image, the count its label (right of the flake).
   - id: freezes
-    positions: "7-8"
+    positions: "45-46"
     image: { asset: daily_freezes, fit: native }
     label: { text: "<aqua>{status[0].freezes}/{status[0].freeze_max}", offset_x: 6 }
     title: { en: "<aqua>Freezes: <white>{status[0].freezes}/{status[0].freeze_max}", fr: "<aqua>Gels : <white>{status[0].freezes}/{status[0].freeze_max}" }
@@ -151,21 +156,36 @@ elements:
       - { en: "{status[0].next_freeze_in == 1 ? \"<aqua>Next freeze tomorrow\" : \"\"}", fr: "{status[0].next_freeze_in == 1 ? \"<aqua>Prochain gel demain\" : \"\"}" }
       - { en: "{status[0].next_freeze_in == 0 ? \"<aqua>Next freeze today\" : \"\"}", fr: "{status[0].next_freeze_in == 0 ? \"<aqua>Prochain gel aujourd'hui\" : \"\"}" }
       - { en: "{status[0].freeze_max > 0 && status[0].freezes >= status[0].freeze_max ? \"<dark_gray>Stock full: none earned until one is used\" : \"\"}", fr: "{status[0].freeze_max > 0 && status[0].freezes >= status[0].freeze_max ? \"<dark_gray>Stock plein : aucun gagné avant d'en utiliser un\" : \"\"}" }
+  # The trophy, next to the close button: the streak. With milestones in data/rewards, the next one
+  # and a click that opens them all; without, no click and no word of milestones.
   - id: milestones
-    positions: 45
+    positions: 52
     states:
-      # No milestone in data/rewards: no button (nothing to show, nothing on hover).
       - if:
-          - expression: "!status[0].has_milestones"
+          - expression: status[0].has_milestones
+        image: { asset: daily_milestones, fit: native }
+        title: { en: "<gold>Streak", fr: "<gold>Streak" }
+        lore:
+          - { en: "<gray>Current: <white>{status[0].streak}", fr: "<gray>Actuel : <white>{status[0].streak}" }
+          - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
+          - { en: "<gray>Days: <white>{status[0].total}", fr: "<gray>Jours : <white>{status[0].total}" }
+          - ""
+          - { en: "{status[0].at_risk ? \"<yellow>Missed days: your freezes cover them\" : \"\"}{status[0].broken ? \"<red>Streak lost: it starts again at 1 today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Jours manqués : tes gels les couvrent\" : \"\"}{status[0].broken ? \"<red>Streak perdu : il repart à 1 aujourd'hui\" : \"\"}" }
+          - { en: "{status[0].next_milestone > 0 ? \"<gray>Next milestone: <white>\" + status[0].next_milestone + \" days</white> of streak\" : \"<gray>No milestone left\"}", fr: "{status[0].next_milestone > 0 ? \"<gray>Prochain palier : <white>\" + status[0].next_milestone + \" jours</white> de streak\" : \"<gray>Plus aucun palier\"}" }
+          - { en: "{status[0].next_milestone_in == 0 ? \"<yellow>Today\" : \"\"}", fr: "{status[0].next_milestone_in == 0 ? \"<yellow>Aujourd'hui\" : \"\"}" }
+          - { en: "{status[0].next_milestone_in > 0 ? \"<gray>In <white>\" + status[0].next_milestone_in + \"</white> days\" : \"\"}", fr: "{status[0].next_milestone_in > 0 ? \"<gray>Dans <white>\" + status[0].next_milestone_in + \"</white> jours\" : \"\"}" }
+          - ""
+          - { en: "<green>Click to see the milestones", fr: "<green>Cliquer pour voir les paliers" }
+        click: { left: [ { open_menu: "daily:milestones" } ] }
     image: { asset: daily_milestones, fit: native }
-    title: { en: "<light_purple>Streak milestones", fr: "<light_purple>Paliers de streak" }
+    title: { en: "<gold>Streak", fr: "<gold>Streak" }
     lore:
-      - { en: "{status[0].next_milestone > 0 ? \"<gray>Next: <white>\" + status[0].next_milestone + \" days</white> of streak\" : \"<gray>No milestone left\"}", fr: "{status[0].next_milestone > 0 ? \"<gray>Prochain : <white>\" + status[0].next_milestone + \" jours</white> de streak\" : \"<gray>Plus aucun palier\"}" }
-      - { en: "{status[0].next_milestone_in == 0 ? \"<yellow>Today\" : \"\"}", fr: "{status[0].next_milestone_in == 0 ? \"<yellow>Aujourd'hui\" : \"\"}" }
-      - { en: "{status[0].next_milestone_in > 0 ? \"<gray>In <white>\" + status[0].next_milestone_in + \"</white> days\" : \"\"}", fr: "{status[0].next_milestone_in > 0 ? \"<gray>Dans <white>\" + status[0].next_milestone_in + \"</white> jours\" : \"\"}" }
+      - { en: "<gray>Current: <white>{status[0].streak}", fr: "<gray>Actuel : <white>{status[0].streak}" }
+      - { en: "<gray>Longest: <white>{status[0].longest}", fr: "<gray>Record : <white>{status[0].longest}" }
+      - { en: "<gray>Days: <white>{status[0].total}", fr: "<gray>Jours : <white>{status[0].total}" }
       - ""
-      - { en: "<green>Click to see them all", fr: "<green>Cliquer pour tous les voir" }
-    click: { left: [ { open_menu: "daily:milestones" } ] }
+      - { en: "{status[0].at_risk ? \"<yellow>Missed days: your freezes cover them\" : \"\"}{status[0].broken ? \"<red>Streak lost: it starts again at 1 today\" : \"\"}", fr: "{status[0].at_risk ? \"<yellow>Jours manqués : tes gels les couvrent\" : \"\"}{status[0].broken ? \"<red>Streak perdu : il repart à 1 aujourd'hui\" : \"\"}" }
+
   # Two slots high each, on both sides of the days.
   - id: previous
     positions: "18,27"
