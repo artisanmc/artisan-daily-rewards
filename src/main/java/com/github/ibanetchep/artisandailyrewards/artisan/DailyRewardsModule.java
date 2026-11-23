@@ -158,6 +158,12 @@ public final class DailyRewardsModule implements ArtisanModule {
         } catch (IOException | RuntimeException e) {
             logger.log(Level.SEVERE, "Could not split data/calendar.yml into data/settings.yml and data/rewards.yml", e);
         }
+        try {
+            if (CalendarFiles.renameNotifyOnUnlock(folder))
+                logger.info("data/settings.yml: join_reminder is now notify_on_unlock, with the same value");
+        } catch (IOException | RuntimeException e) {
+            logger.log(Level.SEVERE, "Could not rename join_reminder to notify_on_unlock in data/settings.yml", e);
+        }
     }
 
     /** {@code plugins/ArtisanDailyRewards/artisan_module/}, before any template: Artisan seeds the shipped files there. */

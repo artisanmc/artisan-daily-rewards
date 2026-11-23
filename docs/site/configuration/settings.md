@@ -12,7 +12,7 @@ sidebar:
 reset_time: "00:00"      # when the game day ends, server time
 auto_claim: "off"        # off | on | player
 min_playtime_minutes: 0  # minutes of the session before the day counts
-join_reminder: true      # tell the player their reward is unlocked
+notify_on_unlock: true   # tell the player their reward is unlocked
 freeze:
   earn_every: 7          # days of streak per freeze; 0: never
   max_stock: 2           # freezes held at most
@@ -24,7 +24,7 @@ freeze:
 | `reset_time` | `HH:MM` | `"00:00"` | When the game day ends, in the server's time zone. |
 | `auto_claim` | `off`, `on`, `player` | `off` | `off`: the player claims. `on`: claimed at join and at the reset. `player`: each player chooses with `/dailyrewards autoclaim`. |
 | `min_playtime_minutes` | integer ≥ 0 | `0` | Minutes of the current session before the day counts and its reward can be claimed. |
-| `join_reminder` | boolean | `true` | Tell a player their reward is unlocked when the day counts, and remind them of rewards that wait. |
+| `notify_on_unlock` | boolean | `true` | Tell a player when today's reward is unlocked, and remind them at join of the rewards of the days before that wait. Formerly `join_reminder`: a file that still says so is renamed at startup, its value kept. |
 | `freeze.earn_every` | integer ≥ 0 | `7` | Days of streak per freeze. `0`: never. |
 | `freeze.max_stock` | integer ≥ 0 | `2` | Freezes a player holds at most. |
 | `freeze.starting` | integer ≥ 0 | `0` | Freezes a new player holds from their first counted day. Above `max_stock`, `max_stock`. Players already counted get none. |

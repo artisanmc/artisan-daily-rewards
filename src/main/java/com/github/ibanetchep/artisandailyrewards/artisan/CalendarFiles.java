@@ -172,6 +172,29 @@ public final class CalendarFiles {
         return Migration.SPLIT;
     }
 
+    /**
+     * Renames {@code join_reminder} to {@code notify_on_unlock} in the owner's {@code data/settings}
+     * file, its value, comments and order kept. Runs before Artisan syncs the shipped files, which
+     * then hold the new name only: the owner's value stays theirs. Nothing to do without the old
+     * key, or when the new one is already there. True when the file was rewritten.
+     */
+    public static boolean renameNotifyOnUnlock(File folder) throws IOException {
+        File settings = ownerFile(folder, SETTINGS);
+        if (settings == null) return false;
+        String text = Files.readString(settings.toPath(), StandardCharsets.UTF_8);
+        if (!OLD_NOTIFY.matcher(text).find() || NEW_NOTIFY.matcher(text).find()) return false;
+        String renamed = OLD_NOTIFY.matcher(text).replaceFirst("notify_on_unlock:");
+        File tmp = new File(settings.getParentFile(), "." + settings.getName() + ".tmp");
+        Files.writeString(tmp.toPath(), renamed, StandardCharsets.UTF_8);
+        Files.move(tmp.toPath(), settings.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        return true;
+    }
+
+    private static final java.util.regex.Pattern OLD_NOTIFY =
+            java.util.regex.Pattern.compile("^join_reminder:", java.util.regex.Pattern.MULTILINE);
+    private static final java.util.regex.Pattern NEW_NOTIFY =
+            java.util.regex.Pattern.compile("^notify_on_unlock:", java.util.regex.Pattern.MULTILINE);
+
     /** Written beside, then moved over: never a half-written file. */
     private static void write(File target, Map<String, Object> content) throws IOException {
         DumperOptions options = new DumperOptions();

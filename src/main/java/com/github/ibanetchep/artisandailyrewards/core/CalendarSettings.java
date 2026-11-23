@@ -18,7 +18,9 @@ import java.util.Map;
  *
  * @param minPlaytimeMinutes playtime of the current session before the day counts for the streak
  *                           and its reward can be claimed
- * @param joinReminder       remind a player whose rewards wait, on join and at the reset
+ * @param notifyOnUnlock     tell a player when today's reward is unlocked, and remind at join of the
+ *                           rewards of the days before that wait ({@code notify_on_unlock}, formerly
+ *                           {@code join_reminder})
  * @param days               the reward of each listed day of the cycle, 1 to {@code cycleLength}
  * @param defaultDay         the reward of a day {@code days} does not list, null for none
  * @param milestones         the bonuses of the streak, in the file's order
@@ -32,7 +34,7 @@ public record CalendarSettings(
         int cycleLength,
         AutoClaim autoClaim,
         int minPlaytimeMinutes,
-        boolean joinReminder,
+        boolean notifyOnUnlock,
         int freezeEarnEvery,
         int freezeMaxStock,
         Map<Integer, DayReward> days,
@@ -53,32 +55,32 @@ public record CalendarSettings(
 
     /** No freeze at the start. */
     public CalendarSettings(LocalTime resetTime, int cycleLength, AutoClaim autoClaim, int minPlaytimeMinutes,
-                            boolean joinReminder, int freezeEarnEvery, int freezeMaxStock,
+                            boolean notifyOnUnlock, int freezeEarnEvery, int freezeMaxStock,
                             Map<Integer, DayReward> days, @Nullable DayReward defaultDay, List<Milestone> milestones,
                             boolean withDefaultDay) {
-        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder, freezeEarnEvery, freezeMaxStock,
+        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, notifyOnUnlock, freezeEarnEvery, freezeMaxStock,
                 days, defaultDay, milestones, withDefaultDay, 0);
     }
 
     /** These settings with {@code value} freezes at the start. */
     public CalendarSettings withFreezeStarting(int value) {
-        return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder,
+        return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, notifyOnUnlock,
                 freezeEarnEvery, freezeMaxStock, days, defaultDay, milestones, withDefaultDay, value);
     }
 
     /** A day's own reward in place of {@code default_day}. */
     public CalendarSettings(LocalTime resetTime, int cycleLength, AutoClaim autoClaim, int minPlaytimeMinutes,
-                            boolean joinReminder, int freezeEarnEvery, int freezeMaxStock,
+                            boolean notifyOnUnlock, int freezeEarnEvery, int freezeMaxStock,
                             Map<Integer, DayReward> days, @Nullable DayReward defaultDay, List<Milestone> milestones) {
-        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder, freezeEarnEvery, freezeMaxStock,
+        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, notifyOnUnlock, freezeEarnEvery, freezeMaxStock,
                 days, defaultDay, milestones, false);
     }
 
     /** Without milestones. */
     public CalendarSettings(LocalTime resetTime, int cycleLength, AutoClaim autoClaim, int minPlaytimeMinutes,
-                            boolean joinReminder, int freezeEarnEvery, int freezeMaxStock,
+                            boolean notifyOnUnlock, int freezeEarnEvery, int freezeMaxStock,
                             Map<Integer, DayReward> days, @Nullable DayReward defaultDay) {
-        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, joinReminder, freezeEarnEvery, freezeMaxStock,
+        this(resetTime, cycleLength, autoClaim, minPlaytimeMinutes, notifyOnUnlock, freezeEarnEvery, freezeMaxStock,
                 days, defaultDay, List.of());
     }
 
@@ -154,7 +156,8 @@ public record CalendarSettings(
         int cycleLength = integer(root, "cycle_length", d.cycleLength(), 1);
         AutoClaim autoClaim = autoClaim(root.get("auto_claim"), d.autoClaim());
         int minPlaytime = integer(root, "min_playtime_minutes", d.minPlaytimeMinutes(), 0);
-        boolean joinReminder = bool(root, "join_reminder", d.joinReminder());
+        // join_reminder: its name before notify_on_unlock, still read when the new one is absent.
+        boolean notifyOnUnlock = bool(root, "notify_on_unlock", bool(root, "join_reminder", d.notifyOnUnlock()));
 
         int earnEvery = d.freezeEarnEvery();
         int maxStock = d.freezeMaxStock();
@@ -175,7 +178,7 @@ public record CalendarSettings(
         }
         List<Milestone> milestones = Milestone.read(root.get("milestones"));
         boolean withDefaultDay = bool(root, WITH_DEFAULT_DAY, d.withDefaultDay());
-        return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytime, joinReminder,
+        return new CalendarSettings(resetTime, cycleLength, autoClaim, minPlaytime, notifyOnUnlock,
                 earnEvery, maxStock, days, defaultDay, milestones, withDefaultDay, starting);
     }
 

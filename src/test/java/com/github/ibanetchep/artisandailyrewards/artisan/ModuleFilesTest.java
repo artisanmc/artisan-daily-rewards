@@ -63,7 +63,7 @@ class ModuleFilesTest {
         CalendarSettings shipped = CalendarSettings.read(calendar);
         CalendarSettings d = CalendarSettings.DEFAULTS;
         assertEquals(new CalendarSettings(d.resetTime(), d.cycleLength(), d.autoClaim(), d.minPlaytimeMinutes(),
-                d.joinReminder(), d.freezeEarnEvery(), d.freezeMaxStock(), shipped.days(), shipped.defaultDay(),
+                d.notifyOnUnlock(), d.freezeEarnEvery(), d.freezeMaxStock(), shipped.days(), shipped.defaultDay(),
                 shipped.milestones()), shipped);
         assertNotNull(shipped.defaultDay());
         // Going on must always pay more than starting over: the last milestone repeats.

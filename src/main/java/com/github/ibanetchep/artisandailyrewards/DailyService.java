@@ -208,8 +208,8 @@ public final class DailyService {
                 return;
             }
             scheduler.runForLater(player, ticks(wait), () -> greet(player, false));
-            int waiting = waitingWhileLocked(unclaimed(uuid));
-            if (remind && waiting > 0 && !autoClaims(state) && settings.joinReminder()) remind(player, waiting);
+            int waiting = remindedWhileLocked(unclaimed(uuid), autoClaims(state), settings.notifyOnUnlock());
+            if (remind && waiting > 0) remind(player, waiting);
             return;
         }
         offer(player, remind);
@@ -221,16 +221,17 @@ public final class DailyService {
         int waiting = unclaimed(player.getUniqueId());
         if (state == null || waiting == 0) return;
         if (autoClaims(state)) claim(player, true);
-        else if (remind && settings.joinReminder()) remind(player, waiting);
+        else if (remind && settings.notifyOnUnlock()) remind(player, waiting);
     }
 
     /**
      * The rewards a join reminder names while today waits for its playtime: those of the days before
-     * that wait, not today's, which is not unlocked yet (the {@code unlocked} message tells it when the
-     * day counts).
+     * that wait ({@code unclaimed}, today's is not counted yet, so not unlocked: the {@code unlocked}
+     * message tells it when the day counts). None for an auto-claim player or with
+     * {@code notify_on_unlock: false}.
      */
-    static int waitingWhileLocked(int unclaimed) {
-        return unclaimed;
+    static int remindedWhileLocked(int unclaimed, boolean autoClaims, boolean notifyOnUnlock) {
+        return autoClaims || !notifyOnUnlock ? 0 : unclaimed;
     }
 
     private void remind(Player player, int waiting) {
@@ -275,7 +276,7 @@ public final class DailyService {
                 if (result.status() == CheckInResult.Status.CONFLICT) return;
                 refreshMenu(player);
                 PlayerState state = cache.get(uuid);
-                if (result.counted() && state != null && !autoClaims(state) && current.joinReminder()) {
+                if (result.counted() && state != null && !autoClaims(state) && current.notifyOnUnlock()) {
                     unlocked(player, result, current);
                 } else {
                     offer(player, remind || result.counted());

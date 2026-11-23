@@ -20,19 +20,25 @@ class CalendarSettingsTest {
     }
 
     @Test
+    void anOldJoinReminderStillSetsTheNotificationUnlessTheNewKeyIsThere() throws Exception {
+        assertFalse(CalendarSettings.read(Map.of("join_reminder", false)).notifyOnUnlock());
+        assertTrue(CalendarSettings.read(Map.of("join_reminder", false, "notify_on_unlock", true)).notifyOnUnlock());
+    }
+
+    @Test
     void readsEveryKey() throws Exception {
         CalendarSettings settings = CalendarSettings.read(Map.of(
                 "reset_time", "06:00",
                 "cycle_length", 7,
                 "auto_claim", "player",
                 "min_playtime_minutes", 5,
-                "join_reminder", false,
+                "notify_on_unlock", false,
                 "freeze", Map.of("earn_every", 10, "max_stock", 3, "starting", 1)));
         assertEquals(LocalTime.of(6, 0), settings.resetTime());
         assertEquals(7, settings.cycleLength());
         assertEquals(CalendarSettings.AutoClaim.PLAYER, settings.autoClaim());
         assertEquals(5, settings.minPlaytimeMinutes());
-        assertFalse(settings.joinReminder());
+        assertFalse(settings.notifyOnUnlock());
         assertEquals(10, settings.freezeEarnEvery());
         assertEquals(3, settings.freezeMaxStock());
         assertEquals(1, settings.freezeStarting());
