@@ -65,5 +65,5 @@ sidebar:
 - The textured calendar's two title texts carry their `line_height`: without it, the editor drew them outside
   the menu.
 - The streak's tooltip no longer says "Missed days: your freezes cover them" (the `/daily` message stays),
-  and "Days" reads "Days played".
+  nor the days played: only the current streak and the longest (and the milestones on the trophy).
 - Not yet: paid restore, tiers, `daily:*` actions, placeholders.
