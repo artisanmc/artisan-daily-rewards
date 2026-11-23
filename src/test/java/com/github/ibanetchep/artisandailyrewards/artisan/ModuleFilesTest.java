@@ -167,6 +167,18 @@ class ModuleFilesTest {
     }
 
     @Test
+    void aCentredTitleTextIsPlacedByItsCentre() throws IOException {
+        // Artisan centres a textarea's lines on its x: the window's middle is 88 (176 px wide).
+        for (String menu : List.of("calendar", "milestones")) {
+            Map<?, ?> textured = (Map<?, ?>) yaml("variants/textured/menus/" + menu + ".yaml");
+            for (Object layer : (List<?>) textured.get("title")) {
+                Map<?, ?> l = (Map<?, ?>) layer;
+                if ("center".equals(l.get("alignment"))) assertEquals(88, l.get("x"), menu + ": " + l.get("value"));
+            }
+        }
+    }
+
+    @Test
     void aDayToClaimLooksNeitherClaimedNorToCome() throws IOException {
         Map<?, ?> menu = (Map<?, ?>) yaml("menus/calendar.yaml");
         Map<?, ?> days = ((List<?>) menu.get("elements")).stream().map(e -> (Map<?, ?>) e)
