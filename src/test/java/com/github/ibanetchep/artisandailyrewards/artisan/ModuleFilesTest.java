@@ -140,7 +140,8 @@ class ModuleFilesTest {
         Map<?, ?> rules = (Map<?, ?>) yaml("variants.yml");
         assertEquals("variants/v1", rules.get("schema"));
         assertEquals(List.of("textured"), rules.get("variants"));
-        assertTrue(text("variants.yml").contains("show_variant: textured"));
+        // Which player sees it is the server's (Artisan's menu variants): no display rules of our own.
+        assertFalse(rules.containsKey("show"));
 
         Set<String> images = new TreeSet<>();
         for (String path : ModuleFiles.PATHS) {
