@@ -1,9 +1,6 @@
 schema: variants/v1
-# Who sees which version of the menus. "textured" redraws the calendar and the milestones with the
-# images of assets/textures/daily_*: Java players who loaded the server's resource pack only. Everyone
-# else (no pack, Bedrock) keeps the module's menus.
+# The variants this module has versions for, in variants/<name>/. Which one a player sees is the
+# server's: 'textured' redraws the calendar and the milestones with the images of
+# assets/textures/daily_*, for Java players who loaded the server's resource pack. Everyone else
+# (no pack, Bedrock) keeps the module's menus, unless they chose otherwise with /artisan variant.
 variants: [textured]
-show:
-  - if: [{ client_is: java }, { has_resource_pack: true }]
-    do: [{ show_variant: textured }]
-  - show_default

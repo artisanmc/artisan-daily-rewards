@@ -50,7 +50,8 @@ is written again, an edited one stays yours until Reset in the editor):
   each state of the `days` element). A day to come that reaches a milestone glows; the beacon (shown only when `milestones` holds one) opens `menus/milestones.yml`, the next 112 milestones,
   28 a page.
 - `variants.yml` and `variants/textured/menus/`: the `textured` variant of both menus, for Java players who
-  loaded the server's resource pack (Bedrock players and those without the pack keep the menus above). Same
+  loaded the server's resource pack (Artisan's `textured` menu variant; Bedrock players and those without the
+  pack keep the menus above, and a player can pick theirs with `/artisan variant`). Same
   inputs, data and clicks, drawn with the images of `assets/glyphs/daily_background*` (the window, with
   `vanilla_texture: false`) and `assets/textures/daily_*` (a 16×16 tile per state of a day, the buttons);
   the texts ("Day N", the freezes count, the claim button's label) are title layers. A day to come keeps its
