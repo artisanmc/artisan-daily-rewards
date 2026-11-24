@@ -208,11 +208,11 @@ elements:
   - id: claim
     positions: "48-50"
     states:
-      # Today waits for its playtime and nothing from the days before waits: greyed, the minutes left on hover.
+      # Today waits for its playtime and nothing from the days before waits: the minutes left.
       - if:
           - expression: status[0].playtime_locked && status[0].unclaimed == 0
         image: { asset: daily_claim_off, fit: native }
-        label: { text: { en: "<gray>Claim", fr: "<gray>Réclamer" }, offset_y: 1 }
+        label: { text: "<gray>{status[0].playtime_left}", offset_y: 1 }
         title: { en: "<gray>Unlocked in <white>{status[0].playtime_left}", fr: "<gray>Débloquée dans <white>{status[0].playtime_left}" }
         lore:
           - { en: "<dark_gray>Keep playing: the reward unlocks then", fr: "<dark_gray>Continue à jouer : elle se débloque alors" }
