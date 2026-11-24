@@ -3,7 +3,8 @@ name: Release
 # ArtisanDailyRewards-<version>.jar on the Artisan site (its /modules/daily-rewards/versions/ page; website README,
 # "Versions and downloads"):
 # - push to main: a development build, <version>-dev.<run> (<version>: the one of build.gradle, the
-#   release in preparation; notes: the pushed commits);
+#   release in preparation, or the patch after the last tag once that one is released; notes: the
+#   pushed commits);
 # - tag v<version>: the release <version> (notes: the tag's annotation, git tag -a).
 # Needs the secret RELEASE_TOKEN.
 on:
@@ -40,7 +41,14 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
           else
             BASE="$(bash ./gradlew properties -q --no-daemon | awk '/^version:/ {print $2}')"
-            VERSION="${BASE%-SNAPSHOT}-dev.$GITHUB_RUN_NUMBER"
+            BASE="${BASE%-SNAPSHOT}"
+            # Once that version is tagged, main builds the next patch: the site ranks 1.0.0-dev.N
+            # before the release 1.0.0, so a build made after it would never be offered as an update.
+            LAST="$(git tag -l 'v[0-9]*' | sed -nE 's/^v([0-9]+\.[0-9]+\.[0-9]+)$/\1/p' | sort -V | tail -1)"
+            if [ -n "$LAST" ] && [ "$(printf '%s\n' "$BASE" "$LAST" | sort -V | tail -1)" = "$LAST" ]; then
+              BASE="$(echo "$LAST" | awk -F. '{print $1 "." $2 "." $3 + 1}')"
+            fi
+            VERSION="$BASE-dev.$GITHUB_RUN_NUMBER"
           fi
           echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$' || { echo "bad version '$VERSION'" >&2; exit 1; }
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
