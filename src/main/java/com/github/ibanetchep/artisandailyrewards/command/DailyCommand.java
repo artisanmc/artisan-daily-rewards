@@ -12,6 +12,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.time.Duration;
+import java.util.Locale;
 
 import java.util.List;
 import java.util.Map;
@@ -71,13 +73,21 @@ public final class DailyCommand {
                 .child(PlayerCommandDeclaration.builder("daily:autoclaim")
                         .name("autoclaim")
                         .permission(PERMISSION)
-                        .argument(CommandArgument.choice("state", List.of("on", "off")).optional())
+                        // A word, not a choice: Artisan's YAML reads a plain `on`/`off` in the command
+                        // file as a boolean, so a choice of on/off asked `true` of one parser and `on` of the other.
+                        .argument(CommandArgument.string("state").optional().suggestions(ctx -> TOGGLE_SUGGESTIONS))
                         .description(Map.of(
                                 "en", "Claim automatically when you join",
                                 "fr", "Réclame automatiquement à la connexion"))
                         .executor(ctx -> withPlayer(ctx, player -> {
                             String state = ctx.get("state", String.class);
-                            service.setAutoClaim(player, state == null ? null : state.equals("on"));
+                            if (state == null || state.isBlank()) {
+                                service.setAutoClaim(player, null);
+                                return;
+                            }
+                            Boolean enabled = parseToggle(state);
+                            if (enabled == null) messages.send(player, "autoclaim.invalid", Map.of("value", state.trim()));
+                            else service.setAutoClaim(player, enabled);
                         }))
                         .build())
                 .build();
@@ -97,16 +107,39 @@ public final class DailyCommand {
                     "longest", state.longest(),
                     "freezes", StreakRules.freezesShown(state, service.settings())));
             int waiting = service.unclaimed(player.getUniqueId());
-            if (waiting > 1) {
-                messages.send(player, "status.waiting_many", Map.of("count", waiting));
-            } else if (waiting == 1 || !shown.countedToday()) {
-                messages.send(player, "status.waiting");
-            } else {
-                messages.send(player, "status.claimed", Map.of("time", Durations.format(service.clock().untilReset())));
-            }
+            Duration lock = service.playtimeLock(player.getUniqueId());
+            String key = claimKey(waiting, shown.countedToday(), !lock.isZero());
+            if (key != null) messages.send(player, key, Map.of(
+                    "count", waiting,
+                    "time", Durations.format(service.clock().untilReset())));
+            if (!lock.isZero()) messages.send(player, "status.playtime", Map.of("time", Durations.format(lock)));
             if (shown.atRisk()) messages.send(player, "status.at_risk");
             if (shown.broken()) messages.send(player, "status.broken", Map.of("lost", state.streak()));
         });
+    }
+
+    /**
+     * What the status says of the rewards: {@code status.waiting_many} / {@code status.waiting} while
+     * some wait to be claimed (today's too once it can be counted, a claim counting it), else
+     * {@code status.claimed} when today is counted; null while today waits for its playtime and
+     * nothing else waits ({@code status.playtime} says how long).
+     */
+    static String claimKey(int waiting, boolean countedToday, boolean playtimeLocked) {
+        if (waiting > 1) return "status.waiting_many";
+        if (waiting == 1 || (!countedToday && !playtimeLocked)) return "status.waiting";
+        return countedToday ? "status.claimed" : null;
+    }
+
+    /** The values {@code autoclaim} completes; {@link #parseToggle} takes more. */
+    static final List<String> TOGGLE_SUGGESTIONS = List.of("on", "off");
+
+    /** {@code on}/{@code off}, {@code true}/{@code false}, {@code yes}/{@code no}, {@code oui}/{@code non}, ignoring case; null otherwise. */
+    static Boolean parseToggle(String raw) {
+        return switch (raw.trim().toLowerCase(Locale.ROOT)) {
+            case "on", "true", "yes", "oui" -> Boolean.TRUE;
+            case "off", "false", "no", "non" -> Boolean.FALSE;
+            default -> null;
+        };
     }
 
     /** Artisan refuses the console on these commands: they are not {@code consoleAllowed}. */
