@@ -25,12 +25,14 @@ status:
   claimed: "<gray>La récompense du jour est réclamée. Prochaine dans <white><time></white>."
   waiting: "<green>Ta récompense quotidienne t'attend :</green> <click:run_command:/<command> claim><green>[Réclamer]</green></click>"
   waiting_many: "<green><white><count></white> récompenses quotidiennes t'attendent :</green> <click:run_command:/<command> claim><green>[Réclamer]</green></click>"
+  playtime: "<gray>Joue encore <white><time></white> pour débloquer la récompense du jour."
   at_risk: "<yellow>Jours manqués : tes gels les couvrent."
   broken: "<red>Streak perdu : il repart à 1 aujourd'hui."
 autoclaim:
   enabled: "<green>Ta récompense du jour sera réclamée automatiquement à la connexion."
   disabled: "<gray>Réclamation automatique désactivée : utilise <white>/<command> claim</white>."
   fixed: "<gray>La réclamation automatique est réglée par le serveur, pas par chaque joueur."
+  invalid: "<red>Valeur invalide : <white><value></white>. Utilise <white>on</white> ou <white>off</white>."
 admin:
   info:
     header: "<gold>Récompenses quotidiennes de <white><player></white>"

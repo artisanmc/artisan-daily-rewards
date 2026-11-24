@@ -9,8 +9,8 @@ sidebar:
 |---|---|---|---|
 | `/dailyrewards` | `daily.use` (everyone) | Opens the calendar. | `/dailyrewards` |
 | `/dailyrewards claim` | `daily.use` | Claims every reward that waits. | `/dailyrewards claim` |
-| `/dailyrewards status` | `daily.use` | Your streak, best streak and freezes, in chat. | `/dailyrewards status` |
-| `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claim automatically at join; only when the settings say `auto_claim: player`. Without an argument, toggles. | `/dailyrewards autoclaim on` |
+| `/dailyrewards status` | `daily.use` | Your streak, best streak and freezes, in chat, and whether a reward waits (or the playtime left before today's unlocks). | `/dailyrewards status` |
+| `/dailyrewards autoclaim [on\|off]` | `daily.use` | Claim automatically at join; only when the settings say `auto_claim: player`. Without an argument, toggles. `true`/`false` (and `yes`/`no`) work too. | `/dailyrewards autoclaim on` |
 | `/dailyadmin info <player>` | `daily.admin` (op) | A player's streak, freezes and ledger. | `/dailyadmin info Steve` |
 | `/dailyadmin set <player> <streak\|longest\|freezes> <value>` | `daily.admin` | Corrects a counter. `streak` restores a streak that holds: the player counts as there yesterday (or today, if today already counts), so tomorrow continues it, even after a break; the longest streak rises to it; no milestone at or below it is paid (again). `streak 0` starts over. | `/dailyadmin set Steve streak 40` |
 | `/dailyadmin give <player> freezes <n>` | `daily.admin` | Gives `n` freezes on top of those held, logged in the ledger (`freeze_given`). It can go over `freeze.max_stock`; the player then earns none until back under it. To remove some: `set … freezes`. | `/dailyadmin give Steve freezes 2` |
